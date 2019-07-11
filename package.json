@@ -1,0 +1,40 @@
+{
+  "name": "@janiscommerce/model",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "export TEST_ENV=true; mocha --exit -R nyan --recursive tests/",
+    "test-ci": "nyc --reporter=html --reporter=text mocha --recursive tests/",
+    "watch-test": "export TEST_ENV=true; mocha --exit -R nyan -w --recursive tests/",
+    "coverage": "nyc npm test",
+    "lint": "eslint index.js lib/ tests/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/janis-commerce/model.git"
+  },
+  "author": "Janis",
+  "license": "ISC",
+  "homepage": "https://github.com/janis-commerce/model.git#readme",
+  "devDependencies": {
+    "eslint": "^5.16.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.17.3",
+    "husky": "^2.4.1",
+    "mocha": "^5.2.0",
+    "nyc": "^14.1.1",
+    "sinon": "^7.3.2"
+  },
+  "files": [
+    "lib/"
+  ],
+  "directories": {
+    "test": "tests"
+  },
+  "dependencies": {
+    "@janiscommerce/database-dispatcher": "^1.3.1",
+    "@janiscommerce/logger": "^1.1.0",
+    "@janiscommerce/settings": "^1.0.0"
+  }
+}
