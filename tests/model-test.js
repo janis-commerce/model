@@ -18,6 +18,7 @@ describe('Model', () => {
 	const DBDriver = {};
 
 	const client = {
+		type: 'mongodb',
 		host: 'the-host',
 		database: 'the-database-name',
 		username: 'the-username',
@@ -117,6 +118,7 @@ describe('Model', () => {
 				// for debug use: DatabaseDispatcher.getDatabaseByConfig.getCall(0).args
 				sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByConfig);
 				sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByConfig, {
+					type: undefined,
 					host: 'my-host.com',
 					database: 'foo',
 					user: undefined,
@@ -146,6 +148,7 @@ describe('Model', () => {
 				// for debug use: DatabaseDispatcher.getDatabaseByConfig.getCall(0).args
 				sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByConfig);
 				sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByConfig, {
+					type: undefined,
 					host: 'my-read-host.com',
 					database: 'foo',
 					user: 'my-username',
@@ -195,6 +198,7 @@ describe('Model', () => {
 					.returns({
 						fields: {
 							write: {
+								type: 'type',
 								host: 'host',
 								database: 'database',
 								user: 'username',
@@ -213,6 +217,7 @@ describe('Model', () => {
 				// for debug use: DatabaseDispatcher.getDatabaseByConfig.getCall(0).args
 				sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByConfig);
 				sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByConfig, {
+					type: 'mongodb',
 					host: 'the-host',
 					database: 'the-database-name',
 					user: 'the-username',
@@ -235,6 +240,7 @@ describe('Model', () => {
 					.returns({
 						fields: {
 							read: {
+								type: 'type',
 								host: 'host',
 								database: 'database',
 								user: 'username',
@@ -253,6 +259,7 @@ describe('Model', () => {
 				// for debug use: DatabaseDispatcher.getDatabaseByConfig.getCall(0).args
 				sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByConfig);
 				sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByConfig, {
+					type: 'mongodb',
 					host: 'the-host',
 					database: 'the-database-name',
 					user: 'the-username',
@@ -294,6 +301,7 @@ describe('Model', () => {
 				await myClientModel.get();
 
 				const readConfig = {
+					type: undefined,
 					host: 'my-read-host.com',
 					database: 'foo',
 					user: 'my-username',
@@ -302,6 +310,7 @@ describe('Model', () => {
 				};
 
 				const writeConfig = {
+					type: undefined,
 					host: 'the-host',
 					database: 'the-database-name',
 					user: 'the-username',
