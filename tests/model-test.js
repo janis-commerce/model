@@ -23,13 +23,15 @@ describe('Model', () => {
 		database: 'the-database-name',
 		username: 'the-username',
 		password: 'the-password',
+		protocol: 'my-protocol',
 		port: 1,
 		dbWriteHost: 'my-host.com',
 		dbWriteDatabase: 'foo',
 		dbReadHost: 'my-read-host.com',
 		dbReadDatabase: 'foo',
 		dbReadUser: 'my-username',
-		dbReadPassword: 'ultrsecurepassword123456'
+		dbReadPassword: 'ultrsecurepassword123456',
+		dbReadProtocol: 'default-protocol'
 	};
 
 	const clientModel = class ClientModel extends Model {};
@@ -119,6 +121,7 @@ describe('Model', () => {
 				sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByConfig);
 				sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByConfig, {
 					type: undefined,
+					protocol: undefined,
 					host: 'my-host.com',
 					database: 'foo',
 					user: undefined,
@@ -149,6 +152,7 @@ describe('Model', () => {
 				sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByConfig);
 				sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByConfig, {
 					type: undefined,
+					protocol: 'default-protocol',
 					host: 'my-read-host.com',
 					database: 'foo',
 					user: 'my-username',
@@ -199,6 +203,7 @@ describe('Model', () => {
 						fields: {
 							write: {
 								type: 'type',
+								protocol: 'protocol',
 								host: 'host',
 								database: 'database',
 								user: 'username',
@@ -218,6 +223,7 @@ describe('Model', () => {
 				sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByConfig);
 				sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByConfig, {
 					type: 'mongodb',
+					protocol: 'my-protocol',
 					host: 'the-host',
 					database: 'the-database-name',
 					user: 'the-username',
@@ -241,6 +247,7 @@ describe('Model', () => {
 						fields: {
 							read: {
 								type: 'type',
+								protocol: 'protocol',
 								host: 'host',
 								database: 'database',
 								user: 'username',
@@ -260,6 +267,7 @@ describe('Model', () => {
 				sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByConfig);
 				sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByConfig, {
 					type: 'mongodb',
+					protocol: 'my-protocol',
 					host: 'the-host',
 					database: 'the-database-name',
 					user: 'the-username',
@@ -302,6 +310,7 @@ describe('Model', () => {
 
 				const readConfig = {
 					type: undefined,
+					protocol: 'default-protocol',
 					host: 'my-read-host.com',
 					database: 'foo',
 					user: 'my-username',
@@ -311,6 +320,7 @@ describe('Model', () => {
 
 				const writeConfig = {
 					type: undefined,
+					protocol: undefined,
 					host: 'the-host',
 					database: 'the-database-name',
 					user: 'the-username',

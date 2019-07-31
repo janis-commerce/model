@@ -62,12 +62,16 @@ For settings the package use [Settings](https://www.npmjs.com/package/@janiscomm
 
 | Field | Default value | Description |
 |--|--|--|
+| clients.fields.read.type | dbReadType | The type for DB Read (mylsq, mongodb) |
 | clients.fields.read.host | dbReadHost | The host for DB Read |
+| clients.fields.read.protocol | dbReadProtocol | The database protocol for DB Read |
 | clients.fields.read.database | dbReadDatabase | The database name for DB Read |
 | clients.fields.read.user | dbReadUser | The database username for DB Read |
 | clients.fields.read.password | dbReadPassword | The database password for DB Read |
 | clients.fields.read.port | dbReadPort | The database port for DB Read |
+| clients.fields.write.type | dbWriteType | The type for DB Write (mylsq, mongodb) |
 | clients.fields.write.host | dbWriteHost | The host for DB Write |
+| clients.fields.write.protocol | dbWriteProtocol | The database protocol for DB Write |
 | clients.fields.write.database | dbWriteDatabase | The database name for DB Write |
 | clients.fields.write.user | dbWriteUser | The database username for DB Write |
 | clients.fields.write.password | dbWritePassword | The database password for DB Write |
@@ -80,14 +84,18 @@ For settings the package use [Settings](https://www.npmjs.com/package/@janiscomm
 	"clients": {
 		"fields": {
 			"read": {
+				"type": "dbReadType",
 				"host": "dbReadHost",
+				"protocol": "dbReadProtocol",
 				"database": "dbReadDatabase",
 				"user": "dbReadUser",
 				"password": "dbReadPassword",
 				"port": "dbReadPort"
 			},
 			"write": {
+				"type": "dbWriteType",
 				"host": "dbWriteHost",
+				"protocol": "dbWriteProtocol",
 				"database": "dbWriteDatabase",
 				"user": "dbWriteUser",
 				"password": "dbWritePassword",
