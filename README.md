@@ -55,55 +55,58 @@ DB_CORE_PASSWORD = "foo123456";
 ```
 
 ### Database connection configurated with client injected
-When your `Model` is a Client Model, and the database connection settings are in the client injected, you don't need to configurate the `databaseKey`.
-You can add settings for the fields in the connection, the fields are the following.
-
-For settings the package use [Settings](https://www.npmjs.com/package/@janiscommerce/settings).
-
-| Field | Default value | Description |
-|--|--|--|
-| clients.fields.read.type | dbReadType | The type for DB Read (mylsq, mongodb) |
-| clients.fields.read.host | dbReadHost | The host for DB Read |
-| clients.fields.read.protocol | dbReadProtocol | The database protocol for DB Read |
-| clients.fields.read.database | dbReadDatabase | The database name for DB Read |
-| clients.fields.read.user | dbReadUser | The database username for DB Read |
-| clients.fields.read.password | dbReadPassword | The database password for DB Read |
-| clients.fields.read.port | dbReadPort | The database port for DB Read |
-| clients.fields.write.type | dbWriteType | The type for DB Write (mylsq, mongodb) |
-| clients.fields.write.host | dbWriteHost | The host for DB Write |
-| clients.fields.write.protocol | dbWriteProtocol | The database protocol for DB Write |
-| clients.fields.write.database | dbWriteDatabase | The database name for DB Write |
-| clients.fields.write.user | dbWriteUser | The database username for DB Write |
-| clients.fields.write.password | dbWritePassword | The database password for DB Write |
-| clients.fields.write.port | dbWritePort | The database port for DB Write |
+When your `Model` is a Client Model, and the database connection settings are in the injected client, you don't need to configurate the `databaseKey`.  
+You can add database connection settings by adding the field names from the received client that contains the settings, with the setting what will be passed to the DBDriver. Also you can add config for read/write databases.
 
 **Example of settings:**
 ```json
 // .janiscommercerc.json
 {
 	"clients": {
-		"fields": {
-			"read": {
-				"type": "dbReadType",
-				"host": "dbReadHost",
-				"protocol": "dbReadProtocol",
-				"database": "dbReadDatabase",
-				"user": "dbReadUser",
-				"password": "dbReadPassword",
-				"port": "dbReadPort"
-			},
-			"write": {
-				"type": "dbWriteType",
-				"host": "dbWriteHost",
-				"protocol": "dbWriteProtocol",
-				"database": "dbWriteDatabase",
-				"user": "dbWriteUser",
-				"password": "dbWritePassword",
-				"port": "dbWritePort"
+		"database": {
+			"fields": {
+				"read": {
+					"dbReadHost" : "host",
+					"dbReadProtocol" : "protocol",
+					"dbReadPort" : "port",
+					"elasticSearchIndex" : "index",
+					"elasticSearchAws" : "awsCredentials"
+				},
+				"write": {
+					"dbWriteHost" : "host",
+					"dbWriteProtocol" : "protocol",
+					"dbWriteDatabase" : "database",
+					"dbWriteUser" : "user",
+					"dbWritePassword" : "password",
+					"dbWritePort" : "port"
+				}
 			}
 		}
 	}
 }
+
+/* 
+
+	Received client:
+
+	{
+		"name": "someclient",
+		"dbReadHost": "http://localhost",
+		"dbReadPort": 27017,
+		"elasticSearchIndex": "someclient_index",
+		"elasticSearchAws": true
+	}
+
+	Database connection settings:
+
+	{
+		"host": "http://localhost",
+		"port": 27017,
+		"index": "someclient_index",
+		"awsCredentials": true
+	}
+
+*/
 ```
 
 ## API
