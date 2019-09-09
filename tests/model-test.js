@@ -3,13 +3,11 @@
 const assert = require('assert');
 
 const DatabaseDispatcher = require('@janiscommerce/database-dispatcher');
-const Settings = require('@janiscommerce/settings');
 
 const sandbox = require('sinon').createSandbox();
 
 const Model = require('../.');
 const ModelError = require('../lib/model-error');
-const ClientFields = require('../lib/client-fields');
 
 /* eslint-disable prefer-arrow-callback */
 
@@ -25,13 +23,7 @@ describe('Model', () => {
 		password: 'the-password',
 		protocol: 'my-protocol',
 		port: 1,
-		dbWriteHost: 'my-host.com',
-		dbWriteDatabase: 'foo',
-		dbReadHost: 'my-read-host.com',
-		dbReadDatabase: 'foo',
-		dbReadUser: 'my-username',
-		dbReadPassword: 'ultrsecurepassword123456',
-		dbReadProtocol: 'default-protocol'
+		myconfig: 'my-config'
 	};
 
 	const clientModel = class ClientModel extends Model {};
@@ -47,8 +39,6 @@ describe('Model', () => {
 	beforeEach(() => {
 
 		// for internal cache clean...
-		ClientFields._fields = undefined; // eslint-disable-line
-
 		DBDriver.get = sandbox.stub();
 		DBDriver.getTotals = sandbox.stub();
 		DBDriver.insert = sandbox.stub();
@@ -62,7 +52,7 @@ describe('Model', () => {
 		sandbox.stub(DatabaseDispatcher, 'getDatabaseByKey')
 			.returns(DBDriver);
 
-		sandbox.stub(DatabaseDispatcher, 'getDatabaseByConfig')
+		DatabaseDispatcher.getDatabaseByClient = sandbox.stub()
 			.returns(DBDriver);
 
 		myCoreModel.formatGet = () => {};
@@ -96,251 +86,50 @@ describe('Model', () => {
 			});
 		});
 
-		context('when client fields settings not found', function() {
 
-			it('should call DBDriver get using databaseKey if exists', async function() {
+		it('should call DBDriver get using databaseKey when it exists', async function() {
 
-				await myCoreModel.get();
+			await myCoreModel.get();
 
-				sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByKey);
-				sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByKey, 'core');
+			sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByKey);
+			sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByKey, 'core');
 
-				sandbox.assert.calledOnce(DBDriver.get);
-				sandbox.assert.calledWithExactly(DBDriver.get, myCoreModel, {});
-			});
-
-			it('should call DBDriver get using client config default', async function() {
-
-				const myClientModel = new clientModel(); // eslint-disable-line
-
-				myClientModel.client = client;
-
-				await myClientModel.get();
-
-				// for debug use: DatabaseDispatcher.getDatabaseByConfig.getCall(0).args
-				sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByConfig);
-				sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByConfig, {
-					type: undefined,
-					protocol: undefined,
-					host: 'my-host.com',
-					database: 'foo',
-					user: undefined,
-					password: undefined,
-					port: undefined
-				});
-
-				// for debug use: DBDriver.get.getCall(0).args
-				sandbox.assert.calledOnce(DBDriver.get);
-				sandbox.assert.calledWithExactly(DBDriver.get, myClientModel, {});
-			});
+			sandbox.assert.calledOnce(DBDriver.get);
+			sandbox.assert.calledWithExactly(DBDriver.get, myCoreModel, {});
 		});
 
-		context('when client fields settings found but has bad format', function() {
-
-			it('should use default fields for client on read DB', async function() {
-
-				sandbox.stub(Settings, 'get')
-					.returns(['bad', 'format']);
+		it('should call DBDriver get using client config when it exists', async function() {
 
 				const myClientModel = new clientModel(); // eslint-disable-line
 
-				myClientModel.client = client;
+			myClientModel.client = client;
 
-				await myClientModel.get({ readonly: true, filters: { foo: 'bar' } });
+			await myClientModel.get();
 
-				// for debug use: DatabaseDispatcher.getDatabaseByConfig.getCall(0).args
-				sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByConfig);
-				sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByConfig, {
-					type: undefined,
-					protocol: 'default-protocol',
-					host: 'my-read-host.com',
-					database: 'foo',
-					user: 'my-username',
-					password: 'ultrsecurepassword123456',
-					port: undefined
-				});
+			// for debug use: DatabaseDispatcher.getDatabaseByClient.getCall(0).args
+			sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByClient);
+			sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByClient, client, false);
 
-				// for debug use: DBDriver.get.getCall(0).args
-				sandbox.assert.calledOnce(DBDriver.get);
-				sandbox.assert.calledWithExactly(DBDriver.get, myClientModel, { readonly: true, filters: { foo: 'bar' } });
-
-				// for debug use: Settings.get.getCall(0).args
-				sandbox.assert.calledOnce(Settings.get);
-				sandbox.assert.calledWithExactly(Settings.get, 'clients');
-			});
-
-			it('should use internal cache for default fields for client', async function() {
-
-				sandbox.stub(Settings, 'get')
-					.returns(['bad', 'format']);
-
-				sandbox.spy(ClientFields, 'get');
-
-				const myClientModel = new clientModel(); // eslint-disable-line
-
-				myClientModel.client = client;
-
-				await myClientModel.get({ readonly: true, filters: { foo: 'bar' } });
-				await myClientModel.get({ readonly: true });
-				await myClientModel.get({ filters: { foo: 'bar' } });
-				await myClientModel.get();
-
-				sandbox.assert.calledOnce(ClientFields.get);
-				sandbox.assert.calledWithExactly(ClientFields.get); // called with undefined!
-
-				// for debug use: Settings.get.getCall(0).args
-				sandbox.assert.calledOnce(Settings.get);
-				sandbox.assert.calledWithExactly(Settings.get, 'clients');
-			});
+			// for debug use: DBDriver.get.getCall(0).args
+			sandbox.assert.calledOnce(DBDriver.get);
+			sandbox.assert.calledWithExactly(DBDriver.get, myClientModel, {});
 		});
 
-		context('when client fields settings found', function() {
-
-			it('should use client db config data for write DB', async function() {
-
-				sandbox.stub(Settings, 'get')
-					.returns({
-						fields: {
-							write: {
-								type: 'type',
-								protocol: 'protocol',
-								host: 'host',
-								database: 'database',
-								user: 'username',
-								password: 'password',
-								port: 'port'
-							}
-						}
-					});
+		it('should call DBDriver get using read DB when readonly param is true', async function() {
 
 				const myClientModel = new clientModel(); // eslint-disable-line
 
-				myClientModel.client = client;
+			myClientModel.client = client;
 
-				await myClientModel.get();
+			await myClientModel.get({ readonly: true });
 
-				// for debug use: DatabaseDispatcher.getDatabaseByConfig.getCall(0).args
-				sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByConfig);
-				sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByConfig, {
-					type: 'mongodb',
-					protocol: 'my-protocol',
-					host: 'the-host',
-					database: 'the-database-name',
-					user: 'the-username',
-					password: 'the-password',
-					port: 1
-				});
+			// for debug use: DatabaseDispatcher.getDatabaseByClient.getCall(0).args
+			sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByClient);
+			sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByClient, client, true);
 
-				// for debug use: DBDriver.get.getCall(0).args
-				sandbox.assert.calledOnce(DBDriver.get);
-				sandbox.assert.calledWithExactly(DBDriver.get, myClientModel, {});
-
-				// for debug use: Settings.get.getCall(0).args
-				sandbox.assert.calledOnce(Settings.get);
-				sandbox.assert.calledWithExactly(Settings.get, 'clients');
-			});
-
-			it('should use client db config data for read DB', async function() {
-
-				sandbox.stub(Settings, 'get')
-					.returns({
-						fields: {
-							read: {
-								type: 'type',
-								protocol: 'protocol',
-								host: 'host',
-								database: 'database',
-								user: 'username',
-								password: 'password',
-								port: 'port'
-							}
-						}
-					});
-
-				const myClientModel = new clientModel(); // eslint-disable-line
-
-				myClientModel.client = client;
-
-				await myClientModel.get({ readonly: true });
-
-				// for debug use: DatabaseDispatcher.getDatabaseByConfig.getCall(0).args
-				sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByConfig);
-				sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByConfig, {
-					type: 'mongodb',
-					protocol: 'my-protocol',
-					host: 'the-host',
-					database: 'the-database-name',
-					user: 'the-username',
-					password: 'the-password',
-					port: 1
-				});
-
-				// for debug use: DBDriver.get.getCall(0).args
-				sandbox.assert.calledOnce(DBDriver.get);
-				sandbox.assert.calledWithExactly(DBDriver.get, myClientModel, { readonly: true });
-
-				// for debug use: Settings.get.getCall(0).args
-				sandbox.assert.calledOnce(Settings.get);
-				sandbox.assert.calledWithExactly(Settings.get, 'clients');
-			});
-
-			it('should use internal cache for settings fields for client', async function() {
-
-				sandbox.stub(Settings, 'get')
-					.returns({
-						fields: {
-							write: {
-								host: 'host',
-								database: 'database',
-								user: 'username',
-								password: 'password',
-								port: 'port'
-							}
-						}
-					});
-
-				const myClientModel = new clientModel(); // eslint-disable-line
-
-				myClientModel.client = client;
-
-				await myClientModel.get({ readonly: true, filters: { foo: 'bar' } });
-				await myClientModel.get({ readonly: true });
-				await myClientModel.get({ filters: { foo: 'bar' } });
-				await myClientModel.get();
-
-				const readConfig = {
-					type: undefined,
-					protocol: 'default-protocol',
-					host: 'my-read-host.com',
-					database: 'foo',
-					user: 'my-username',
-					password: 'ultrsecurepassword123456',
-					port: undefined
-				};
-
-				const writeConfig = {
-					type: undefined,
-					protocol: undefined,
-					host: 'the-host',
-					database: 'the-database-name',
-					user: 'the-username',
-					password: 'the-password',
-					port: 1
-				};
-
-				// for debug use: DatabaseDispatcher.getDatabaseByConfig.getCall(0).args
-				sandbox.assert.callCount(DatabaseDispatcher.getDatabaseByConfig, 4);
-
-				sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByConfig.getCall(0), readConfig);
-				sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByConfig.getCall(1), readConfig);
-
-				sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByConfig.getCall(2), writeConfig);
-				sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByConfig.getCall(3), writeConfig);
-
-				// for debug use: Settings.get.getCall(0).args
-				sandbox.assert.calledOnce(Settings.get);
-				sandbox.assert.calledWithExactly(Settings.get, 'clients');
-			});
+			// for debug use: DBDriver.get.getCall(0).args
+			sandbox.assert.calledOnce(DBDriver.get);
+			sandbox.assert.calledWithExactly(DBDriver.get, myClientModel, { readonly: true });
 		});
 	});
 
@@ -475,27 +264,6 @@ describe('Model', () => {
 		// for debug use: DBDriver.multiRemove.getCall(0).args
 		sandbox.assert.calledOnce(DBDriver.multiRemove);
 		sandbox.assert.calledWithExactly(DBDriver.multiRemove, myCoreModel, { foo: 'bar' });
-	});
-
-	it('should cache ClientFields when request from different models', async function() {
-
-		sandbox.stub(Settings, 'get');
-
-		const myClientModel = new clientModel(); // eslint-disable-line
-
-		myClientModel.client = client;
-
-		await myClientModel.get();
-
-		const otherClientModel = new clientModel(); // eslint-disable-line
-
-		otherClientModel.client = client;
-
-		await otherClientModel.get();
-
-		// for debug use: Settings.get.getCall(0).args
-		sandbox.assert.calledOnce(Settings.get);
-		sandbox.assert.calledWithExactly(Settings.get, 'clients');
 	});
 
 	context('when param \'changeKeys\' received', function() {
