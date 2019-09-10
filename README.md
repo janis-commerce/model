@@ -64,6 +64,8 @@ You can add database connection settings by adding the field names from the rece
 {
 	"clients": {
 		"database": {
+			"databaseWriteType" : "someDBDriver",
+			"databaseReadType": "someOtherDBDriver",
 			"fields": {
 				"read": {
 					"dbReadHost" : "host",
