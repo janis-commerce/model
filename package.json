@@ -33,6 +33,6 @@
     "test": "tests"
   },
   "dependencies": {
-    "@janiscommerce/database-dispatcher": "^1.3.3"
+    "@janiscommerce/database-dispatcher": "^2.0.0"
   }
 }
