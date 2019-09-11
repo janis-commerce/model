@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 - `db()` method passes client config to `database-dispatcher` due client configs are not built anymore.
+- `database-dispatcher` updated to `2.0.0`
 
 ## [1.2.0] - 2019-07-31
 ### Added
