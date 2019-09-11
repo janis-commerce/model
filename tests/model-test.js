@@ -131,6 +131,37 @@ describe('Model', () => {
 			sandbox.assert.calledOnce(DBDriver.get);
 			sandbox.assert.calledWithExactly(DBDriver.get, myClientModel, { readonly: true });
 		});
+
+		[
+			'insert',
+			'multiInsert',
+			'update',
+			'save',
+			'multiSave',
+			'remove',
+			'multiRemove'
+
+		].forEach(async method => {
+
+			it(`should call DBDriver using write DB when ${method} is executed after a readonly get`, async () => {
+
+				const myClientModel = new clientModel(); // eslint-disable-line
+
+				myClientModel.client = client;
+
+				await myClientModel.get({ readonly: true });
+
+				// for debug use: DatabaseDispatcher.getDatabaseByClient.getCall(0).args
+				sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByClient);
+				sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByClient, client, true);
+
+				await myClientModel[method]({ foo: 'bar' });
+
+				// for debug use: DatabaseDispatcher.getDatabaseByClient.getCall(2).args
+				sandbox.assert.calledTwice(DatabaseDispatcher.getDatabaseByClient);
+				sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByClient, client, false);
+			});
+		});
 	});
 
 	it('should admit object result from model', async function() {
