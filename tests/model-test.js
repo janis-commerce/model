@@ -52,7 +52,7 @@ describe('Model', () => {
 		sandbox.stub(DatabaseDispatcher, 'getDatabaseByKey')
 			.returns(DBDriver);
 
-		DatabaseDispatcher.getDatabaseByClient = sandbox.stub()
+		sandbox.stub(DatabaseDispatcher, 'getDatabaseByClient')
 			.returns(DBDriver);
 
 		myCoreModel.formatGet = () => {};
