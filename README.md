@@ -32,7 +32,7 @@ class MyModel extends Model {
 
 Database Dispatcher will try to use one of the following settings
 
-1. Using [Settings](https://www.npmjs.com/package/@janiscommerce/settings), with settings in file `/path/to/root/.janiscommercerc.json`:
+Using [Settings](https://www.npmjs.com/package/@janiscommerce/settings), with settings in file `/path/to/root/.janiscommercerc.json`:
 
 ```json
 {
@@ -44,14 +44,6 @@ Database Dispatcher will try to use one of the following settings
 		}
 	}
 }
-```
-
-2. Using ENV variables:
-```bash
-DB_CORE_HOST = "http://my-host-name.org";
-DB_CORE_DATABASE = "db-name";
-DB_CORE_USER = "user";
-DB_CORE_PASSWORD = "foo123456";
 ```
 
 ### Database connection configurated with client injected
@@ -71,7 +63,7 @@ You can add database connection settings by adding the field names from the rece
 					"dbReadHost" : "host",
 					"dbReadProtocol" : "protocol",
 					"dbReadPort" : "port",
-					"elasticSearchIndex" : "index",
+					"elasticSearchPrefix" : "name",
 					"elasticSearchAws" : "awsCredentials"
 				},
 				"write": {
@@ -95,7 +87,7 @@ You can add database connection settings by adding the field names from the rece
 		"name": "someclient",
 		"dbReadHost": "http://localhost",
 		"dbReadPort": 27017,
-		"elasticSearchIndex": "someclient_index",
+		"elasticSearchPrefix": "someclient",
 		"elasticSearchAws": true
 	}
 
@@ -104,7 +96,7 @@ You can add database connection settings by adding the field names from the rece
 	{
 		"host": "http://localhost",
 		"port": 27017,
-		"index": "someclient_index",
+		"prefix": "someclient",
 		"awsCredentials": true
 	}
 
