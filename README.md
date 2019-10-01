@@ -8,10 +8,10 @@
 npm install @janiscommerce/model
 ```
 
-## Client injection
-The client injection is useful when you have a dedicated database per client.
-Using the public setter `client`, the client will be stored in the `controller` instance.
-All the controllers and models getted using that controller will have the client injected.
+## Session injection
+The session injection is useful when you have a dedicated database per client.
+Using the public setter `session`, the session will be stored in the `controller` instance.
+All the controllers and models getted using that controller will have the session injected.
 
 ## Database Dispatcher
 The `Model` uses [Database Dispatcher](https://www.npmjs.com/package/@janiscommerce/database-dispatcher) for getting the correct **DBDriver** for a `Model`.
@@ -46,8 +46,8 @@ Using [Settings](https://www.npmjs.com/package/@janiscommerce/settings), with se
 }
 ```
 
-### Database connection configurated with client injected
-When your `Model` is a Client Model, and the database connection settings are in the injected client, you don't need to configurate the `databaseKey`.  
+### Database connection configurated with session injected
+When your `Model` is a Client Model, and the database connection settings are in the injected session, you don't need to configurate the `databaseKey`.
 You can add database connection settings by adding the field names from the received client that contains the settings, with the setting what will be passed to the DBDriver. Also you can add config for read/write databases.
 
 **Example of settings:**
@@ -79,7 +79,7 @@ You can add database connection settings by adding the field names from the rece
 	}
 }
 
-/* 
+/*
 
 	Received client:
 

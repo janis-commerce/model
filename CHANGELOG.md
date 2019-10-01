@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [3.0.0] - 2019-09-12
+### Changed
+- Client injection replaced by Session injection (**BREAKING CHANGE**)
+
 ## [2.1.0] - 2019-09-12
 ### Removed
 - `ENV` vars config documentation
