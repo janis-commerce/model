@@ -26,7 +26,8 @@ describe('Model', () => {
 		myconfig: 'my-config'
 	};
 
-	const clientModel = class ClientModel extends Model {};
+	class ClientModel extends Model {
+	}
 
 	class CoreModel extends Model {
 		get databaseKey() { return 'core'; }
@@ -76,9 +77,9 @@ describe('Model', () => {
 
 	describe('Database getters', function() {
 
-		it('should reject when model haven\'t a client injected or databaseKey getter', async function() {
+		it('Should reject when model haven\'t a client injected or databaseKey getter', async function() {
 
-			const myClientModel = new clientModel(); // eslint-disable-line
+			const myClientModel = new ClientModel();
 
 			await assert.rejects(() => myClientModel.get(), {
 				name: 'ModelError',
@@ -87,7 +88,7 @@ describe('Model', () => {
 		});
 
 
-		it('should call DBDriver get using databaseKey when it exists', async function() {
+		it('Should call DBDriver get using databaseKey when it exists', async function() {
 
 			await myCoreModel.get();
 
@@ -98,11 +99,13 @@ describe('Model', () => {
 			sandbox.assert.calledWithExactly(DBDriver.get, myCoreModel, {});
 		});
 
-		it('should call DBDriver get using client config when it exists', async function() {
+		it('Should call DBDriver get using client config when it exists', async function() {
 
-				const myClientModel = new clientModel(); // eslint-disable-line
+			const myClientModel = new ClientModel();
 
-			myClientModel.client = client;
+			myClientModel.session = {
+				client: Promise.resolve(client)
+			};
 
 			await myClientModel.get();
 
@@ -115,11 +118,13 @@ describe('Model', () => {
 			sandbox.assert.calledWithExactly(DBDriver.get, myClientModel, {});
 		});
 
-		it('should call DBDriver get using read DB when readonly param is true', async function() {
+		it('Should call DBDriver get using read DB when readonly param is true', async function() {
 
-				const myClientModel = new clientModel(); // eslint-disable-line
+			const myClientModel = new ClientModel();
 
-			myClientModel.client = client;
+			myClientModel.session = {
+				client: Promise.resolve(client)
+			};
 
 			await myClientModel.get({ readonly: true });
 
@@ -145,9 +150,11 @@ describe('Model', () => {
 
 			it(`should call DBDriver using write DB when ${method} is executed after a readonly get`, async () => {
 
-				const myClientModel = new clientModel(); // eslint-disable-line
+				const myClientModel = new ClientModel();
 
-				myClientModel.client = client;
+				myClientModel.session = {
+					client: Promise.resolve(client)
+				};
 
 				await myClientModel.get({ readonly: true });
 
@@ -164,7 +171,7 @@ describe('Model', () => {
 		});
 	});
 
-	it('should admit object result from model', async function() {
+	it('Should admit object result from model', async function() {
 
 		DBDriver.get.returns({ foo: 456 });
 
@@ -184,7 +191,7 @@ describe('Model', () => {
 		assert.deepEqual(result, { foo: 456 });
 	});
 
-	it('should return an empty array when driver returns an empty array', async function() {
+	it('Should return an empty array when driver returns an empty array', async function() {
 
 		DBDriver.get
 			.returns([]);
@@ -197,7 +204,7 @@ describe('Model', () => {
 		assert.deepEqual(result, []);
 	});
 
-	it('should get normaly if no \'formatGet\' method exists', async function() {
+	it('Should get normaly if no \'formatGet\' method exists', async function() {
 
 		delete myCoreModel.formatGet;
 
@@ -214,7 +221,7 @@ describe('Model', () => {
 		assert.deepEqual(result, [{ fooItem: 88 }]);
 	});
 
-	it('should get normaly if no \'afterGet\' method exists', async function() {
+	it('Should get normaly if no \'afterGet\' method exists', async function() {
 
 		delete myCoreModel.afterGet;
 
@@ -231,7 +238,7 @@ describe('Model', () => {
 		assert.deepEqual(result, [{ fooItem: 7787 }]);
 	});
 
-	it('should call DBDriver getTotals method passing the model', async function() {
+	it('Should call DBDriver getTotals method passing the model', async function() {
 
 		await myCoreModel.getTotals();
 
@@ -258,7 +265,7 @@ describe('Model', () => {
 		});
 	});
 
-	it('should call DBDriver update method passing the model and the values and filter received', async function() {
+	it('Should call DBDriver update method passing the model and the values and filter received', async function() {
 
 		await myCoreModel.update({ status: -1 }, { foo: 'bar' });
 
@@ -285,7 +292,7 @@ describe('Model', () => {
 		});
 	});
 
-	it('should call DBDriver multiRemove method passing the model and the filter received', async function() {
+	it('Should call DBDriver multiRemove method passing the model and the filter received', async function() {
 
 		await myCoreModel.multiRemove({ foo: 'bar' });
 
@@ -299,7 +306,7 @@ describe('Model', () => {
 
 	context('when param \'changeKeys\' received', function() {
 
-		it('should change keys if key found in items', async function() {
+		it('Should change keys if key found in items', async function() {
 
 			DBDriver.get
 				.returns([{ id: 1, foo: 'bar' }, { id: 2, bar: 'foo' }]);
@@ -320,7 +327,7 @@ describe('Model', () => {
 			});
 		});
 
-		it('should ignore items that hasn\'t the key', async function() {
+		it('Should ignore items that hasn\'t the key', async function() {
 
 			DBDriver.get
 				.returns([{ foo: 'bar' }, { bar: 'foo' }]);
@@ -339,7 +346,7 @@ describe('Model', () => {
 		});
 	});
 
-	it('should call controller \'formatGet\' with each item', async function() {
+	it('Should call controller \'formatGet\' with each item', async function() {
 
 		myCoreModel.formatGet
 			.callsFake(({ ...item }) => {
@@ -365,7 +372,7 @@ describe('Model', () => {
 		]);
 	});
 
-	it('should call controller \'afterGet\' with all items', async function() {
+	it('Should call controller \'afterGet\' with all items', async function() {
 
 		DBDriver.get
 			.returns([{ foo: 1 }, { bar: 2 }]);
@@ -381,7 +388,7 @@ describe('Model', () => {
 		assert.deepEqual(result, [{ foo: 1 }, { bar: 2 }]);
 	});
 
-	it('should call controller \'afterGet\' with all items, params, indexes and ids', async function() {
+	it('Should call controller \'afterGet\' with all items, params, indexes and ids', async function() {
 
 		DBDriver.get
 			.returns([{ id: 33, foo: 45 }, { id: 78, bar: 987 }]);
@@ -399,7 +406,7 @@ describe('Model', () => {
 
 	context('when call \'getPaged\' method', function() {
 
-		it('should reject if received an invalid callback', async function() {
+		it('Should reject if received an invalid callback', async function() {
 
 			const wrongCallbackError = {
 				name: 'ModelError',
@@ -419,7 +426,7 @@ describe('Model', () => {
 			await Promise.all(promises);
 		});
 
-		it('shouldn\'t call the callback if get response empty results', async function() {
+		it('Shouldn\'t call the callback if get response empty results', async function() {
 
 			sandbox.stub(myCoreModel, 'get')
 				.returns([]);
@@ -435,7 +442,7 @@ describe('Model', () => {
 			sandbox.assert.notCalled(getPagedCallback);
 		});
 
-		it('should call the callback one time if get response an array of items, passing custom limit', async function() {
+		it('Should call the callback one time if get response an array of items, passing custom limit', async function() {
 
 			sandbox.stub(myCoreModel, 'get')
 				.onCall(0)
