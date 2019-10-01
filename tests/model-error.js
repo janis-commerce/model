@@ -4,7 +4,7 @@ const assert = require('assert');
 
 const ModelError = require('../lib/model-error');
 
-describe('Api Session Error', () => {
+describe('Model Error', () => {
 
 	it('Should accept a message error and a code', () => {
 		const error = new ModelError('Some error', ModelError.codes.DATABASE_CONFIG_NOT_FOUND);
