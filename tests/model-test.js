@@ -6,7 +6,7 @@ const DatabaseDispatcher = require('@janiscommerce/database-dispatcher');
 
 const sandbox = require('sinon').createSandbox();
 
-const Model = require('../.');
+const Model = require('../lib/model');
 const ModelError = require('../lib/model-error');
 
 /* eslint-disable prefer-arrow-callback */
