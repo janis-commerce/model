@@ -54,11 +54,14 @@ You can add database connection settings by adding the field names from the rece
 ```json
 // .janiscommercerc.json
 {
+	"databaseWriteType" : "someDBDriver",
+	"databaseReadType": "someOtherDBDriver",
 	"clients": {
 		"database": {
-			"databaseWriteType" : "someDBDriver",
-			"databaseReadType": "someOtherDBDriver",
 			"fields": {
+				"databaseKey": "core",
+				"table": "clients",
+				"identifierField": "code",
 				"read": {
 					"dbReadHost" : "host",
 					"dbReadProtocol" : "protocol",
