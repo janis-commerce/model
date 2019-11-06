@@ -148,6 +148,21 @@ const totals = await myModel.getTotals();
 
 ```
 
+### const uniqueValues = await myModel.distinct(key, params)
+- Returns unique values of the key field from database
+Params is an optional Object with filters.
+```js
+const uniqueValues = await myModel.distinct('status');
+```
+
+```js
+const uniqueValues = await myModel.distinct('status', {
+	filters: {
+		type: 'some-type'
+	}
+});
+```
+
 ### myModel.insert(item)
 - Insert an item in DB. This method is only for insert, will not update perform an update.
 
