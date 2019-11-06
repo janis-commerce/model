@@ -40,16 +40,17 @@ describe('Model', () => {
 	beforeEach(() => {
 
 		// for internal cache clean...
-		DBDriver = {};
-		DBDriver.get = sandbox.stub();
-		DBDriver.getTotals = sandbox.stub();
-		DBDriver.insert = sandbox.stub();
-		DBDriver.save = sandbox.stub();
-		DBDriver.update = sandbox.stub();
-		DBDriver.remove = sandbox.stub();
-		DBDriver.multiInsert = sandbox.stub();
-		DBDriver.multiSave = sandbox.stub();
-		DBDriver.multiRemove = sandbox.stub();
+		DBDriver = {
+			get: sandbox.stub(),
+			getTotals: sandbox.stub(),
+			insert: sandbox.stub(),
+			save: sandbox.stub(),
+			update: sandbox.stub(),
+			remove: sandbox.stub(),
+			multiInsert: sandbox.stub(),
+			multiSave: sandbox.stub(),
+			multiRemove: sandbox.stub()
+		};
 
 		sandbox.stub(DatabaseDispatcher, 'getDatabaseByKey')
 			.returns(DBDriver);
@@ -168,6 +169,66 @@ describe('Model', () => {
 				// for debug use: DatabaseDispatcher.getDatabaseByClient.getCall(2).args
 				sandbox.assert.calledTwice(DatabaseDispatcher.getDatabaseByClient);
 				sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByClient, client, false);
+			});
+		});
+	});
+
+	describe('distinct()', async () => {
+
+		it('Should reject if DB Driver does not support the distinct method', async () => {
+			await assert.rejects(() => myCoreModel.distinct('status'), {
+				code: ModelError.codes.DRIVER_METHOD_NOT_IMPLEMENTED
+			});
+		});
+
+		it('Should reject if DB Driver rejects', async () => {
+
+			DBDriver.distinct = sandbox.stub();
+			DBDriver.distinct.rejects(new Error('Some internal error'));
+
+			await assert.rejects(() => myCoreModel.distinct('status'), {
+				message: 'Some internal error'
+			});
+		});
+
+		it('Should resolve an array of distinct values if DB Driver resolves', async () => {
+
+			DBDriver.distinct = sandbox.stub();
+			DBDriver.distinct.resolves([
+				'Value 1',
+				'Value 2'
+			]);
+
+			const distinctValues = await myCoreModel.distinct('status');
+
+			sandbox.assert.calledOnce(DBDriver.distinct);
+			sandbox.assert.calledWithExactly(DBDriver.distinct, myCoreModel, {
+				key: 'status'
+			});
+
+			assert.deepEqual(distinctValues, [
+				'Value 1',
+				'Value 2'
+			]);
+		});
+
+		it('Should pass extra params to the DB Driver', async () => {
+
+			DBDriver.distinct = sandbox.stub();
+			DBDriver.distinct.resolves([]);
+
+			await myCoreModel.distinct('status', {
+				filters: {
+					type: 'foo'
+				}
+			});
+
+			sandbox.assert.calledOnce(DBDriver.distinct);
+			sandbox.assert.calledWithExactly(DBDriver.distinct, myCoreModel, {
+				filters: {
+					type: 'foo'
+				},
+				key: 'status'
 			});
 		});
 	});
