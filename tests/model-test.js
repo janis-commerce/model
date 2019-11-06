@@ -13,7 +13,7 @@ const ModelError = require('../lib/model-error');
 
 describe('Model', () => {
 
-	const DBDriver = {};
+	let DBDriver;
 
 	const client = {
 		type: 'mongodb',
@@ -40,6 +40,7 @@ describe('Model', () => {
 	beforeEach(() => {
 
 		// for internal cache clean...
+		DBDriver = {};
 		DBDriver.get = sandbox.stub();
 		DBDriver.getTotals = sandbox.stub();
 		DBDriver.insert = sandbox.stub();
@@ -75,9 +76,9 @@ describe('Model', () => {
 		sandbox.restore();
 	});
 
-	describe('Database getters', function() {
+	describe('Database getters', () => {
 
-		it('Should reject when model haven\'t a client injected or databaseKey getter', async function() {
+		it('Should reject when model haven\'t a client injected or databaseKey getter', async () => {
 
 			const myClientModel = new ClientModel();
 
@@ -88,7 +89,7 @@ describe('Model', () => {
 		});
 
 
-		it('Should call DBDriver get using databaseKey when it exists', async function() {
+		it('Should call DBDriver get using databaseKey when it exists', async () => {
 
 			await myCoreModel.get();
 
@@ -99,7 +100,7 @@ describe('Model', () => {
 			sandbox.assert.calledWithExactly(DBDriver.get, myCoreModel, {});
 		});
 
-		it('Should call DBDriver get using client config when it exists', async function() {
+		it('Should call DBDriver get using client config when it exists', async () => {
 
 			const myClientModel = new ClientModel();
 
@@ -118,7 +119,7 @@ describe('Model', () => {
 			sandbox.assert.calledWithExactly(DBDriver.get, myClientModel, {});
 		});
 
-		it('Should call DBDriver get using read DB when readonly param is true', async function() {
+		it('Should call DBDriver get using read DB when readonly param is true', async () => {
 
 			const myClientModel = new ClientModel();
 
@@ -171,7 +172,7 @@ describe('Model', () => {
 		});
 	});
 
-	it('Should admit object result from model', async function() {
+	it('Should admit object result from model', async () => {
 
 		DBDriver.get.returns({ foo: 456 });
 
@@ -191,7 +192,7 @@ describe('Model', () => {
 		assert.deepEqual(result, { foo: 456 });
 	});
 
-	it('Should return an empty array when driver returns an empty array', async function() {
+	it('Should return an empty array when driver returns an empty array', async () => {
 
 		DBDriver.get
 			.returns([]);
@@ -204,7 +205,7 @@ describe('Model', () => {
 		assert.deepEqual(result, []);
 	});
 
-	it('Should get normaly if no \'formatGet\' method exists', async function() {
+	it('Should get normaly if no \'formatGet\' method exists', async () => {
 
 		delete myCoreModel.formatGet;
 
@@ -221,7 +222,7 @@ describe('Model', () => {
 		assert.deepEqual(result, [{ fooItem: 88 }]);
 	});
 
-	it('Should get normaly if no \'afterGet\' method exists', async function() {
+	it('Should get normaly if no \'afterGet\' method exists', async () => {
 
 		delete myCoreModel.afterGet;
 
@@ -238,7 +239,7 @@ describe('Model', () => {
 		assert.deepEqual(result, [{ fooItem: 7787 }]);
 	});
 
-	it('Should call DBDriver getTotals method passing the model', async function() {
+	it('Should call DBDriver getTotals method passing the model', async () => {
 
 		await myCoreModel.getTotals();
 
@@ -252,7 +253,7 @@ describe('Model', () => {
 
 	['insert', 'save', 'remove'].forEach(method => {
 
-		it(`should call DBDriver ${method} method passing the model and the item received`, async function() {
+		it(`should call DBDriver ${method} method passing the model and the item received`, async () => {
 
 			await myCoreModel[method]({ foo: 'bar' });
 
@@ -265,7 +266,7 @@ describe('Model', () => {
 		});
 	});
 
-	it('Should call DBDriver update method passing the model and the values and filter received', async function() {
+	it('Should call DBDriver update method passing the model and the values and filter received', async () => {
 
 		await myCoreModel.update({ status: -1 }, { foo: 'bar' });
 
@@ -279,7 +280,7 @@ describe('Model', () => {
 
 	['multiInsert', 'multiSave'].forEach(method => {
 
-		it(`should call DBDriver ${method} method passing the model and the items received`, async function() {
+		it(`should call DBDriver ${method} method passing the model and the items received`, async () => {
 
 			await myCoreModel[method]([{ foo: 'bar' }, { foo2: 'bar2' }]);
 
@@ -292,7 +293,7 @@ describe('Model', () => {
 		});
 	});
 
-	it('Should call DBDriver multiRemove method passing the model and the filter received', async function() {
+	it('Should call DBDriver multiRemove method passing the model and the filter received', async () => {
 
 		await myCoreModel.multiRemove({ foo: 'bar' });
 
@@ -304,9 +305,9 @@ describe('Model', () => {
 		sandbox.assert.calledWithExactly(DBDriver.multiRemove, myCoreModel, { foo: 'bar' });
 	});
 
-	context('when param \'changeKeys\' received', function() {
+	context('when param \'changeKeys\' received', () => {
 
-		it('Should change keys if key found in items', async function() {
+		it('Should change keys if key found in items', async () => {
 
 			DBDriver.get
 				.returns([{ id: 1, foo: 'bar' }, { id: 2, bar: 'foo' }]);
@@ -327,7 +328,7 @@ describe('Model', () => {
 			});
 		});
 
-		it('Should ignore items that hasn\'t the key', async function() {
+		it('Should ignore items that hasn\'t the key', async () => {
 
 			DBDriver.get
 				.returns([{ foo: 'bar' }, { bar: 'foo' }]);
@@ -346,7 +347,7 @@ describe('Model', () => {
 		});
 	});
 
-	it('Should call controller \'formatGet\' with each item', async function() {
+	it('Should call controller \'formatGet\' with each item', async () => {
 
 		myCoreModel.formatGet
 			.callsFake(({ ...item }) => {
@@ -372,7 +373,7 @@ describe('Model', () => {
 		]);
 	});
 
-	it('Should call controller \'afterGet\' with all items', async function() {
+	it('Should call controller \'afterGet\' with all items', async () => {
 
 		DBDriver.get
 			.returns([{ foo: 1 }, { bar: 2 }]);
@@ -388,7 +389,7 @@ describe('Model', () => {
 		assert.deepEqual(result, [{ foo: 1 }, { bar: 2 }]);
 	});
 
-	it('Should call controller \'afterGet\' with all items, params, indexes and ids', async function() {
+	it('Should call controller \'afterGet\' with all items, params, indexes and ids', async () => {
 
 		DBDriver.get
 			.returns([{ id: 33, foo: 45 }, { id: 78, bar: 987 }]);
@@ -404,9 +405,9 @@ describe('Model', () => {
 		assert.deepEqual(result, [{ id: 33, foo: 45 }, { id: 78, bar: 987 }]);
 	});
 
-	context('when call \'getPaged\' method', function() {
+	context('when call \'getPaged\' method', () => {
 
-		it('Should reject if received an invalid callback', async function() {
+		it('Should reject if received an invalid callback', async () => {
 
 			const wrongCallbackError = {
 				name: 'ModelError',
@@ -426,7 +427,7 @@ describe('Model', () => {
 			await Promise.all(promises);
 		});
 
-		it('Shouldn\'t call the callback if get response empty results', async function() {
+		it('Shouldn\'t call the callback if get response empty results', async () => {
 
 			sandbox.stub(myCoreModel, 'get')
 				.returns([]);
@@ -442,7 +443,7 @@ describe('Model', () => {
 			sandbox.assert.notCalled(getPagedCallback);
 		});
 
-		it('Should call the callback one time if get response an array of items, passing custom limit', async function() {
+		it('Should call the callback one time if get response an array of items, passing custom limit', async () => {
 
 			sandbox.stub(myCoreModel, 'get')
 				.onCall(0)
