@@ -3,6 +3,7 @@
 const assert = require('assert');
 
 const DatabaseDispatcher = require('@janiscommerce/database-dispatcher');
+const Log = require('@janiscommerce/log');
 
 const sandbox = require('sinon').createSandbox();
 
@@ -55,6 +56,9 @@ describe('Model', () => {
 
 		sandbox.stub(DatabaseDispatcher, 'getDatabaseByClient')
 			.returns(DBDriver);
+
+		sandbox.stub(Log, 'add')
+			.returns();
 
 		myCoreModel.formatGet = () => {};
 
@@ -470,6 +474,209 @@ describe('Model', () => {
 			sandbox.assert.calledWithExactly(getPagedCallback.getCall(0), [{ foo: 1 }, { bar: 2 }], 1, 2);
 
 			sandbox.assert.calledWithExactly(getPagedCallback.getCall(1), [{ foo: 5 }], 2, 2);
+		});
+
+		context('when call write methods', () => {
+
+			const myClientModel = new ClientModel();
+
+			myClientModel.session = {
+				clientCode: 'some-client'
+			};
+
+			it('Should log the insert operation', async () => {
+
+				DBDriver.insert.returns('some-id');
+
+				await myClientModel.insert({ some: 'data' });
+
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+					type: 'inserted',
+					entity: 'client-model',
+					entityId: 'some-id',
+					message: 'Inserted document',
+					log: { some: 'data' }
+				});
+			});
+
+			it('Should log the multiInsert operation', async () => {
+
+				DBDriver.multiInsert.returns(true);
+
+				await myClientModel.multiInsert([{ some: 'data' }]);
+
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+					type: 'inserted',
+					entity: 'client-model',
+					message: 'Inserted document',
+					log: { some: 'data' }
+				});
+			});
+
+			it('Should not log if multiInsert method does not receive items', async () => {
+
+				DBDriver.multiInsert.returns();
+				await myClientModel.multiInsert();
+				sandbox.assert.notCalled(Log.add);
+			});
+
+			it('Should log the update operation', async () => {
+
+				DBDriver.update.returns(1);
+
+				await myClientModel.update({ some: 'data' }, { id: 'some-id' });
+
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+					type: 'updated',
+					entity: 'client-model',
+					entityId: 'some-id',
+					message: 'Updated documents',
+					log: {
+						values: { some: 'data' },
+						filter: { id: 'some-id' }
+					}
+				});
+			});
+
+			it('Should not log if the update method does not receive filters', async () => {
+
+				DBDriver.update.returns(1);
+				await myClientModel.update({ some: 'data' });
+				sandbox.assert.notCalled(Log.add);
+			});
+
+			it('Should log the remove operation', async () => {
+
+				DBDriver.remove.returns('some-id');
+
+				await myClientModel.remove({ id: 'some-id', some: 'data' });
+
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+					type: 'removed',
+					entity: 'client-model',
+					entityId: 'some-id',
+					message: 'Removed document',
+					log: { id: 'some-id', some: 'data' }
+				});
+			});
+
+			it('Should not log if remove method does not receive an item', async () => {
+
+				DBDriver.remove.returns();
+				await myClientModel.remove();
+				sandbox.assert.notCalled(Log.add);
+			});
+
+			it('Should log the multiRemove operation', async () => {
+
+				DBDriver.multiRemove.returns('some-id');
+
+				await myClientModel.multiRemove({ id: 'some-id' });
+
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+					type: 'removed',
+					entity: 'client-model',
+					entityId: 'some-id',
+					message: 'Removed documents',
+					log: { id: 'some-id' }
+				});
+			});
+
+			it('Should not log if multiRemove method does not receive filters', async () => {
+
+				DBDriver.multiRemove.returns();
+				await myClientModel.multiRemove();
+				sandbox.assert.notCalled(Log.add);
+			});
+
+			it('Should log the save operation', async () => {
+
+				DBDriver.save.returns('some-id');
+
+				await myClientModel.save({ id: 'some-id', some: 'data' });
+
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+					type: 'upserted',
+					entity: 'client-model',
+					entityId: 'some-id',
+					message: 'Upserted document',
+					log: { id: 'some-id', some: 'data' }
+				});
+			});
+
+			it('Should log the multiSave operation', async () => {
+
+				DBDriver.multiSave.returns('some-id');
+
+				await myClientModel.multiSave([{ id: 'some-id', some: 'data' }]);
+
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+					type: 'upserted',
+					entity: 'client-model',
+					entityId: 'some-id',
+					message: 'Upserted document',
+					log: { id: 'some-id', some: 'data' }
+				});
+			});
+
+			it('Should not log if multiSave method does not receive items', async () => {
+
+				DBDriver.multiSave.returns();
+				await myClientModel.multiSave();
+				sandbox.assert.notCalled(Log.add);
+			});
+
+			it('Should not log the invalid entries if multiSave method receives invalid items', async () => {
+
+				DBDriver.multiSave.returns();
+				await myClientModel.multiSave([{ id: 'some-id' }, null]);
+
+				sandbox.assert.calledOnce(Log.add);
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+					type: 'upserted',
+					entity: 'client-model',
+					entityId: 'some-id',
+					message: 'Upserted document',
+					log: { id: 'some-id' }
+				});
+			});
+		});
+
+		it('Should exclude the fields from the log when excludeFieldsInLog static getter exists', async () => {
+
+			const myClientModel = new ClientModel();
+
+			myClientModel.session = {
+				clientCode: 'some-client'
+			};
+
+			ClientModel.excludeFieldsInLog = [
+				'password', 'address'
+			];
+
+			DBDriver.insert.returns('some-id');
+
+			await myClientModel.insert({
+				username: 'some-username',
+				password: 'some-password',
+				location: {
+					country: 'some-country',
+					address: 'some-address'
+				}
+			});
+
+			sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+				type: 'inserted',
+				entity: 'client-model',
+				entityId: 'some-id',
+				message: 'Inserted document',
+				log: {
+					username: 'some-username',
+					location: {
+						country: 'some-country'
+					}
+				}
+			});
 		});
 	});
 });
