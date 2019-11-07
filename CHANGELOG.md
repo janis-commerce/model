@@ -7,7 +7,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Added
-- Logs in write methods (insert, multiInsert, update, save, multiSave, remove and multiRemove)
+- Logs for write methods: 
+	- insert
+	- multiInsert
+	- update
+	- save
+	- multiSave
+	- remove
+	- multiRemove
+- `@janiscommerce/log` package
+- `lib/utils.js` module
 
 ## [3.1.0] - 2019-10-09
 ### Fixed

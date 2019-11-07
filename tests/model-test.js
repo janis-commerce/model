@@ -513,13 +513,6 @@ describe('Model', () => {
 				});
 			});
 
-			it('Should not log if multiInsert method does not receive items', async () => {
-
-				DBDriver.multiInsert.returns();
-				await myClientModel.multiInsert();
-				sandbox.assert.notCalled(Log.add);
-			});
-
 			it('Should log the update operation', async () => {
 
 				DBDriver.update.returns(1);
@@ -538,13 +531,6 @@ describe('Model', () => {
 				});
 			});
 
-			it('Should not log if the update method does not receive filters', async () => {
-
-				DBDriver.update.returns(1);
-				await myClientModel.update({ some: 'data' });
-				sandbox.assert.notCalled(Log.add);
-			});
-
 			it('Should log the remove operation', async () => {
 
 				DBDriver.remove.returns('some-id');
@@ -560,13 +546,6 @@ describe('Model', () => {
 				});
 			});
 
-			it('Should not log if remove method does not receive an item', async () => {
-
-				DBDriver.remove.returns();
-				await myClientModel.remove();
-				sandbox.assert.notCalled(Log.add);
-			});
-
 			it('Should log the multiRemove operation', async () => {
 
 				DBDriver.multiRemove.returns('some-id');
@@ -580,13 +559,6 @@ describe('Model', () => {
 					message: 'Removed documents',
 					log: { id: 'some-id' }
 				});
-			});
-
-			it('Should not log if multiRemove method does not receive filters', async () => {
-
-				DBDriver.multiRemove.returns();
-				await myClientModel.multiRemove();
-				sandbox.assert.notCalled(Log.add);
 			});
 
 			it('Should log the save operation', async () => {
@@ -619,14 +591,7 @@ describe('Model', () => {
 				});
 			});
 
-			it('Should not log if multiSave method does not receive items', async () => {
-
-				DBDriver.multiSave.returns();
-				await myClientModel.multiSave();
-				sandbox.assert.notCalled(Log.add);
-			});
-
-			it('Should not log the invalid entries if multiSave method receives invalid items', async () => {
+			it('Shouldn\'t log the invalid entries if multiSave method receives invalid items', async () => {
 
 				DBDriver.multiSave.returns();
 				await myClientModel.multiSave([{ id: 'some-id' }, null]);
@@ -638,6 +603,23 @@ describe('Model', () => {
 					entityId: 'some-id',
 					message: 'Upserted document',
 					log: { id: 'some-id' }
+				});
+			});
+
+			[
+				'update',
+				'remove',
+				'multiSave',
+				'multiInsert',
+				'multiRemove'
+
+			].forEach(method => {
+
+				it(`Shouldn't log if ${method} does not receive items/filters`, async () => {
+
+					DBDriver[method].returns();
+					await myClientModel[method]();
+					sandbox.assert.notCalled(Log.add);
 				});
 			});
 		});
