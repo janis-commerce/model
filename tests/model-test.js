@@ -494,7 +494,6 @@ describe('Model', () => {
 					type: 'inserted',
 					entity: 'client-model',
 					entityId: 'some-id',
-					message: 'Inserted document',
 					log: { some: 'data' }
 				});
 			});
@@ -508,7 +507,6 @@ describe('Model', () => {
 				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
 					type: 'inserted',
 					entity: 'client-model',
-					message: 'Inserted document',
 					log: { some: 'data' }
 				});
 			});
@@ -523,7 +521,6 @@ describe('Model', () => {
 					type: 'updated',
 					entity: 'client-model',
 					entityId: 'some-id',
-					message: 'Updated documents',
 					log: {
 						values: { some: 'data' },
 						filter: { id: 'some-id' }
@@ -541,7 +538,6 @@ describe('Model', () => {
 					type: 'removed',
 					entity: 'client-model',
 					entityId: 'some-id',
-					message: 'Removed document',
 					log: { id: 'some-id', some: 'data' }
 				});
 			});
@@ -556,7 +552,6 @@ describe('Model', () => {
 					type: 'removed',
 					entity: 'client-model',
 					entityId: 'some-id',
-					message: 'Removed documents',
 					log: { id: 'some-id' }
 				});
 			});
@@ -571,7 +566,6 @@ describe('Model', () => {
 					type: 'upserted',
 					entity: 'client-model',
 					entityId: 'some-id',
-					message: 'Upserted document',
 					log: { id: 'some-id', some: 'data' }
 				});
 			});
@@ -586,7 +580,6 @@ describe('Model', () => {
 					type: 'upserted',
 					entity: 'client-model',
 					entityId: 'some-id',
-					message: 'Upserted document',
 					log: { id: 'some-id', some: 'data' }
 				});
 			});
@@ -601,7 +594,6 @@ describe('Model', () => {
 					type: 'upserted',
 					entity: 'client-model',
 					entityId: 'some-id',
-					message: 'Upserted document',
 					log: { id: 'some-id' }
 				});
 			});
@@ -651,7 +643,6 @@ describe('Model', () => {
 				type: 'inserted',
 				entity: 'client-model',
 				entityId: 'some-id',
-				message: 'Inserted document',
 				log: {
 					username: 'some-username',
 					location: {
