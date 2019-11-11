@@ -3,6 +3,7 @@
 const assert = require('assert');
 
 const DatabaseDispatcher = require('@janiscommerce/database-dispatcher');
+const Log = require('@janiscommerce/log');
 
 const sandbox = require('sinon').createSandbox();
 
@@ -57,6 +58,9 @@ describe('Model', () => {
 
 		sandbox.stub(DatabaseDispatcher, 'getDatabaseByClient')
 			.returns(DBDriver);
+
+		sandbox.stub(Log, 'add')
+			.returns();
 
 		myCoreModel.formatGet = () => {};
 
@@ -532,6 +536,182 @@ describe('Model', () => {
 			sandbox.assert.calledWithExactly(getPagedCallback.getCall(0), [{ foo: 1 }, { bar: 2 }], 1, 2);
 
 			sandbox.assert.calledWithExactly(getPagedCallback.getCall(1), [{ foo: 5 }], 2, 2);
+		});
+
+		context('when call write methods', () => {
+
+			const myClientModel = new ClientModel();
+
+			myClientModel.session = {
+				clientCode: 'some-client'
+			};
+
+			it('Should log the insert operation', async () => {
+
+				DBDriver.insert.returns('some-id');
+
+				await myClientModel.insert({ some: 'data' });
+
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+					type: 'inserted',
+					entity: 'client-model',
+					entityId: 'some-id',
+					log: { some: 'data' }
+				});
+			});
+
+			it('Should log the multiInsert operation', async () => {
+
+				DBDriver.multiInsert.returns(true);
+
+				await myClientModel.multiInsert([{ some: 'data' }]);
+
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+					type: 'inserted',
+					entity: 'client-model',
+					log: { some: 'data' }
+				});
+			});
+
+			it('Should log the update operation', async () => {
+
+				DBDriver.update.returns(1);
+
+				await myClientModel.update({ some: 'data' }, { id: 'some-id' });
+
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+					type: 'updated',
+					entity: 'client-model',
+					entityId: 'some-id',
+					log: {
+						values: { some: 'data' },
+						filter: { id: 'some-id' }
+					}
+				});
+			});
+
+			it('Should log the remove operation', async () => {
+
+				DBDriver.remove.returns('some-id');
+
+				await myClientModel.remove({ id: 'some-id', some: 'data' });
+
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+					type: 'removed',
+					entity: 'client-model',
+					entityId: 'some-id',
+					log: { id: 'some-id', some: 'data' }
+				});
+			});
+
+			it('Should log the multiRemove operation', async () => {
+
+				DBDriver.multiRemove.returns('some-id');
+
+				await myClientModel.multiRemove({ id: 'some-id' });
+
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+					type: 'removed',
+					entity: 'client-model',
+					entityId: 'some-id',
+					log: { id: 'some-id' }
+				});
+			});
+
+			it('Should log the save operation', async () => {
+
+				DBDriver.save.returns('some-id');
+
+				await myClientModel.save({ id: 'some-id', some: 'data' });
+
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+					type: 'upserted',
+					entity: 'client-model',
+					entityId: 'some-id',
+					log: { id: 'some-id', some: 'data' }
+				});
+			});
+
+			it('Should log the multiSave operation', async () => {
+
+				DBDriver.multiSave.returns('some-id');
+
+				await myClientModel.multiSave([{ id: 'some-id', some: 'data' }]);
+
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+					type: 'upserted',
+					entity: 'client-model',
+					entityId: 'some-id',
+					log: { id: 'some-id', some: 'data' }
+				});
+			});
+
+			it('Shouldn\'t log the invalid entries if multiSave method receives invalid items', async () => {
+
+				DBDriver.multiSave.returns();
+				await myClientModel.multiSave([{ id: 'some-id' }, null]);
+
+				sandbox.assert.calledOnce(Log.add);
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+					type: 'upserted',
+					entity: 'client-model',
+					entityId: 'some-id',
+					log: { id: 'some-id' }
+				});
+			});
+
+			[
+				'update',
+				'remove',
+				'multiSave',
+				'multiInsert',
+				'multiRemove'
+
+			].forEach(method => {
+
+				it(`Shouldn't log if ${method} does not receive items/filters`, async () => {
+
+					DBDriver[method].returns();
+					await myClientModel[method]();
+					sandbox.assert.notCalled(Log.add);
+				});
+			});
+		});
+
+		it('Should exclude the fields from the log when excludeFieldsInLog static getter exists', async () => {
+
+			const myClientModel = new ClientModel();
+
+			myClientModel.session = {
+				clientCode: 'some-client'
+			};
+
+			ClientModel.excludeFieldsInLog = [
+				'password', 'address'
+			];
+
+			DBDriver.insert.returns('some-id');
+
+			await myClientModel.insert({
+				username: 'some-username',
+				password: 'some-password',
+				location: {
+					country: 'some-country',
+					address: 'some-address'
+				}
+			});
+
+			sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+				type: 'inserted',
+				entity: 'client-model',
+				entityId: 'some-id',
+				log: {
+					username: 'some-username',
+					location: {
+						country: 'some-country'
+					}
+				}
+			});
 		});
 	});
 });
