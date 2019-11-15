@@ -62,12 +62,12 @@ describe('Model', () => {
 		sandbox.stub(Log, 'add')
 			.returns();
 
-		myCoreModel.formatGet = () => {};
+		myCoreModel.formatGet = () => { };
 
 		sandbox.stub(myCoreModel, 'formatGet')
 			.callsFake(({ ...item }) => item);
 
-		myCoreModel.afterGet = () => {};
+		myCoreModel.afterGet = () => { };
 
 		sandbox.stub(myCoreModel, 'afterGet')
 			.callsFake(([...newItems]) => newItems);
@@ -145,12 +145,9 @@ describe('Model', () => {
 
 		[
 			'insert',
-			'multiInsert',
 			'update',
 			'save',
-			'multiSave',
-			'remove',
-			'multiRemove'
+			'remove'
 
 		].forEach(async method => {
 
@@ -169,6 +166,35 @@ describe('Model', () => {
 				sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByClient, client, true);
 
 				await myClientModel[method]({ foo: 'bar' });
+
+				// for debug use: DatabaseDispatcher.getDatabaseByClient.getCall(2).args
+				sandbox.assert.calledTwice(DatabaseDispatcher.getDatabaseByClient);
+				sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByClient, client, false);
+			});
+		});
+
+		[
+			'multiInsert',
+			'multiSave',
+			'multiRemove'
+
+		].forEach(async method => {
+
+			it(`should call DBDriver using write DB when ${method} is executed after a readonly get`, async () => {
+
+				const myClientModel = new ClientModel();
+
+				myClientModel.session = {
+					client: Promise.resolve(client)
+				};
+
+				await myClientModel.get({ readonly: true });
+
+				// for debug use: DatabaseDispatcher.getDatabaseByClient.getCall(0).args
+				sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByClient);
+				sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByClient, client, true);
+
+				await myClientModel[method]([{ foo: 'bar' }]);
 
 				// for debug use: DatabaseDispatcher.getDatabaseByClient.getCall(2).args
 				sandbox.assert.calledTwice(DatabaseDispatcher.getDatabaseByClient);
@@ -537,16 +563,39 @@ describe('Model', () => {
 
 			sandbox.assert.calledWithExactly(getPagedCallback.getCall(1), [{ foo: 5 }], 2, 2);
 		});
+	});
 
-		context('when call write methods', () => {
+	context('Write methods', () => {
 
-			const myClientModel = new ClientModel();
+		const myClientModel = new ClientModel();
 
-			myClientModel.session = {
-				clientCode: 'some-client'
-			};
+		const userCreated = 'some-user-id';
+		const userModified = userCreated;
 
-			it('Should log the insert operation', async () => {
+		myClientModel.session = {
+			clientCode: 'some-client',
+			userId: 'some-user-id'
+		};
+
+		afterEach(() => {
+			delete ClientModel.excludeFieldsInLog;
+		});
+
+		describe('insert()', () => {
+
+			it('Should add the userCreated field when session exists', async () => {
+
+				DBDriver.insert.returns();
+
+				await myClientModel.insert({ some: 'data' });
+
+				sandbox.assert.calledWithExactly(DBDriver.insert, myClientModel, {
+					some: 'data',
+					userCreated: 'some-user-id'
+				});
+			});
+
+			it('Should log the insert operation when session exists', async () => {
 
 				DBDriver.insert.returns('some-id');
 
@@ -556,11 +605,27 @@ describe('Model', () => {
 					type: 'inserted',
 					entity: 'client-model',
 					entityId: 'some-id',
-					log: { some: 'data' }
+					userCreated,
+					log: { some: 'data', userCreated }
 				});
 			});
+		});
 
-			it('Should log the multiInsert operation', async () => {
+		describe('multiInsert()', () => {
+
+			it('Should add the userCreated field when session exists', async () => {
+
+				DBDriver.multiInsert.returns();
+
+				await myClientModel.multiInsert([{ some: 'data' }, { other: 'data' }]);
+
+				sandbox.assert.calledWithExactly(DBDriver.multiInsert, myClientModel, [
+					{ some: 'data', userCreated },
+					{ other: 'data', userCreated }
+				]);
+			});
+
+			it('Should log the multiInsert operation when session exists', async () => {
 
 				DBDriver.multiInsert.returns(true);
 
@@ -569,11 +634,42 @@ describe('Model', () => {
 				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
 					type: 'inserted',
 					entity: 'client-model',
-					log: { some: 'data' }
+					userCreated,
+					log: { some: 'data', userCreated }
 				});
 			});
 
-			it('Should log the update operation', async () => {
+			it('Shouldn\'t log the invalid entries when multiInsert method receives invalid items', async () => {
+
+				DBDriver.multiInsert.returns();
+
+				await myClientModel.multiInsert([{ some: 'data' }, null]);
+
+				sandbox.assert.calledOnce(Log.add);
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+					type: 'inserted',
+					entity: 'client-model',
+					userCreated,
+					log: { some: 'data', userCreated }
+				});
+			});
+		});
+
+		describe('update()', () => {
+
+			it('Should add the userModified field when session exists', async () => {
+
+				DBDriver.update.returns();
+
+				await myClientModel.update({ some: 'data' }, {});
+
+				sandbox.assert.calledWithExactly(DBDriver.update, myClientModel, {
+					some: 'data',
+					userModified
+				}, {});
+			});
+
+			it('Should log the update operation when session exists', async () => {
 
 				DBDriver.update.returns(1);
 
@@ -583,14 +679,18 @@ describe('Model', () => {
 					type: 'updated',
 					entity: 'client-model',
 					entityId: 'some-id',
+					userCreated,
 					log: {
-						values: { some: 'data' },
+						values: { some: 'data', userModified },
 						filter: { id: 'some-id' }
 					}
 				});
 			});
+		});
 
-			it('Should log the remove operation', async () => {
+		describe('remove()', () => {
+
+			it('Should log the remove operation when session exists', async () => {
 
 				DBDriver.remove.returns('some-id');
 
@@ -600,11 +700,15 @@ describe('Model', () => {
 					type: 'removed',
 					entity: 'client-model',
 					entityId: 'some-id',
+					userCreated,
 					log: { id: 'some-id', some: 'data' }
 				});
 			});
+		});
 
-			it('Should log the multiRemove operation', async () => {
+		describe('multiRemove()', () => {
+
+			it('Should log the multiRemove operation when session exists', async () => {
 
 				DBDriver.multiRemove.returns('some-id');
 
@@ -614,11 +718,47 @@ describe('Model', () => {
 					type: 'removed',
 					entity: 'client-model',
 					entityId: 'some-id',
+					userCreated,
 					log: { id: 'some-id' }
 				});
 			});
+		});
 
-			it('Should log the save operation', async () => {
+		describe('save', () => {
+
+			it('Should add the userCreated field when session exists and the received item not have id', async () => {
+
+				DBDriver.save.returns();
+
+				await myClientModel.save({ some: 'data' });
+
+				sandbox.assert.calledWithExactly(DBDriver.save, myClientModel, {
+					some: 'data',
+					userCreated
+				});
+			});
+
+			[
+				'id',
+				'_id'
+
+			].forEach(idField => {
+
+				it(`Should add the userModified field when session exists and the received item have ${idField}`, async () => {
+
+					DBDriver.save.returns();
+
+					await myClientModel.save({ [idField]: 'some-id', some: 'data' });
+
+					sandbox.assert.calledWithExactly(DBDriver.save, myClientModel, {
+						[idField]: 'some-id',
+						some: 'data',
+						userModified
+					});
+				});
+			});
+
+			it('Should log the save operation when session exists', async () => {
 
 				DBDriver.save.returns('some-id');
 
@@ -628,7 +768,42 @@ describe('Model', () => {
 					type: 'upserted',
 					entity: 'client-model',
 					entityId: 'some-id',
-					log: { id: 'some-id', some: 'data' }
+					userCreated,
+					log: { id: 'some-id', some: 'data', userModified }
+				});
+			});
+		});
+
+		describe('multiSave()', () => {
+
+			it('Should add the userCreated field when session exists and the received item not have id', async () => {
+
+				DBDriver.multiSave.returns();
+
+				await myClientModel.multiSave([{ some: 'data' }, { other: 'data' }]);
+
+				sandbox.assert.calledWithExactly(DBDriver.multiSave, myClientModel, [
+					{ some: 'data', userCreated },
+					{ other: 'data', userCreated }
+				]);
+			});
+
+			[
+				'id',
+				'_id'
+
+			].forEach(idField => {
+
+				it(`Should add the userModified field when session exists and the received item have ${idField}`, async () => {
+
+					DBDriver.multiSave.returns();
+
+					await myClientModel.multiSave([{ [idField]: 'some-id', some: 'data' }, { [idField]: 'other-id', other: 'data' }]);
+
+					sandbox.assert.calledWithExactly(DBDriver.multiSave, myClientModel, [
+						{ [idField]: 'some-id', some: 'data', userModified },
+						{ [idField]: 'other-id', other: 'data', userModified }
+					]);
 				});
 			});
 
@@ -642,11 +817,12 @@ describe('Model', () => {
 					type: 'upserted',
 					entity: 'client-model',
 					entityId: 'some-id',
-					log: { id: 'some-id', some: 'data' }
+					userCreated,
+					log: { id: 'some-id', some: 'data', userModified }
 				});
 			});
 
-			it('Shouldn\'t log the invalid entries if multiSave method receives invalid items', async () => {
+			it('Shouldn\'t log the invalid entries when multiSave method receives invalid items', async () => {
 
 				DBDriver.multiSave.returns();
 				await myClientModel.multiSave([{ id: 'some-id' }, null]);
@@ -656,62 +832,66 @@ describe('Model', () => {
 					type: 'upserted',
 					entity: 'client-model',
 					entityId: 'some-id',
-					log: { id: 'some-id' }
-				});
-			});
-
-			[
-				'update',
-				'remove',
-				'multiSave',
-				'multiInsert',
-				'multiRemove'
-
-			].forEach(method => {
-
-				it(`Shouldn't log if ${method} does not receive items/filters`, async () => {
-
-					DBDriver[method].returns();
-					await myClientModel[method]();
-					sandbox.assert.notCalled(Log.add);
+					userCreated,
+					log: { id: 'some-id', userModified }
 				});
 			});
 		});
 
-		it('Should exclude the fields from the log when excludeFieldsInLog static getter exists', async () => {
+		[
+			'update',
+			'remove',
+			'multiSave',
+			'multiInsert',
+			'multiRemove'
 
-			const myClientModel = new ClientModel();
+		].forEach(method => {
 
-			myClientModel.session = {
-				clientCode: 'some-client'
-			};
+			it(`Shouldn't log if ${method} does not receive items/filters`, async () => {
 
-			ClientModel.excludeFieldsInLog = [
-				'password', 'address'
-			];
+				DBDriver[method].returns();
+				await myClientModel[method]();
+				sandbox.assert.notCalled(Log.add);
+			});
+		});
+	});
 
-			DBDriver.insert.returns('some-id');
+	it('Should exclude the fields from the log when excludeFieldsInLog static getter exists', async () => {
 
-			await myClientModel.insert({
+		const myClientModel = new ClientModel();
+
+		myClientModel.session = {
+			clientCode: 'some-client',
+			userId: 'some-user-id'
+		};
+
+		ClientModel.excludeFieldsInLog = [
+			'password', 'address'
+		];
+
+		DBDriver.insert.returns('some-id');
+
+		await myClientModel.insert({
+			username: 'some-username',
+			password: 'some-password',
+			location: {
+				country: 'some-country',
+				address: 'some-address'
+			}
+		});
+
+		sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+			type: 'inserted',
+			entity: 'client-model',
+			entityId: 'some-id',
+			userCreated: 'some-user-id',
+			log: {
 				username: 'some-username',
-				password: 'some-password',
 				location: {
-					country: 'some-country',
-					address: 'some-address'
-				}
-			});
-
-			sandbox.assert.calledWithExactly(Log.add, 'some-client', {
-				type: 'inserted',
-				entity: 'client-model',
-				entityId: 'some-id',
-				log: {
-					username: 'some-username',
-					location: {
-						country: 'some-country'
-					}
-				}
-			});
+					country: 'some-country'
+				},
+				userCreated: 'some-user-id'
+			}
 		});
 	});
 });
