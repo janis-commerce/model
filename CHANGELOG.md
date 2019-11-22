@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [3.3.2] - 2019-11-22
+### Fixed
+- `getPaged` method is now guaranteed to process every page
+
 ## [3.3.1] - 2019-11-21
 ### Added
 - `userCreated` and `userModified` fields auto generated for write methods.
@@ -12,7 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [3.3.0] - 2019-11-06
 ### Added
-- Logs for write methods: 
+- Logs for write methods:
 	- insert
 	- multiInsert
 	- update
