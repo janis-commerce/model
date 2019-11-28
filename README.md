@@ -108,6 +108,11 @@ You can add database connection settings by adding the field names from the rece
 
 ## API
 
+### Getters
+
+* **excludeFieldsInLog** (*getter*).
+Returns the fields that will be removed from the logs as an array of strings. For example: `['password', 'super-secret']`
+
 ### const items = await myModel.get(params)
 - Returns items from database
 Params is an optional Object with filters, order, paginator.
