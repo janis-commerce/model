@@ -114,14 +114,30 @@ You can add database connection settings by adding the field names from the rece
 Returns the fields that will be removed from the logs as an array of strings. For example: `['password', 'super-secret']`
 
 ### const items = await myModel.get(params)
+
 - Returns items from database
-Params is an optional Object with filters, order, paginator.
+
+`params` is an optional Object with filters, order, paginator.
+
+```js
+const items = await myModel.get({ filters: { status: 'active' } });
+```
+
+### const item = await myModel.getById(id, [params])
+- It's an alias of get(), passing and ID as filter and handling return value as an array if `id` is an array, or an object otherwise.
+
+`id` is required. It can be one ID or an array of IDs
+`params` is an optional Object with filters, order, paginator.
+
 ```js
 const items = await myModel.get({ filters: { status: 'active' } });
 ```
 
 ### myModel.getPaged(params, callback)
 - Returns items from database using pages, the default limit is 500 items per page.
+
+`params` See get() method
+`callback` A function to be executed for each page. Receives three arguments: the items found, the current page and the page limit
 
 ```js
 await myModel.getPaged({ filters: { status: 'active' } }, (items, page, limit) => {
@@ -130,7 +146,9 @@ await myModel.getPaged({ filters: { status: 'active' } }, (items, page, limit) =
 ```
 
 ### myModel.getTotals()
+
 - After performing a `get()` sometimes you need data of totals. This method returns an object with that information.
+
 Result object structure:
 **pages**: The total pages for the filters applied
 **page**: The current page
@@ -154,8 +172,11 @@ const totals = await myModel.getTotals();
 ```
 
 ### const uniqueValues = await myModel.distinct(key, params)
+
 - Returns unique values of the key field from database
-Params is an optional Object with filters.
+
+`params` is an optional Object with filters.
+
 ```js
 const uniqueValues = await myModel.distinct('status');
 ```
@@ -169,7 +190,8 @@ const uniqueValues = await myModel.distinct('status', {
 ```
 
 ### myModel.insert(item)
-- Insert an item in DB. This method is only for insert, will not update perform an update.
+
+- Inserts an item in DB. This method is only for insert, will not update perform an update.
 
 ```js
 await myModel.insert({ foo: 'bar' });
@@ -189,7 +211,8 @@ const items = await myModel.get({ filters: { foo: 'bar' }});
 ```
 
 ### myModel.save(item)
-- Insert/update an item in DB. This method will perfrom an upsert.
+
+- Inserts/updates an item in DB. This method will perfrom an upsert.
 
 ```js
 await myModel.save({ foo: 'bar' });
@@ -209,6 +232,7 @@ const items = await myModel.get({ filters: { foo: 'bar' }});
 ```
 
 ### myModel.update(values, filter)
+
 - Update items that match with the `filter`.
 
 ```js
@@ -217,6 +241,7 @@ await myModel.update({ updated: 1 }, { status: 5 });
 ```
 
 ### myModel.remove(item)
+
 - Remove an item from DB.
 
 ```js
@@ -232,6 +257,7 @@ const items = await myModel.get({ filters: { foo: 'bar' }});
 ```
 
 ### myModel.multiInsert(items)
+
 - Perform a bulk insert of items in DB. This action will insert elements, and will not update elements.
 
 ```js
@@ -251,6 +277,7 @@ const items = await myModel.get();
 
 
 ### myModel.multiSave(items)
+
 - Perform a bulk save of items in DB. This action will insert/update (upsert) elements.
 
 ```js
@@ -269,6 +296,7 @@ const items = await myModel.get();
 ```
 
 ### myModel.multiRemove(filter)
+
 - Perform a bulk remove of items in DB.
 
 ```js
