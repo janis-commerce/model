@@ -377,6 +377,120 @@ describe('Model', () => {
 
 	});
 
+	describe('getBy() alias', () => {
+
+		class MyModel extends Model {}
+
+		beforeEach(() => {
+			sandbox.stub(MyModel.prototype, 'get');
+		});
+
+		it('Should pass one orderId filter as the only param if third argument is not passed', async () => {
+
+			const model = new MyModel();
+			await model.getBy('orderId', 1);
+
+			sandbox.assert.calledWithExactly(MyModel.prototype.get, {
+				filters: {
+					orderId: 1
+				}
+			});
+		});
+
+		it('Should pass multi orderIds filter as the only param if third argument is not passed', async () => {
+
+			const model = new MyModel();
+			await model.getBy('orderId', [1, 2]);
+
+			sandbox.assert.calledWithExactly(MyModel.prototype.get, {
+				filters: {
+					orderId: [1, 2]
+				}
+			});
+		});
+
+		it('Should merge the orderId filter with the other params passed', async () => {
+
+			const model = new MyModel();
+			await model.getBy('orderId', 1, { limit: 10 });
+
+			sandbox.assert.calledWithExactly(MyModel.prototype.get, {
+				filters: {
+					orderId: 1
+				},
+				limit: 10
+			});
+		});
+
+		it('Should merge the orderId filter with the other params passed (including other filters)', async () => {
+
+			const model = new MyModel();
+			await model.getBy('orderId', 1, {
+				filters: {
+					status: 'active'
+				},
+				limit: 10
+			});
+
+			sandbox.assert.calledWithExactly(MyModel.prototype.get, {
+				filters: {
+					status: 'active',
+					orderId: 1
+				},
+				limit: 10
+			});
+		});
+
+		it('Should return the records array if passed orderId is an array', async () => {
+
+			MyModel.prototype.get.resolves([
+				{ id: 1, orderId: 1, name: 'First' },
+				{ id: 2, orderId: 2, name: 'Second' }
+			]);
+
+			const model = new MyModel();
+			const result = await model.getBy('orderId', [1, 2]);
+
+			assert.deepStrictEqual(result, [
+				{ id: 1, orderId: 1, name: 'First' },
+				{ id: 2, orderId: 2, name: 'Second' }
+			]);
+		});
+
+		it('Should return an empty array if no records are found and passed orderId is an array', async () => {
+
+			MyModel.prototype.get.resolves([]);
+
+			const model = new MyModel();
+			const result = await model.getBy('orderId', [1, 2]);
+
+			assert.deepStrictEqual(result, []);
+		});
+
+		it('Should return the first record if passed orderId is not an array', async () => {
+
+			MyModel.prototype.get.resolves([
+				{ id: 1, orderId: 1, name: 'First' }
+			]);
+
+			const model = new MyModel();
+			const result = await model.getBy('orderId', 1);
+
+			assert.deepStrictEqual(result, { id: 1, orderId: 1, name: 'First' });
+		});
+
+		it('Should return null if no records are found and passed orderId is not an array', async () => {
+
+			MyModel.prototype.get.resolves([]);
+
+			const model = new MyModel();
+			const result = await model.getBy('orderId', 1);
+
+			assert.deepStrictEqual(result, null);
+		});
+
+	});
+
 	it('Should admit object result from model', async () => {
 
 		DBDriver.get.returns({ foo: 456 });
