@@ -130,14 +130,14 @@ const items = await myModel.get({ filters: { status: 'active' } });
 `params` is an optional Object with filters, order, paginator.
 
 ```js
-const items = await myModel.getBy(123, { filters: { status: 'active' } });
+const items = await myModel.getById(123, { filters: { status: 'active' } });
 ```
 
 ### const item = await myModel.getBy(field, id, [params])
-- It's an alias of get(), passing and field and the ids of that fiel as filter and handling return value as an array if `id` is an array, or an object otherwise.
+- It's an alias of get(), passing and field and the values of that field as filter and handling return value as an array if `value` is an array, or an object otherwise.
 
 `field` is required. A string as a field
-`id` is required. It can be one ID or an array of IDs
+`value` is required. It can be one value or an array of values
 `params` is an optional Object with filters, order, paginator.
 
 ```js

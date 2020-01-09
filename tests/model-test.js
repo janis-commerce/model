@@ -375,46 +375,6 @@ describe('Model', () => {
 			assert.deepStrictEqual(result, null);
 		});
 
-		it('Should return null if passed a empty string', async () => {
-
-			MyModel.prototype.get.resolves([]);
-
-			const model = new MyModel();
-			const result = await model.getById('');
-
-			assert.deepStrictEqual(result, null);
-		});
-
-		it('Should return null if passed \'false\'', async () => {
-
-			MyModel.prototype.get.resolves([]);
-
-			const model = new MyModel();
-			const result = await model.getById(false);
-
-			assert.deepStrictEqual(result, null);
-		});
-
-		it('Should return null if passed \'undefined\'', async () => {
-
-			MyModel.prototype.get.resolves([]);
-
-			const model = new MyModel();
-			const result = await model.getById(false);
-
-			assert.deepStrictEqual(result, null);
-		});
-
-		it('Should return null if passed a empty array', async () => {
-
-			MyModel.prototype.get.resolves([]);
-
-			const model = new MyModel();
-			const result = await model.getById([]);
-
-			assert.deepStrictEqual(result, null);
-		});
-
 	});
 
 	describe('getBy() alias', () => {
@@ -481,6 +441,19 @@ describe('Model', () => {
 			});
 		});
 
+		it('Should rejects if no value is passed', async () => {
+
+			MyModel.prototype.get.rejects([]);
+
+			const model = new MyModel();
+
+			await assert.rejects(() => model.getBy('orderId'), {
+				name: 'ModelError',
+				message: 'The value must be defined',
+				code: ModelError.codes.INVALID_VALUE
+			});
+		});
+
 		it('Should return the records array if passed orderId is an array', async () => {
 
 			MyModel.prototype.get.resolves([
@@ -507,7 +480,7 @@ describe('Model', () => {
 			assert.deepStrictEqual(result, []);
 		});
 
-		it('Should return the first record if passed orderId is not an array', async () => {
+		it('Should return the records if passed orderId is not an array', async () => {
 
 			MyModel.prototype.get.resolves([
 				{ id: 1, orderId: 1, name: 'First' }
@@ -515,6 +488,18 @@ describe('Model', () => {
 
 			const model = new MyModel();
 			const result = await model.getBy('orderId', 1);
+
+			assert.deepStrictEqual(result, [{ id: 1, orderId: 1, name: 'First' }]);
+		});
+
+		it('Should return the the first record if passed orderId and \'unique=true\' param', async () => {
+
+			MyModel.prototype.get.resolves([
+				{ id: 1, orderId: 1, name: 'First' }
+			]);
+
+			const model = new MyModel();
+			const result = await model.getBy('orderId', 1, { unique: true });
 
 			assert.deepStrictEqual(result, { id: 1, orderId: 1, name: 'First' });
 		});
@@ -526,7 +511,7 @@ describe('Model', () => {
 			const model = new MyModel();
 			const result = await model.getBy('orderId', 1);
 
-			assert.deepStrictEqual(result, null);
+			assert.deepStrictEqual(result, []);
 		});
 
 		it('Should return null if passed a empty field value', async () => {
@@ -565,46 +550,6 @@ describe('Model', () => {
 
 			const model = new MyModel();
 			const result = await model.getBy(false);
-
-			assert.deepStrictEqual(result, null);
-		});
-
-		it('Should return null if passed \'false\' as id', async () => {
-
-			MyModel.prototype.get.resolves([]);
-
-			const model = new MyModel();
-			const result = await model.getBy('orderId', false);
-
-			assert.deepStrictEqual(result, null);
-		});
-
-		it('Should return null if passed a empty string as id', async () => {
-
-			MyModel.prototype.get.resolves([]);
-
-			const model = new MyModel();
-			const result = await model.getBy('orderId', '');
-
-			assert.deepStrictEqual(result, null);
-		});
-
-		it('Should return null if passed \'undefined\' as id', async () => {
-
-			MyModel.prototype.get.resolves([]);
-
-			const model = new MyModel();
-			const result = await model.getBy('orderId', undefined);
-
-			assert.deepStrictEqual(result, null);
-		});
-
-		it('Should return null if passed a empty array as id', async () => {
-
-			MyModel.prototype.get.resolves([]);
-
-			const model = new MyModel();
-			const result = await model.getBy('orderId', []);
 
 			assert.deepStrictEqual(result, null);
 		});
