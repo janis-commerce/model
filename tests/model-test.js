@@ -50,7 +50,8 @@ describe('Model', () => {
 			remove: sandbox.stub(),
 			multiInsert: sandbox.stub(),
 			multiSave: sandbox.stub(),
-			multiRemove: sandbox.stub()
+			multiRemove: sandbox.stub(),
+			increment: sandbox.stub(),
 		};
 
 		sandbox.stub(DatabaseDispatcher, 'getDatabaseByKey')
@@ -885,6 +886,56 @@ describe('Model', () => {
 					userCreated,
 					log: { id: 'some-id', some: 'data', userModified }
 				});
+			});
+		});
+
+		describe('increment', () => {
+
+			it('Should add the userModified field when session exists', async () => {
+
+				DBDriver.increment.returns({ _id: 'some-id', quantity: 2, userModified });
+
+				await myClientModel.increment({ id: 'some-id'}, { quantity: 1 });
+
+				sandbox.assert.calledWithExactly(DBDriver.increment, myClientModel,
+					{ id: 'some-id'},
+					{ quantity: 1 },
+					{ userModified }
+				);
+			});
+
+			it('Should not add the userModified field when not session exists', async () => {
+
+				DBDriver.increment.returns({ _id: 'some-id', quantity: 2, userModified });
+
+				await myCoreModel.increment({ id: 'some-id'}, { quantity: 1 });
+
+				sandbox.assert.calledWithExactly(DBDriver.increment, myCoreModel,
+					{ id: 'some-id'},
+					{ quantity: 1 },
+					{ }
+				);
+			});
+
+			it('Should log the save operation when session exists', async () => {
+
+				DBDriver.increment.returns({ _id: 'some-id', quantity: 2, userModified });
+
+				await myClientModel.increment({ id: 'some-id'}, { quantity: 1 });
+
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+					type: 'incremented',
+					entity: 'client-model',
+					entityId: 'some-id',
+					userCreated,
+					log: { _id: 'some-id', quantity: 2, userModified }
+				});
+			});
+
+			it('Should reject if DB not support method', async () => {
+				delete DBDriver.increment;
+
+				await assert.rejects(myClientModel.increment({ id: 'some-id'}, { quantity: 1 }));
 			});
 		});
 
