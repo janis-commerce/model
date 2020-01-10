@@ -310,3 +310,35 @@ const items = await myModel.get({ filters: { status: 2 }});
 */
 
 ```
+
+### myModel.increment(filters, incrementData)
+
+- Increment/decrement values from an item in DB. This method will not perfrom an upsert.
+
+```js
+await myModel.increment({ uniqueIndex: 'bar' }, { increment: 1, decrement: -1 });
+
+/**
+
+before:
+	items content:
+	[
+		{
+			increment: 1,
+			decrement: 2
+		}
+		//...
+	]
+
+after:
+	items content:
+	[
+		{
+			increment: 2,
+			decrement: 1
+		}
+		//...
+	]
+*/
+
+```

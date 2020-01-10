@@ -51,7 +51,7 @@ describe('Model', () => {
 			multiInsert: sandbox.stub(),
 			multiSave: sandbox.stub(),
 			multiRemove: sandbox.stub(),
-			increment: sandbox.stub(),
+			increment: sandbox.stub()
 		};
 
 		sandbox.stub(DatabaseDispatcher, 'getDatabaseByKey')
@@ -895,10 +895,10 @@ describe('Model', () => {
 
 				DBDriver.increment.returns({ _id: 'some-id', quantity: 2, userModified });
 
-				await myClientModel.increment({ id: 'some-id'}, { quantity: 1 });
+				await myClientModel.increment({ id: 'some-id' }, { quantity: 1 });
 
 				sandbox.assert.calledWithExactly(DBDriver.increment, myClientModel,
-					{ id: 'some-id'},
+					{ id: 'some-id' },
 					{ quantity: 1 },
 					{ userModified }
 				);
@@ -908,10 +908,10 @@ describe('Model', () => {
 
 				DBDriver.increment.returns({ _id: 'some-id', quantity: 2, userModified });
 
-				await myCoreModel.increment({ id: 'some-id'}, { quantity: 1 });
+				await myCoreModel.increment({ id: 'some-id' }, { quantity: 1 });
 
 				sandbox.assert.calledWithExactly(DBDriver.increment, myCoreModel,
-					{ id: 'some-id'},
+					{ id: 'some-id' },
 					{ quantity: 1 },
 					{ }
 				);
@@ -921,7 +921,7 @@ describe('Model', () => {
 
 				DBDriver.increment.returns({ _id: 'some-id', quantity: 2, userModified });
 
-				await myClientModel.increment({ id: 'some-id'}, { quantity: 1 });
+				await myClientModel.increment({ id: 'some-id' }, { quantity: 1 });
 
 				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
 					type: 'incremented',
@@ -935,7 +935,7 @@ describe('Model', () => {
 			it('Should reject if DB not support method', async () => {
 				delete DBDriver.increment;
 
-				await assert.rejects(myClientModel.increment({ id: 'some-id'}, { quantity: 1 }));
+				await assert.rejects(myClientModel.increment({ id: 'some-id' }, { quantity: 1 }));
 			});
 		});
 
