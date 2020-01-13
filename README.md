@@ -342,3 +342,59 @@ after:
 */
 
 ```
+
+### Indexes Manipulation
+
+> Only if Database support it
+
+#### myModel.getIndexes()
+
+- Get an *array<Object>* of Indexes in Database table
+
+```js
+await myModel.getIndexes();
+
+/*
+	[
+		{ name: '_id_', key: { _id_: 1}, unique: true },
+		{ name: 'code', key: { code: 1} }
+	]
+*/
+
+```
+
+#### myModel.createIndex(index)
+
+- Create a single index in Database Table.
+
+```js
+await myModel.createIndex({ name: 'name', key: { name: 1}, unique: true });
+
+```
+
+#### myModel.createIndexes(indexes)
+
+- Create a multiple indexes in Database Table.
+
+```js
+await myModel.createIndexes([{ name: 'name', key: { name: 1}, unique: true }, { name: 'code', key: { code: -1 }}]);
+
+```
+
+#### myModel.dropIndex(name)
+
+- Drop a single in Database Table.
+
+```js
+await myModel.dropIndex('name');
+
+```
+
+#### myModel.dropIndexes(names)
+
+- Drop multiple indexes in Database Table.
+
+```js
+await myModel.dropIndexes(['name', 'code']);
+
+```
