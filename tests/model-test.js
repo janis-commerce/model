@@ -51,7 +51,12 @@ describe('Model', () => {
 			multiInsert: sandbox.stub(),
 			multiSave: sandbox.stub(),
 			multiRemove: sandbox.stub(),
-			increment: sandbox.stub()
+			increment: sandbox.stub(),
+			getIndexes: sandbox.stub(),
+			createIndexes: sandbox.stub(),
+			createIndex: sandbox.stub(),
+			dropIndex: sandbox.stub(),
+			dropIndexes: sandbox.stub()
 		};
 
 		sandbox.stub(DatabaseDispatcher, 'getDatabaseByKey')
@@ -1059,6 +1064,38 @@ describe('Model', () => {
 				},
 				userCreated: 'some-user-id'
 			}
+		});
+	});
+
+	describe('Indexes Methods', () => {
+
+		[
+			['getIndexes'],
+			['createIndexes', [{ name: 'name', key: { name: 1 }, unique: true }, { name: 'code', key: { code: 1 }, unique: true }]],
+			['createIndex', { name: 'name', key: { name: 1 }, unique: true }],
+			['dropIndex', 'name'],
+			['dropIndexes', ['name', 'code']]
+		].forEach(([method, ...args]) => {
+
+			it(`Should call DBDriver ${method} method passing the model`, async () => {
+
+				await myCoreModel[method](...args);
+
+				sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByKey);
+				sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByKey, 'core');
+
+				// for debug use: DBDriver.getTotals.getCall(0).args
+				sandbox.assert.calledOnce(DBDriver[method]);
+				sandbox.assert.calledWithExactly(DBDriver[method], myCoreModel, ...args);
+			});
+
+			it('Should reject if DB not support method', async () => {
+				delete DBDriver[method];
+
+				await assert.rejects(myCoreModel[method](...args), {
+					code: ModelError.codes.DRIVER_METHOD_NOT_IMPLEMENTED
+				});
+			});
 		});
 	});
 });
