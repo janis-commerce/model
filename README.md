@@ -321,3 +321,91 @@ const items = await myModel.get({ filters: { status: 2 }});
 */
 
 ```
+
+### myModel.increment(filters, incrementData)
+
+- Increment/decrement values from an item in DB. This method will not perfrom an upsert.
+
+```js
+await myModel.increment({ uniqueIndex: 'bar' }, { increment: 1, decrement: -1 });
+
+/**
+
+before:
+	items content:
+	[
+		{
+			increment: 1,
+			decrement: 2
+		}
+		//...
+	]
+
+after:
+	items content:
+	[
+		{
+			increment: 2,
+			decrement: 1
+		}
+		//...
+	]
+*/
+
+```
+
+### Indexes Manipulation
+
+> Only if Database support it
+
+#### myModel.getIndexes()
+
+- Get an *array<Object>* of Indexes in Database table
+
+```js
+await myModel.getIndexes();
+
+/*
+	[
+		{ name: '_id_', key: { _id_: 1}, unique: true },
+		{ name: 'code', key: { code: 1} }
+	]
+*/
+
+```
+
+#### myModel.createIndex(index)
+
+- Create a single index in Database Table.
+
+```js
+await myModel.createIndex({ name: 'name', key: { name: 1}, unique: true });
+
+```
+
+#### myModel.createIndexes(indexes)
+
+- Create a multiple indexes in Database Table.
+
+```js
+await myModel.createIndexes([{ name: 'name', key: { name: 1}, unique: true }, { name: 'code', key: { code: -1 }}]);
+
+```
+
+#### myModel.dropIndex(name)
+
+- Drop a single in Database Table.
+
+```js
+await myModel.dropIndex('name');
+
+```
+
+#### myModel.dropIndexes(names)
+
+- Drop multiple indexes in Database Table.
+
+```js
+await myModel.dropIndexes(['name', 'code']);
+
+```
