@@ -935,7 +935,9 @@ describe('Model', () => {
 			it('Should reject if DB not support method', async () => {
 				delete DBDriver.increment;
 
-				await assert.rejects(myClientModel.increment({ id: 'some-id' }, { quantity: 1 }));
+				await assert.rejects(myClientModel.increment({ id: 'some-id' }, { quantity: 1 }), {
+					code: ModelError.codes.DRIVER_METHOD_NOT_IMPLEMENTED
+				});
 			});
 		});
 
