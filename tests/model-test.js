@@ -1335,4 +1335,49 @@ describe('Model', () => {
 			});
 		});
 	});
+
+	describe('Map ID By References IDs', () => {
+
+		it('Should reject if Reference Ids is not an Array', async () => {
+			await assert.rejects(myCoreModel.mapIdByReferenceId(), { code: ModelError.codes.INVALID_VALUE });
+			await assert.rejects(myCoreModel.mapIdByReferenceId('refId'), { code: ModelError.codes.INVALID_VALUE });
+			await assert.rejects(myCoreModel.mapIdByReferenceId({ refId: 'refId' }), { code: ModelError.codes.INVALID_VALUE });
+			await assert.rejects(myCoreModel.mapIdByReferenceId(1000), { code: ModelError.codes.INVALID_VALUE });
+		});
+
+		it('Should return empty object if ReferenceId is an empty Array', async () => {
+
+			DBDriver.get.returns([]);
+
+			assert.deepStrictEqual(await myCoreModel.mapIdByReferenceId([]), {});
+
+			sandbox.assert.calledOnce(DBDriver.get);
+			sandbox.assert.calledWithExactly(DBDriver.get, myCoreModel, { filters: { referenceId: [] } });
+		});
+
+		it('Should return object with referenceId key and Id value', async () => {
+
+			DBDriver.get.returns([{ id: 'some-id', referenceId: 'some-ref-id' }, { id: 'other-id', referenceId: 'other-ref-id' }]);
+
+			assert.deepStrictEqual(await myCoreModel.mapIdByReferenceId(['some-ref-id', 'other-ref-id']), {
+				'some-ref-id': 'some-id',
+				'other-ref-id': 'other-id'
+			});
+
+			sandbox.assert.calledOnce(DBDriver.get);
+			sandbox.assert.calledWithExactly(DBDriver.get, myCoreModel, { filters: { referenceId: ['some-ref-id', 'other-ref-id'] } });
+		});
+
+		it('Should return object with referenceId key and Id value if referenceId match', async () => {
+
+			DBDriver.get.returns([{ id: 'some-id', referenceId: 'some-ref-id' }]);
+
+			assert.deepStrictEqual(await myCoreModel.mapIdByReferenceId(['some-ref-id', 'foo-ref-id']), {
+				'some-ref-id': 'some-id'
+			});
+
+			sandbox.assert.calledOnce(DBDriver.get);
+			sandbox.assert.calledWithExactly(DBDriver.get, myCoreModel, { filters: { referenceId: ['some-ref-id', 'foo-ref-id'] } });
+		});
+	});
 });

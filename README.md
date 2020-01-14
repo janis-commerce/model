@@ -196,6 +196,25 @@ const totals = await myModel.getTotals();
 
 ```
 
+### myModel.mapIdByReferenceId(referencesIds)
+
+- Search all References Ids and return an Object with key: `referenceIds` and values: `id`, only those founds.
+- **referencesIds**: `Array<strings>` List of References Ids
+
+
+```js
+
+await myModel.mapIdByReferenceId(['some-ref-id', 'other-ref-id', 'foo-ref-id']);
+
+/**
+	{
+		some-ref-id: 'some-id',
+		foo-ref-id: 'foo-id'
+	}
+*/
+
+```
+
 ### const uniqueValues = await myModel.distinct(key, params)
 
 - Returns unique values of the key field from database
