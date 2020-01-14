@@ -654,7 +654,7 @@ describe('Model', () => {
 		sandbox.assert.calledWithExactly(DBDriver.getTotals, myCoreModel);
 	});
 
-	['insert', 'save', 'remove'].forEach(method => {
+	['insert', 'remove'].forEach(method => {
 
 		it(`should call DBDriver ${method} method passing the model and the item received`, async () => {
 
@@ -669,6 +669,18 @@ describe('Model', () => {
 		});
 	});
 
+	it('should call DBDriver save method passing the model and the item received', async () => {
+
+		await myCoreModel.save({ foo: 'bar' });
+
+		sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByKey);
+		sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByKey, 'core');
+
+		// for debug use: DBDriver[method].getCall(0).args
+		sandbox.assert.calledOnce(DBDriver.save);
+		sandbox.assert.calledWithExactly(DBDriver.save, myCoreModel, { foo: 'bar' }, undefined);
+	});
+
 	it('Should call DBDriver update method passing the model and the values and filter received', async () => {
 
 		await myCoreModel.update({ status: -1 }, { foo: 'bar' });
@@ -681,19 +693,28 @@ describe('Model', () => {
 		sandbox.assert.calledWithExactly(DBDriver.update, myCoreModel, { status: -1 }, { foo: 'bar' });
 	});
 
-	['multiInsert', 'multiSave'].forEach(method => {
+	it('should call DBDriver multiInsert method passing the model and the items received', async () => {
 
-		it(`should call DBDriver ${method} method passing the model and the items received`, async () => {
+		await myCoreModel.multiInsert([{ foo: 'bar' }, { foo2: 'bar2' }]);
 
-			await myCoreModel[method]([{ foo: 'bar' }, { foo2: 'bar2' }]);
+		sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByKey);
+		sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByKey, 'core');
 
-			sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByKey);
-			sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByKey, 'core');
+		// for debug use: DBDriver[method].getCall(0).args
+		sandbox.assert.calledOnce(DBDriver.multiInsert);
+		sandbox.assert.calledWithExactly(DBDriver.multiInsert, myCoreModel, [{ foo: 'bar' }, { foo2: 'bar2' }]);
+	});
 
-			// for debug use: DBDriver[method].getCall(0).args
-			sandbox.assert.calledOnce(DBDriver[method]);
-			sandbox.assert.calledWithExactly(DBDriver[method], myCoreModel, [{ foo: 'bar' }, { foo2: 'bar2' }]);
-		});
+	it('should call DBDriver multiSave method passing the model and the items received', async () => {
+
+		await myCoreModel.multiSave([{ foo: 'bar' }, { foo2: 'bar2' }]);
+
+		sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByKey);
+		sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByKey, 'core');
+
+		// for debug use: DBDriver[method].getCall(0).args
+		sandbox.assert.calledOnce(DBDriver.multiSave);
+		sandbox.assert.calledWithExactly(DBDriver.multiSave, myCoreModel, [{ foo: 'bar' }, { foo2: 'bar2' }], undefined);
 	});
 
 	it('Should call DBDriver multiRemove method passing the model and the filter received', async () => {
@@ -1047,7 +1068,19 @@ describe('Model', () => {
 				sandbox.assert.calledWithExactly(DBDriver.save, myClientModel, {
 					some: 'data',
 					userCreated
-				});
+				}, undefined);
+			});
+
+			it('Should add the setOnInsert when it is passed', async () => {
+
+				DBDriver.save.returns();
+
+				await myClientModel.save({ some: 'data' }, { status: 'active' });
+
+				sandbox.assert.calledWithExactly(DBDriver.save, myClientModel, {
+					some: 'data',
+					userCreated
+				}, { status: 'active' });
 			});
 
 			[
@@ -1066,7 +1099,7 @@ describe('Model', () => {
 						[idField]: 'some-id',
 						some: 'data',
 						userModified
-					});
+					}, undefined);
 				});
 			});
 
@@ -1149,7 +1182,19 @@ describe('Model', () => {
 				sandbox.assert.calledWithExactly(DBDriver.multiSave, myClientModel, [
 					{ some: 'data', userCreated },
 					{ other: 'data', userCreated }
-				]);
+				], undefined);
+			});
+
+			it('Should add setOnInsert when it is passed', async () => {
+
+				DBDriver.multiSave.returns();
+
+				await myClientModel.multiSave([{ some: 'data' }, { other: 'data' }], { quantity: 100 });
+
+				sandbox.assert.calledWithExactly(DBDriver.multiSave, myClientModel, [
+					{ some: 'data', userCreated },
+					{ other: 'data', userCreated }
+				], { quantity: 100 });
 			});
 
 			[
@@ -1167,7 +1212,7 @@ describe('Model', () => {
 					sandbox.assert.calledWithExactly(DBDriver.multiSave, myClientModel, [
 						{ [idField]: 'some-id', some: 'data', userModified },
 						{ [idField]: 'other-id', other: 'data', userModified }
-					]);
+					], undefined);
 				});
 			});
 

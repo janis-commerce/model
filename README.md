@@ -235,12 +235,13 @@ const items = await myModel.get({ filters: { foo: 'bar' }});
 
 ```
 
-### myModel.save(item)
+### myModel.save(item, setOnInsert)
 
 - Inserts/updates an item in DB. This method will perfrom an upsert.
+- `setOnInsert` to add default values on Insert, optional
 
 ```js
-await myModel.save({ foo: 'bar' });
+await myModel.save({ foo: 'bar' }, { status: 'active' });
 
 const items = await myModel.get({ filters: { foo: 'bar' }});
 
@@ -248,7 +249,8 @@ const items = await myModel.get({ filters: { foo: 'bar' }});
 	items content:
 	[
 		{
-			foo: 'bar'
+			foo: 'bar',
+			status: 'active'
 		}
 		//...
 	]
@@ -301,20 +303,21 @@ const items = await myModel.get();
 ```
 
 
-### myModel.multiSave(items)
+### myModel.multiSave(items, setOnInsert)
 
 - Perform a bulk save of items in DB. This action will insert/update (upsert) elements.
+- `setOnInsert` to add default values on Insert, optional
 
 ```js
-await myModel.multiSave([{ foo: 1 }, { foo: 2 }]);
+await myModel.multiSave([{ foo: 1 }, { foo: 2, status: 'pending' }], { status: 'active' });
 
 const items = await myModel.get();
 
 /**
 	items content:
 	[
-		{ foo: 1 },
-		{ foo: 2 }
+		{ foo: 1, status: 'active' },
+		{ foo: 2, status: 'pending' }
 	]
 */
 
