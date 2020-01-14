@@ -113,6 +113,20 @@ You can add database connection settings by adding the field names from the rece
 * **excludeFieldsInLog** (*getter*).
 Returns the fields that will be removed from the logs as an array of strings. For example: `['password', 'super-secret']`
 
+* **statuses** (*class getter*).
+Returns an `object` with the default statuses (`active` / `inactive`)
+
+```js
+console.log(Model.statuses);
+
+/*
+	{
+		active: 'active',
+		inactive: 'inactive'
+	}
+*/
+```
+
 ### const items = await myModel.get(params)
 
 - Returns items from database

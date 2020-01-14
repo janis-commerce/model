@@ -87,6 +87,19 @@ describe('Model', () => {
 		sandbox.restore();
 	});
 
+	it('Should return the statuses', async () => {
+
+		assert.deepStrictEqual(ClientModel.statuses, {
+			active: 'active',
+			inactive: 'inactive'
+		});
+
+		assert.deepStrictEqual(CoreModel.statuses, {
+			active: 'active',
+			inactive: 'inactive'
+		});
+	});
+
 	describe('Database getters', () => {
 
 		it('Should reject when model haven\'t a client injected or databaseKey getter', async () => {
