@@ -1,6 +1,6 @@
 {
   "name": "@janiscommerce/model",
-  "version": "3.6.0",
+  "version": "3.6.1",
   "description": "",
   "main": "lib/model.js",
   "scripts": {
@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "@janiscommerce/database-dispatcher": "^2.0.0",
-    "@janiscommerce/log": "^2.0.0",
+    "@janiscommerce/log": "^3.0.0",
     "lodash.omit": "^4.5.0"
   }
 }
