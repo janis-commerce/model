@@ -66,7 +66,7 @@ describe('Model', () => {
 			.returns(DBDriver);
 
 		sandbox.stub(Log, 'add')
-			.returns();
+			.resolves();
 
 		myCoreModel.formatGet = () => { };
 
