@@ -936,7 +936,7 @@ describe('Model', () => {
 
 				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
 					type: 'inserted',
-					entity: 'client-model',
+					entity: 'client',
 					entityId: 'some-id',
 					userCreated,
 					log: { some: 'data', userCreated }
@@ -964,12 +964,14 @@ describe('Model', () => {
 
 				await myClientModel.multiInsert([{ some: 'data' }]);
 
-				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
-					type: 'inserted',
-					entity: 'client-model',
-					userCreated,
-					log: { some: 'data', userCreated }
-				});
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', [
+					{
+						type: 'inserted',
+						entity: 'client',
+						userCreated,
+						log: { some: 'data', userCreated }
+					}
+				]);
 			});
 
 			it('Shouldn\'t log the invalid entries when multiInsert method receives invalid items', async () => {
@@ -979,12 +981,14 @@ describe('Model', () => {
 				await myClientModel.multiInsert([{ some: 'data' }, null]);
 
 				sandbox.assert.calledOnce(Log.add);
-				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
-					type: 'inserted',
-					entity: 'client-model',
-					userCreated,
-					log: { some: 'data', userCreated }
-				});
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', [
+					{
+						type: 'inserted',
+						entity: 'client',
+						userCreated,
+						log: { some: 'data', userCreated }
+					}]
+				);
 			});
 		});
 
@@ -1010,7 +1014,7 @@ describe('Model', () => {
 
 				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
 					type: 'updated',
-					entity: 'client-model',
+					entity: 'client',
 					entityId: 'some-id',
 					userCreated,
 					log: {
@@ -1031,7 +1035,7 @@ describe('Model', () => {
 
 				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
 					type: 'removed',
-					entity: 'client-model',
+					entity: 'client',
 					entityId: 'some-id',
 					userCreated,
 					log: { id: 'some-id', some: 'data' }
@@ -1049,7 +1053,7 @@ describe('Model', () => {
 
 				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
 					type: 'removed',
-					entity: 'client-model',
+					entity: 'client',
 					entityId: 'some-id',
 					userCreated,
 					log: { id: 'some-id' }
@@ -1111,7 +1115,7 @@ describe('Model', () => {
 
 				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
 					type: 'upserted',
-					entity: 'client-model',
+					entity: 'client',
 					entityId: 'some-id',
 					userCreated,
 					log: { id: 'some-id', some: 'data', userModified }
@@ -1155,7 +1159,7 @@ describe('Model', () => {
 
 				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
 					type: 'incremented',
-					entity: 'client-model',
+					entity: 'client',
 					entityId: 'some-id',
 					userCreated,
 					log: { _id: 'some-id', quantity: 2, userModified }
@@ -1222,13 +1226,15 @@ describe('Model', () => {
 
 				await myClientModel.multiSave([{ id: 'some-id', some: 'data' }]);
 
-				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
-					type: 'upserted',
-					entity: 'client-model',
-					entityId: 'some-id',
-					userCreated,
-					log: { id: 'some-id', some: 'data', userModified }
-				});
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', [
+					{
+						type: 'upserted',
+						entity: 'client',
+						entityId: 'some-id',
+						userCreated,
+						log: { id: 'some-id', some: 'data', userModified }
+					}
+				]);
 			});
 
 			it('Shouldn\'t log the invalid entries when multiSave method receives invalid items', async () => {
@@ -1237,13 +1243,15 @@ describe('Model', () => {
 				await myClientModel.multiSave([{ id: 'some-id' }, null]);
 
 				sandbox.assert.calledOnce(Log.add);
-				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
-					type: 'upserted',
-					entity: 'client-model',
-					entityId: 'some-id',
-					userCreated,
-					log: { id: 'some-id', userModified }
-				});
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', [
+					{
+						type: 'upserted',
+						entity: 'client',
+						entityId: 'some-id',
+						userCreated,
+						log: { id: 'some-id', userModified }
+					}
+				]);
 			});
 		});
 
@@ -1291,7 +1299,7 @@ describe('Model', () => {
 
 		sandbox.assert.calledWithExactly(Log.add, 'some-client', {
 			type: 'inserted',
-			entity: 'client-model',
+			entity: 'client',
 			entityId: 'some-id',
 			userCreated: 'some-user-id',
 			log: {
@@ -1302,6 +1310,32 @@ describe('Model', () => {
 				userCreated: 'some-user-id'
 			}
 		});
+	});
+
+	it('Should not log when the static getter shouldCreateLogs is set to false', async () => {
+
+		const myClientModel = new ClientModel();
+
+		myClientModel.session = {
+			clientCode: 'some-client',
+			userId: 'some-user-id'
+		};
+
+		sandbox.stub(ClientModel, 'shouldCreateLogs')
+			.get(() => false);
+
+		DBDriver.insert.returns('some-id');
+
+		await myClientModel.insert({
+			username: 'some-username',
+			password: 'some-password',
+			location: {
+				country: 'some-country',
+				address: 'some-address'
+			}
+		});
+
+		sandbox.assert.notCalled(Log.add);
 	});
 
 	describe('Indexes Methods', () => {

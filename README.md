@@ -110,8 +110,11 @@ You can add database connection settings by adding the field names from the rece
 
 ### Getters
 
-* **excludeFieldsInLog** (*getter*).
-Returns the fields that will be removed from the logs as an array of strings. For example: `['password', 'super-secret']`
+* **shouldCreateLogs** (*static getter*).
+Returns if the model should log the write operations. Default: `true`. For more details about logging, read the [logging](#Logging) section.
+
+* **excludeFieldsInLog** (*static getter*).
+Returns the fields that will be removed from the logs as an array of strings. For example: `['password', 'super-secret']`. For more details about logging, read the [logging](#Logging) section.
 
 * **statuses** (*class getter*).
 Returns an `object` with the default statuses (`active` / `inactive`)
@@ -443,5 +446,77 @@ await myModel.dropIndex('name');
 
 ```js
 await myModel.dropIndexes(['name', 'code']);
+
+```
+
+#### myModel.getDb()
+
+- Get the configured/sessionated DBDriver instance to use methods not supported by model.
+
+```js
+const dbDriver = await myModel.getDb();
+
+await dbDriver.specialMethod(myModel);
+
+```
+
+## Logging
+This package automatically logs any write operation such as:
+- insert
+- multiInsert
+- update
+- save
+- multiSave
+- increment
+- remove
+- multiRemove
+
+#### You can disable this functionality by setting the `static getter` `shouldCreateLogs` to false:
+```js
+class MyModel extends Model {
+
+	static get shouldCreateLogs() {
+		return false;
+	}
+}
+
+```
+
+### Excluding fields from logs
+You can exclude fields for logs in case you have sensitive information in your entries such as passwords, addresses, etc.
+
+#### Specify the fields to exclude by setting them in the `static getter` `excludeFieldsInLog`:
+```js
+class MyModel extends Model {
+
+	static get excludeFieldsInLog() {
+		return [
+			'password',
+			'address',
+			'secret'
+		]
+	}
+}
+
+```
+
+By setting this when you do an operation with an item like:
+```js
+await myModel.insert({
+	user: 'johndoe',
+	password: 'some-password',
+	contry: 'AR',
+	address: 'Fake St 123'
+});
+
+```
+
+It will be logged as:
+```js
+{
+	id: '5ea30bcbe28c55870324d9f0',
+	user: 'johndoe',
+	contry: 'AR'
+}
 
 ```

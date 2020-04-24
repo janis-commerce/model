@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Multi log support for multiInsert and multiSave operations
+
+### Changed
+- `getDb()` as public method
 
 ## [3.6.3] - 2020-04-16
 ### Fixed
