@@ -284,7 +284,7 @@ describe('Model', () => {
 
 	describe('getById() alias', () => {
 
-		class MyModel extends Model {}
+		class MyModel extends Model { }
 
 		beforeEach(() => {
 			sandbox.stub(MyModel.prototype, 'get');
@@ -398,7 +398,7 @@ describe('Model', () => {
 
 	describe('getBy() alias', () => {
 
-		class MyModel extends Model {}
+		class MyModel extends Model { }
 
 		beforeEach(() => {
 			sandbox.stub(MyModel.prototype, 'get');
@@ -456,6 +456,32 @@ describe('Model', () => {
 					status: 'active',
 					orderId: 1
 				},
+				limit: 10
+			});
+		});
+
+		it('Should pass the orderId filter for each condition in OR filters (array filters)', async () => {
+
+			const model = new MyModel();
+			await model.getBy('orderId', 1, {
+				filters: [
+					{ status: 'active' },
+					{ status: 'pending' }
+				],
+				limit: 10
+			});
+
+			sandbox.assert.calledWithExactly(MyModel.prototype.get, {
+				filters: [
+					{
+						status: 'active',
+						orderId: 1
+					},
+					{
+						status: 'pending',
+						orderId: 1
+					}
+				],
 				limit: 10
 			});
 		});
@@ -1147,7 +1173,7 @@ describe('Model', () => {
 				sandbox.assert.calledWithExactly(DBDriver.increment, myCoreModel,
 					{ id: 'some-id' },
 					{ quantity: 1 },
-					{ }
+					{}
 				);
 			});
 
