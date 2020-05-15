@@ -34,7 +34,9 @@
   },
   "dependencies": {
     "@janiscommerce/database-dispatcher": "^2.0.1",
-    "@janiscommerce/log": "^3.1.1",
     "lodash.omit": "^4.5.0"
+  },
+  "peerDependencies": {
+      "@janiscommerce/log": "3.x"
   }
 }

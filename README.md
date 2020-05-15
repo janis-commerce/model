@@ -520,3 +520,7 @@ It will be logged as:
 }
 
 ```
+
+## Peer dependencies
+
+In order to use this package, [@janiscommerce/log@3.x](https://www.npmjs.com/package/@janiscommerce/log) is required as peer dependecy.
