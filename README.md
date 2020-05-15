@@ -7,9 +7,8 @@
 ```sh
 npm install @janiscommerce/model
 ```
-### Peer dependencies
 
-:warning: From version 4.0.0,  in order to use this package , [@janiscommerce/log@3.x](https://www.npmjs.com/package/@janiscommerce/log) is required as peer dependecy.
+> :warning: From version 4.0.0,  in order to use this package , [@janiscommerce/log@3.x](https://www.npmjs.com/package/@janiscommerce/log) is required as peer dependecy.
 
 
 ## Session injection
