@@ -7,6 +7,10 @@
 ```sh
 npm install @janiscommerce/model
 ```
+### Peer dependencies
+
+:warning: From version 4.0.0,  i	n order to use this package , [@janiscommerce/log@3.x](https://www.npmjs.com/package/@janiscommerce/log) is required as peer dependecy.
+
 
 ## Session injection
 The session injection is useful when you have a dedicated database per client.
@@ -520,7 +524,3 @@ It will be logged as:
 }
 
 ```
-
-## Peer dependencies
-
-In order to use this package, [@janiscommerce/log@3.x](https://www.npmjs.com/package/@janiscommerce/log) is required as peer dependecy.
