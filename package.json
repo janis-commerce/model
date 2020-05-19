@@ -1,7 +1,7 @@
 {
   "name": "@janiscommerce/model",
-  "version": "4.0.0",
-  "description": "",
+  "version": "4.1.0",
+  "description": "A package for managing Janis Models",
   "main": "lib/model.js",
   "scripts": {
     "test": "export TEST_ENV=true; mocha --exit -R nyan --recursive tests/",
@@ -24,8 +24,7 @@
     "husky": "^4.2.5",
     "mocha": "^7.1.1",
     "nyc": "^15.0.1",
-    "sinon": "^7.3.2",
-    "@janiscommerce/log": "^3.x"
+    "sinon": "^7.3.2"
   },
   "files": [
     "lib/"
@@ -35,9 +34,7 @@
   },
   "dependencies": {
     "@janiscommerce/database-dispatcher": "^2.0.1",
-    "lodash.omit": "^4.5.0"
-  },
-  "peerDependencies": {
-    "@janiscommerce/log": "^3.x"
+    "@janiscommerce/log": "^3.2.0",
+    "lodash.omit": "4.5.0"
   }
 }

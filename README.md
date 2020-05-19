@@ -8,9 +8,6 @@
 npm install @janiscommerce/model
 ```
 
-> :warning: From version 4.0.0,  in order to use this package , [@janiscommerce/log@3.x](https://www.npmjs.com/package/@janiscommerce/log) is required as peer dependecy.
-
-
 ## Session injection
 The session injection is useful when you have a dedicated database per client.
 Using the public setter `session`, the session will be stored in the `controller` instance.
