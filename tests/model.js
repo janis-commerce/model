@@ -1,11 +1,10 @@
 'use strict';
 
 const assert = require('assert');
-
-const DatabaseDispatcher = require('@janiscommerce/database-dispatcher');
-const Log = require('@janiscommerce/log');
-
 const sandbox = require('sinon').createSandbox();
+
+const Log = require('@janiscommerce/log');
+const DatabaseDispatcher = require('../lib/helpers/database-dispatcher');
 
 const Model = require('../lib/model');
 const ModelError = require('../lib/model-error');
