@@ -4,42 +4,69 @@ const assert = require('assert');
 const sandbox = require('sinon').createSandbox();
 
 const Log = require('@janiscommerce/log');
+const Settings = require('@janiscommerce/settings');
 const DatabaseDispatcher = require('../lib/helpers/database-dispatcher');
 
 const Model = require('../lib/model');
 const ModelError = require('../lib/model-error');
-
-/* eslint-disable prefer-arrow-callback */
 
 describe('Model', () => {
 
 	let DBDriver;
 
 	const client = {
-		type: 'mongodb',
-		host: 'the-host',
-		database: 'the-database-name',
-		username: 'the-username',
-		password: 'the-password',
-		protocol: 'my-protocol',
-		port: 1,
-		myconfig: 'my-config'
+
+		databases: {
+			default: {
+				write: {
+					type: 'mongodb',
+					host: 'the-host',
+					database: 'the-database-name',
+					username: 'the-username',
+					password: 'the-password',
+					protocol: 'my-protocol',
+					port: 1
+				}
+			}
+		}
 	};
 
-	class ClientModel extends Model {
-	}
+	const settings = {
+		core: {
+			write: {
+				type: 'mongodb',
+				host: 'the-host',
+				database: 'the-database-name',
+				username: 'the-username',
+				password: 'the-password',
+				protocol: 'my-protocol',
+				port: 1
+			}
+		}
+	};
+
+	const fakeSession = {
+
+		getSessionInstance: Constructor => {
+			const instance = new Constructor();
+			instance.session = fakeSession;
+			return instance;
+		},
+		client: Promise.resolve(client)
+	};
+
+	class ClientModel extends Model {}
 
 	class CoreModel extends Model {
 		get databaseKey() { return 'core'; }
 	}
 
-	const myCoreModel = new CoreModel();
-
 	let getPagedCallback;
+
+	let myCoreModel;
 
 	beforeEach(() => {
 
-		// for internal cache clean...
 		DBDriver = {
 			get: sandbox.stub(),
 			getTotals: sandbox.stub(),
@@ -58,14 +85,17 @@ describe('Model', () => {
 			dropIndexes: sandbox.stub()
 		};
 
-		sandbox.stub(DatabaseDispatcher, 'getDatabaseByKey')
-			.returns(DBDriver);
+		sandbox.stub(Settings, 'get')
+			.withArgs('database')
+			.returns(settings);
 
-		sandbox.stub(DatabaseDispatcher, 'getDatabaseByClient')
+		sandbox.stub(DatabaseDispatcher.prototype, 'getDatabaseByKey')
 			.returns(DBDriver);
 
 		sandbox.stub(Log, 'add')
 			.resolves();
+
+		myCoreModel = new CoreModel();
 
 		myCoreModel.formatGet = () => { };
 
@@ -99,137 +129,15 @@ describe('Model', () => {
 		});
 	});
 
-	describe('Database getters', () => {
-
-		it('Should reject when model haven\'t a client injected or databaseKey getter', async () => {
-
-			const myClientModel = new ClientModel();
-
-			await assert.rejects(() => myClientModel.get(), {
-				name: 'ModelError',
-				code: ModelError.codes.DATABASE_CONFIG_NOT_FOUND
-			});
-		});
-
-
-		it('Should call DBDriver get using databaseKey when it exists', async () => {
-
-			await myCoreModel.get();
-
-			sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByKey);
-			sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByKey, 'core');
-
-			sandbox.assert.calledOnce(DBDriver.get);
-			sandbox.assert.calledWithExactly(DBDriver.get, myCoreModel, {});
-		});
-
-		it('Should call DBDriver get using client config when it exists', async () => {
-
-			const myClientModel = new ClientModel();
-
-			myClientModel.session = {
-				client: Promise.resolve(client)
-			};
-
-			await myClientModel.get();
-
-			// for debug use: DatabaseDispatcher.getDatabaseByClient.getCall(0).args
-			sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByClient);
-			sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByClient, client, false);
-
-			// for debug use: DBDriver.get.getCall(0).args
-			sandbox.assert.calledOnce(DBDriver.get);
-			sandbox.assert.calledWithExactly(DBDriver.get, myClientModel, {});
-		});
-
-		it('Should call DBDriver get using read DB when readonly param is true', async () => {
-
-			const myClientModel = new ClientModel();
-
-			myClientModel.session = {
-				client: Promise.resolve(client)
-			};
-
-			await myClientModel.get({ readonly: true });
-
-			// for debug use: DatabaseDispatcher.getDatabaseByClient.getCall(0).args
-			sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByClient);
-			sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByClient, client, true);
-
-			// for debug use: DBDriver.get.getCall(0).args
-			sandbox.assert.calledOnce(DBDriver.get);
-			sandbox.assert.calledWithExactly(DBDriver.get, myClientModel, { readonly: true });
-		});
-
-		[
-			'insert',
-			'update',
-			'save',
-			'remove'
-
-		].forEach(async method => {
-
-			it(`should call DBDriver using write DB when ${method} is executed after a readonly get`, async () => {
-
-				const myClientModel = new ClientModel();
-
-				myClientModel.session = {
-					client: Promise.resolve(client)
-				};
-
-				await myClientModel.get({ readonly: true });
-
-				// for debug use: DatabaseDispatcher.getDatabaseByClient.getCall(0).args
-				sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByClient);
-				sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByClient, client, true);
-
-				await myClientModel[method]({ foo: 'bar' });
-
-				// for debug use: DatabaseDispatcher.getDatabaseByClient.getCall(2).args
-				sandbox.assert.calledTwice(DatabaseDispatcher.getDatabaseByClient);
-				sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByClient, client, false);
-			});
-		});
-
-		[
-			'multiInsert',
-			'multiSave',
-			'multiRemove'
-
-		].forEach(async method => {
-
-			it(`should call DBDriver using write DB when ${method} is executed after a readonly get`, async () => {
-
-				const myClientModel = new ClientModel();
-
-				myClientModel.session = {
-					client: Promise.resolve(client)
-				};
-
-				await myClientModel.get({ readonly: true });
-
-				// for debug use: DatabaseDispatcher.getDatabaseByClient.getCall(0).args
-				sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByClient);
-				sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByClient, client, true);
-
-				await myClientModel[method]([{ foo: 'bar' }]);
-
-				// for debug use: DatabaseDispatcher.getDatabaseByClient.getCall(2).args
-				sandbox.assert.calledTwice(DatabaseDispatcher.getDatabaseByClient);
-				sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByClient, client, false);
-			});
-		});
-	});
-
 	describe('distinct()', async () => {
 
-		it('Should reject if DB Driver does not support the distinct method', async () => {
+		it('Should reject when DB Driver does not support the distinct method', async () => {
 			await assert.rejects(() => myCoreModel.distinct('status'), {
 				code: ModelError.codes.DRIVER_METHOD_NOT_IMPLEMENTED
 			});
 		});
 
-		it('Should reject if DB Driver rejects', async () => {
+		it('Should reject when DB Driver rejects', async () => {
 
 			DBDriver.distinct = sandbox.stub();
 			DBDriver.distinct.rejects(new Error('Some internal error'));
@@ -239,31 +147,24 @@ describe('Model', () => {
 			});
 		});
 
-		it('Should resolve an array of distinct values if DB Driver resolves', async () => {
+		it('Should resolve an array of distinct values when DB Driver resolves', async () => {
 
-			DBDriver.distinct = sandbox.stub();
-			DBDriver.distinct.resolves([
-				'Value 1',
-				'Value 2'
-			]);
+			DBDriver.distinct = sandbox.stub()
+				.resolves(['Value 1', 'Value 2']);
 
 			const distinctValues = await myCoreModel.distinct('status');
 
-			sandbox.assert.calledOnce(DBDriver.distinct);
-			sandbox.assert.calledWithExactly(DBDriver.distinct, myCoreModel, {
+			sandbox.assert.calledOnceWithExactly(DBDriver.distinct, myCoreModel, {
 				key: 'status'
 			});
 
-			assert.deepEqual(distinctValues, [
-				'Value 1',
-				'Value 2'
-			]);
+			assert.deepEqual(distinctValues, ['Value 1', 'Value 2']);
 		});
 
 		it('Should pass extra params to the DB Driver', async () => {
 
-			DBDriver.distinct = sandbox.stub();
-			DBDriver.distinct.resolves([]);
+			DBDriver.distinct = sandbox.stub()
+				.resolves([]);
 
 			await myCoreModel.distinct('status', {
 				filters: {
@@ -271,8 +172,7 @@ describe('Model', () => {
 				}
 			});
 
-			sandbox.assert.calledOnce(DBDriver.distinct);
-			sandbox.assert.calledWithExactly(DBDriver.distinct, myCoreModel, {
+			sandbox.assert.calledOnceWithExactly(DBDriver.distinct, myCoreModel, {
 				filters: {
 					type: 'foo'
 				},
@@ -281,32 +181,31 @@ describe('Model', () => {
 		});
 	});
 
-	describe('getById() alias', () => {
+	describe('getById()', () => {
 
-		class MyModel extends Model { }
+		let model;
 
 		beforeEach(() => {
-			sandbox.stub(MyModel.prototype, 'get');
+			sandbox.stub(ClientModel.prototype, 'get');
+			model = new ClientModel();
 		});
 
-		it('Should pass one ID filter as the only param if second argument is not passed', async () => {
+		it('Should pass one ID filter as the only param when second argument is not passed', async () => {
 
-			const model = new MyModel();
 			await model.getById(1);
 
-			sandbox.assert.calledWithExactly(MyModel.prototype.get, {
+			sandbox.assert.calledWithExactly(ClientModel.prototype.get, {
 				filters: {
 					id: 1
 				}
 			});
 		});
 
-		it('Should pass multi ID filter as the only param if second argument is not passed', async () => {
+		it('Should pass multi ID filter as the only param when second argument is not passed', async () => {
 
-			const model = new MyModel();
 			await model.getById([1, 2]);
 
-			sandbox.assert.calledWithExactly(MyModel.prototype.get, {
+			sandbox.assert.calledWithExactly(ClientModel.prototype.get, {
 				filters: {
 					id: [1, 2]
 				}
@@ -315,10 +214,9 @@ describe('Model', () => {
 
 		it('Should merge the ID filter with the other params passed', async () => {
 
-			const model = new MyModel();
 			await model.getById(1, { limit: 10 });
 
-			sandbox.assert.calledWithExactly(MyModel.prototype.get, {
+			sandbox.assert.calledWithExactly(ClientModel.prototype.get, {
 				filters: {
 					id: 1
 				},
@@ -328,7 +226,6 @@ describe('Model', () => {
 
 		it('Should merge the ID filter with the other params passed (including other filters)', async () => {
 
-			const model = new MyModel();
 			await model.getById(1, {
 				filters: {
 					status: 'active'
@@ -336,7 +233,7 @@ describe('Model', () => {
 				limit: 10
 			});
 
-			sandbox.assert.calledWithExactly(MyModel.prototype.get, {
+			sandbox.assert.calledWithExactly(ClientModel.prototype.get, {
 				filters: {
 					status: 'active',
 					id: 1
@@ -345,14 +242,13 @@ describe('Model', () => {
 			});
 		});
 
-		it('Should return the records array if passed ID is an array', async () => {
+		it('Should return the records array when passed ID is an array', async () => {
 
-			MyModel.prototype.get.resolves([
+			ClientModel.prototype.get.resolves([
 				{ id: 1, name: 'First' },
 				{ id: 2, name: 'Second' }
 			]);
 
-			const model = new MyModel();
 			const result = await model.getById([1, 2]);
 
 			assert.deepStrictEqual(result, [
@@ -361,33 +257,30 @@ describe('Model', () => {
 			]);
 		});
 
-		it('Should return an empty array if no records are found and passed ID is an array', async () => {
+		it('Should return an empty array when no records are found and passed ID is an array', async () => {
 
-			MyModel.prototype.get.resolves([]);
+			ClientModel.prototype.get.resolves([]);
 
-			const model = new MyModel();
 			const result = await model.getById([1, 2]);
 
 			assert.deepStrictEqual(result, []);
 		});
 
-		it('Should return the first record if passed ID is not an array', async () => {
+		it('Should return the first record when passed ID is not an array', async () => {
 
-			MyModel.prototype.get.resolves([
+			ClientModel.prototype.get.resolves([
 				{ id: 1, name: 'First' }
 			]);
 
-			const model = new MyModel();
 			const result = await model.getById(1);
 
 			assert.deepStrictEqual(result, { id: 1, name: 'First' });
 		});
 
-		it('Should return null if no records are found and passed ID is not an array', async () => {
+		it('Should return null when no records are found and passed ID is not an array', async () => {
 
-			MyModel.prototype.get.resolves([]);
+			ClientModel.prototype.get.resolves([]);
 
-			const model = new MyModel();
 			const result = await model.getById(1);
 
 			assert.deepStrictEqual(result, null);
@@ -395,32 +288,31 @@ describe('Model', () => {
 
 	});
 
-	describe('getBy() alias', () => {
+	describe('getBy()', () => {
 
-		class MyModel extends Model { }
+		let model;
 
 		beforeEach(() => {
-			sandbox.stub(MyModel.prototype, 'get');
+			sandbox.stub(ClientModel.prototype, 'get');
+			model = new ClientModel();
 		});
 
-		it('Should pass one orderId filter as the only param if third argument is not passed', async () => {
+		it('Should pass one orderId filter as the only param when third argument is not passed', async () => {
 
-			const model = new MyModel();
 			await model.getBy('orderId', 1);
 
-			sandbox.assert.calledWithExactly(MyModel.prototype.get, {
+			sandbox.assert.calledWithExactly(ClientModel.prototype.get, {
 				filters: {
 					orderId: 1
 				}
 			});
 		});
 
-		it('Should pass multi orderIds filter as the only param if third argument is not passed', async () => {
+		it('Should pass multi orderIds filter as the only param when third argument is not passed', async () => {
 
-			const model = new MyModel();
 			await model.getBy('orderId', [1, 2]);
 
-			sandbox.assert.calledWithExactly(MyModel.prototype.get, {
+			sandbox.assert.calledWithExactly(ClientModel.prototype.get, {
 				filters: {
 					orderId: [1, 2]
 				}
@@ -429,10 +321,9 @@ describe('Model', () => {
 
 		it('Should merge the orderId filter with the other params passed', async () => {
 
-			const model = new MyModel();
 			await model.getBy('orderId', 1, { limit: 10 });
 
-			sandbox.assert.calledWithExactly(MyModel.prototype.get, {
+			sandbox.assert.calledWithExactly(ClientModel.prototype.get, {
 				filters: {
 					orderId: 1
 				},
@@ -442,7 +333,6 @@ describe('Model', () => {
 
 		it('Should merge the orderId filter with the other params passed (including other filters)', async () => {
 
-			const model = new MyModel();
 			await model.getBy('orderId', 1, {
 				filters: {
 					status: 'active'
@@ -450,7 +340,7 @@ describe('Model', () => {
 				limit: 10
 			});
 
-			sandbox.assert.calledWithExactly(MyModel.prototype.get, {
+			sandbox.assert.calledWithExactly(ClientModel.prototype.get, {
 				filters: {
 					status: 'active',
 					orderId: 1
@@ -461,7 +351,6 @@ describe('Model', () => {
 
 		it('Should pass the orderId filter for each condition in OR filters (array filters)', async () => {
 
-			const model = new MyModel();
 			await model.getBy('orderId', 1, {
 				filters: [
 					{ status: 'active' },
@@ -470,7 +359,7 @@ describe('Model', () => {
 				limit: 10
 			});
 
-			sandbox.assert.calledWithExactly(MyModel.prototype.get, {
+			sandbox.assert.calledWithExactly(ClientModel.prototype.get, {
 				filters: [
 					{
 						status: 'active',
@@ -485,11 +374,9 @@ describe('Model', () => {
 			});
 		});
 
-		it('Should rejects if no value is passed', async () => {
+		it('Should rejects when no value is passed', async () => {
 
-			MyModel.prototype.get.rejects([]);
-
-			const model = new MyModel();
+			ClientModel.prototype.get.rejects([]);
 
 			await assert.rejects(() => model.getBy('orderId'), {
 				name: 'ModelError',
@@ -498,14 +385,13 @@ describe('Model', () => {
 			});
 		});
 
-		it('Should return the records array if passed orderId is an array', async () => {
+		it('Should return the records array when passed orderId is an array', async () => {
 
-			MyModel.prototype.get.resolves([
+			ClientModel.prototype.get.resolves([
 				{ id: 1, orderId: 1, name: 'First' },
 				{ id: 2, orderId: 2, name: 'Second' }
 			]);
 
-			const model = new MyModel();
 			const result = await model.getBy('orderId', [1, 2]);
 
 			assert.deepStrictEqual(result, [
@@ -514,85 +400,77 @@ describe('Model', () => {
 			]);
 		});
 
-		it('Should return an empty array if no records are found and passed orderId is an array', async () => {
+		it('Should return an empty array when no records are found and passed orderId is an array', async () => {
 
-			MyModel.prototype.get.resolves([]);
+			ClientModel.prototype.get.resolves([]);
 
-			const model = new MyModel();
 			const result = await model.getBy('orderId', [1, 2]);
 
 			assert.deepStrictEqual(result, []);
 		});
 
-		it('Should return the records if passed orderId is not an array', async () => {
+		it('Should return the records when passed orderId is not an array', async () => {
 
-			MyModel.prototype.get.resolves([
+			ClientModel.prototype.get.resolves([
 				{ id: 1, orderId: 1, name: 'First' }
 			]);
 
-			const model = new MyModel();
 			const result = await model.getBy('orderId', 1);
 
 			assert.deepStrictEqual(result, [{ id: 1, orderId: 1, name: 'First' }]);
 		});
 
-		it('Should return the the first record if passed orderId and \'unique=true\' param', async () => {
+		it('Should return the the first record when passed orderId and \'unique=true\' param', async () => {
 
-			MyModel.prototype.get.resolves([
+			ClientModel.prototype.get.resolves([
 				{ id: 1, orderId: 1, name: 'First' }
 			]);
 
-			const model = new MyModel();
 			const result = await model.getBy('orderId', 1, { unique: true });
 
 			assert.deepStrictEqual(result, { id: 1, orderId: 1, name: 'First' });
 		});
 
-		it('Should return null if no records are found and passed orderId is not an array', async () => {
+		it('Should return null when no records are found and passed orderId is not an array', async () => {
 
-			MyModel.prototype.get.resolves([]);
+			ClientModel.prototype.get.resolves([]);
 
-			const model = new MyModel();
 			const result = await model.getBy('orderId', 1);
 
 			assert.deepStrictEqual(result, []);
 		});
 
-		it('Should return null if passed a empty field value', async () => {
+		it('Should return null when passed a empty field value', async () => {
 
-			MyModel.prototype.get.resolves([]);
+			ClientModel.prototype.get.resolves([]);
 
-			const model = new MyModel();
 			const result = await model.getBy();
 
 			assert.deepStrictEqual(result, null);
 		});
 
-		it('Should return null if passed a empty string field value', async () => {
+		it('Should return null when passed a empty string field value', async () => {
 
-			MyModel.prototype.get.resolves([]);
+			ClientModel.prototype.get.resolves([]);
 
-			const model = new MyModel();
 			const result = await model.getBy('');
 
 			assert.deepStrictEqual(result, null);
 		});
 
-		it('Should return null if passed a array field value', async () => {
+		it('Should return null when passed a array field value', async () => {
 
-			MyModel.prototype.get.resolves([]);
+			ClientModel.prototype.get.resolves([]);
 
-			const model = new MyModel();
 			const result = await model.getBy([1, 1]);
 
 			assert.deepStrictEqual(result, null);
 		});
 
-		it('Should return null if passed a false field value', async () => {
+		it('Should return null when passed a false field value', async () => {
 
-			MyModel.prototype.get.resolves([]);
+			ClientModel.prototype.get.resolves([]);
 
-			const model = new MyModel();
 			const result = await model.getBy(false);
 
 			assert.deepStrictEqual(result, null);
@@ -608,12 +486,8 @@ describe('Model', () => {
 			fooParam: 1
 		});
 
-		sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByKey);
-		sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByKey, 'core');
-
-		// for debug use: DBDriver.get.getCall(0).args
-		sandbox.assert.calledOnce(DBDriver.get);
-		sandbox.assert.calledWithExactly(DBDriver.get, myCoreModel, {
+		sandbox.assert.calledOnceWithExactly(DatabaseDispatcher.prototype.getDatabaseByKey, 'core', false);
+		sandbox.assert.calledOnceWithExactly(DBDriver.get, myCoreModel, {
 			fooParam: 1
 		});
 
@@ -627,13 +501,12 @@ describe('Model', () => {
 
 		const result = await myCoreModel.get();
 
-		sandbox.assert.calledOnce(DBDriver.get);
-		sandbox.assert.calledWithExactly(DBDriver.get, myCoreModel, {});
+		sandbox.assert.calledOnceWithExactly(DBDriver.get, myCoreModel, {});
 
 		assert.deepEqual(result, []);
 	});
 
-	it('Should get normaly if no \'formatGet\' method exists', async () => {
+	it('Should get normaly when no \'formatGet\' method exists', async () => {
 
 		delete myCoreModel.formatGet;
 
@@ -644,13 +517,12 @@ describe('Model', () => {
 			fooParam: 1
 		});
 
-		sandbox.assert.calledOnce(DBDriver.get);
-		sandbox.assert.calledWithExactly(DBDriver.get, myCoreModel, { fooParam: 1 });
+		sandbox.assert.calledOnceWithExactly(DBDriver.get, myCoreModel, { fooParam: 1 });
 
 		assert.deepEqual(result, [{ fooItem: 88 }]);
 	});
 
-	it('Should get normaly if no \'afterGet\' method exists', async () => {
+	it('Should get normaly when no \'afterGet\' method exists', async () => {
 
 		delete myCoreModel.afterGet;
 
@@ -661,8 +533,7 @@ describe('Model', () => {
 			fooParam: 1
 		});
 
-		sandbox.assert.calledOnce(DBDriver.get);
-		sandbox.assert.calledWithExactly(DBDriver.get, myCoreModel, { fooParam: 1 });
+		sandbox.assert.calledOnceWithExactly(DBDriver.get, myCoreModel, { fooParam: 1 });
 
 		assert.deepEqual(result, [{ fooItem: 7787 }]);
 	});
@@ -671,12 +542,8 @@ describe('Model', () => {
 
 		await myCoreModel.getTotals();
 
-		sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByKey);
-		sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByKey, 'core');
-
-		// for debug use: DBDriver.getTotals.getCall(0).args
-		sandbox.assert.calledOnce(DBDriver.getTotals);
-		sandbox.assert.calledWithExactly(DBDriver.getTotals, myCoreModel);
+		sandbox.assert.calledOnceWithExactly(DatabaseDispatcher.prototype.getDatabaseByKey, 'core', false);
+		sandbox.assert.calledOnceWithExactly(DBDriver.getTotals, myCoreModel);
 	});
 
 	['insert', 'remove'].forEach(method => {
@@ -685,12 +552,8 @@ describe('Model', () => {
 
 			await myCoreModel[method]({ foo: 'bar' });
 
-			sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByKey);
-			sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByKey, 'core');
-
-			// for debug use: DBDriver[method].getCall(0).args
-			sandbox.assert.calledOnce(DBDriver[method]);
-			sandbox.assert.calledWithExactly(DBDriver[method], myCoreModel, { foo: 'bar' });
+			sandbox.assert.calledOnceWithExactly(DatabaseDispatcher.prototype.getDatabaseByKey, 'core', false);
+			sandbox.assert.calledOnceWithExactly(DBDriver[method], myCoreModel, { foo: 'bar' });
 		});
 	});
 
@@ -698,65 +561,45 @@ describe('Model', () => {
 
 		await myCoreModel.save({ foo: 'bar' });
 
-		sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByKey);
-		sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByKey, 'core');
-
-		// for debug use: DBDriver[method].getCall(0).args
-		sandbox.assert.calledOnce(DBDriver.save);
-		sandbox.assert.calledWithExactly(DBDriver.save, myCoreModel, { foo: 'bar' }, undefined);
+		sandbox.assert.calledOnceWithExactly(DatabaseDispatcher.prototype.getDatabaseByKey, 'core', false);
+		sandbox.assert.calledOnceWithExactly(DBDriver.save, myCoreModel, { foo: 'bar' }, undefined);
 	});
 
 	it('Should call DBDriver update method passing the model and the values and filter received', async () => {
 
 		await myCoreModel.update({ status: -1 }, { foo: 'bar' });
 
-		sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByKey);
-		sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByKey, 'core');
-
-		// for debug use: DBDriver.update.getCall(0).args
-		sandbox.assert.calledOnce(DBDriver.update);
-		sandbox.assert.calledWithExactly(DBDriver.update, myCoreModel, { status: -1 }, { foo: 'bar' });
+		sandbox.assert.calledOnceWithExactly(DatabaseDispatcher.prototype.getDatabaseByKey, 'core', false);
+		sandbox.assert.calledOnceWithExactly(DBDriver.update, myCoreModel, { status: -1 }, { foo: 'bar' });
 	});
 
 	it('should call DBDriver multiInsert method passing the model and the items received', async () => {
 
 		await myCoreModel.multiInsert([{ foo: 'bar' }, { foo2: 'bar2' }]);
 
-		sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByKey);
-		sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByKey, 'core');
-
-		// for debug use: DBDriver[method].getCall(0).args
-		sandbox.assert.calledOnce(DBDriver.multiInsert);
-		sandbox.assert.calledWithExactly(DBDriver.multiInsert, myCoreModel, [{ foo: 'bar' }, { foo2: 'bar2' }]);
+		sandbox.assert.calledOnceWithExactly(DatabaseDispatcher.prototype.getDatabaseByKey, 'core', false);
+		sandbox.assert.calledOnceWithExactly(DBDriver.multiInsert, myCoreModel, [{ foo: 'bar' }, { foo2: 'bar2' }]);
 	});
 
 	it('should call DBDriver multiSave method passing the model and the items received', async () => {
 
 		await myCoreModel.multiSave([{ foo: 'bar' }, { foo2: 'bar2' }]);
 
-		sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByKey);
-		sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByKey, 'core');
-
-		// for debug use: DBDriver[method].getCall(0).args
-		sandbox.assert.calledOnce(DBDriver.multiSave);
-		sandbox.assert.calledWithExactly(DBDriver.multiSave, myCoreModel, [{ foo: 'bar' }, { foo2: 'bar2' }], undefined);
+		sandbox.assert.calledOnceWithExactly(DatabaseDispatcher.prototype.getDatabaseByKey, 'core', false);
+		sandbox.assert.calledOnceWithExactly(DBDriver.multiSave, myCoreModel, [{ foo: 'bar' }, { foo2: 'bar2' }], undefined);
 	});
 
 	it('Should call DBDriver multiRemove method passing the model and the filter received', async () => {
 
 		await myCoreModel.multiRemove({ foo: 'bar' });
 
-		sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByKey);
-		sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByKey, 'core');
-
-		// for debug use: DBDriver.multiRemove.getCall(0).args
-		sandbox.assert.calledOnce(DBDriver.multiRemove);
-		sandbox.assert.calledWithExactly(DBDriver.multiRemove, myCoreModel, { foo: 'bar' });
+		sandbox.assert.calledOnceWithExactly(DatabaseDispatcher.prototype.getDatabaseByKey, 'core', false);
+		sandbox.assert.calledOnceWithExactly(DBDriver.multiRemove, myCoreModel, { foo: 'bar' });
 	});
 
 	context('when param \'changeKeys\' received', () => {
 
-		it('Should change keys if key found in items', async () => {
+		it('Should change keys when key found in items', async () => {
 
 			DBDriver.get
 				.returns([{ id: 1, foo: 'bar' }, { id: 2, bar: 'foo' }]);
@@ -765,11 +608,8 @@ describe('Model', () => {
 				changeKeys: 'id'
 			});
 
-			sandbox.assert.calledOnce(DBDriver.get);
-			sandbox.assert.calledWithExactly(DBDriver.get, myCoreModel, { changeKeys: 'id' });
-
-			sandbox.assert.calledOnce(Model.changeKeys);
-			sandbox.assert.calledWithExactly(Model.changeKeys, [{ id: 1, foo: 'bar' }, { id: 2, bar: 'foo' }], 'id');
+			sandbox.assert.calledOnceWithExactly(DBDriver.get, myCoreModel, { changeKeys: 'id' });
+			sandbox.assert.calledOnceWithExactly(Model.changeKeys, [{ id: 1, foo: 'bar' }, { id: 2, bar: 'foo' }], 'id');
 
 			assert.deepEqual(result, {
 				1: { id: 1, foo: 'bar' },
@@ -786,11 +626,8 @@ describe('Model', () => {
 				changeKeys: 'id'
 			});
 
-			sandbox.assert.calledOnce(DBDriver.get);
-			sandbox.assert.calledWithExactly(DBDriver.get, myCoreModel, { changeKeys: 'id' });
-
-			sandbox.assert.calledOnce(Model.changeKeys);
-			sandbox.assert.calledWithExactly(Model.changeKeys, [{ foo: 'bar' }, { bar: 'foo' }], 'id');
+			sandbox.assert.calledOnceWithExactly(DBDriver.get, myCoreModel, { changeKeys: 'id' });
+			sandbox.assert.calledOnceWithExactly(Model.changeKeys, [{ foo: 'bar' }, { bar: 'foo' }], 'id');
 
 			assert.deepEqual(result, {});
 		});
@@ -809,8 +646,7 @@ describe('Model', () => {
 
 		const result = await myCoreModel.get();
 
-		sandbox.assert.calledOnce(DBDriver.get);
-		sandbox.assert.calledWithExactly(DBDriver.get, myCoreModel, {});
+		sandbox.assert.calledOnceWithExactly(DBDriver.get, myCoreModel, {});
 
 		sandbox.assert.calledTwice(myCoreModel.formatGet);
 		sandbox.assert.calledWithExactly(myCoreModel.formatGet.getCall(0), { fooItem: 2 });
@@ -829,11 +665,8 @@ describe('Model', () => {
 
 		const result = await myCoreModel.get();
 
-		sandbox.assert.calledOnce(DBDriver.get);
-		sandbox.assert.calledWithExactly(DBDriver.get, myCoreModel, {});
-
-		sandbox.assert.calledOnce(myCoreModel.afterGet);
-		sandbox.assert.calledWithExactly(myCoreModel.afterGet, [{ foo: 1 }, { bar: 2 }], {}, {}, []);
+		sandbox.assert.calledOnceWithExactly(DBDriver.get, myCoreModel, {});
+		sandbox.assert.calledOnceWithExactly(myCoreModel.afterGet, [{ foo: 1 }, { bar: 2 }], {}, {}, []);
 
 		assert.deepEqual(result, [{ foo: 1 }, { bar: 2 }]);
 	});
@@ -845,18 +678,15 @@ describe('Model', () => {
 
 		const result = await myCoreModel.get({ extraParam: true });
 
-		sandbox.assert.calledOnce(DBDriver.get);
-		sandbox.assert.calledWithExactly(DBDriver.get, myCoreModel, { extraParam: true });
-
-		sandbox.assert.calledOnce(myCoreModel.afterGet);
-		sandbox.assert.calledWithExactly(myCoreModel.afterGet, [{ id: 33, foo: 45 }, { id: 78, bar: 987 }], { extraParam: true }, { 33: 0, 78: 1 }, [33, 78]); // eslint-disable-line
+		sandbox.assert.calledOnceWithExactly(DBDriver.get, myCoreModel, { extraParam: true });
+		sandbox.assert.calledOnceWithExactly(myCoreModel.afterGet, [{ id: 33, foo: 45 }, { id: 78, bar: 987 }], { extraParam: true }, { 33: 0, 78: 1 }, [33, 78]); // eslint-disable-line max-len
 
 		assert.deepEqual(result, [{ id: 33, foo: 45 }, { id: 78, bar: 987 }]);
 	});
 
 	context('when call \'getPaged\' method', () => {
 
-		it('Should reject if received an invalid callback', async () => {
+		it('Should reject when received an invalid callback', async () => {
 
 			const wrongCallbackError = {
 				name: 'ModelError',
@@ -876,15 +706,14 @@ describe('Model', () => {
 			await Promise.all(promises);
 		});
 
-		it('Shouldn\'t call the callback if get response empty results', async () => {
+		it('Shouldn\'t call the callback when get response empty results', async () => {
 
 			sandbox.stub(myCoreModel, 'get')
 				.returns([]);
 
 			await myCoreModel.getPaged({}, getPagedCallback);
 
-			sandbox.assert.calledOnce(myCoreModel.get);
-			sandbox.assert.calledWithExactly(myCoreModel.get, {
+			sandbox.assert.calledOnceWithExactly(myCoreModel.get, {
 				page: 1,
 				limit: Model.defaultPageLimit
 			});
@@ -892,7 +721,7 @@ describe('Model', () => {
 			sandbox.assert.notCalled(getPagedCallback);
 		});
 
-		it('Should call the callback one time if get response an array of items, passing custom limit', async () => {
+		it('Should call the callback one time when get response an array of items, passing custom limit', async () => {
 
 			sandbox.stub(myCoreModel, 'get')
 				.onCall(0)
@@ -904,21 +733,11 @@ describe('Model', () => {
 			await myCoreModel.getPaged({ limit: 2 }, getPagedCallback);
 
 			sandbox.assert.calledTwice(myCoreModel.get);
-
-			sandbox.assert.calledWithExactly(myCoreModel.get.getCall(0), {
-				page: 1,
-				limit: 2
-			});
-
-			sandbox.assert.calledWithExactly(myCoreModel.get.getCall(1), {
-				page: 2,
-				limit: 2
-			});
+			sandbox.assert.calledWithExactly(myCoreModel.get.getCall(0), { page: 1, limit: 2 });
+			sandbox.assert.calledWithExactly(myCoreModel.get.getCall(1), { page: 2, limit: 2 });
 
 			sandbox.assert.calledTwice(getPagedCallback);
-
 			sandbox.assert.calledWithExactly(getPagedCallback.getCall(0), [{ foo: 1 }, { bar: 2 }], 1, 2);
-
 			sandbox.assert.calledWithExactly(getPagedCallback.getCall(1), [{ foo: 5 }], 2, 2);
 		});
 	});
@@ -931,6 +750,7 @@ describe('Model', () => {
 		const userModified = userCreated;
 
 		myClientModel.session = {
+			...fakeSession,
 			clientCode: 'some-client',
 			userId: 'some-user-id'
 		};
@@ -1005,8 +825,7 @@ describe('Model', () => {
 
 				await myClientModel.multiInsert([{ some: 'data' }, null]);
 
-				sandbox.assert.calledOnce(Log.add);
-				sandbox.assert.calledWithExactly(Log.add, 'some-client', [
+				sandbox.assert.calledOnceWithExactly(Log.add, 'some-client', [
 					{
 						type: 'inserted',
 						entity: 'client',
@@ -1191,7 +1010,7 @@ describe('Model', () => {
 				});
 			});
 
-			it('Should reject if DB not support method', async () => {
+			it('Should reject when DB not support method', async () => {
 				delete DBDriver.increment;
 
 				await assert.rejects(myClientModel.increment({ id: 'some-id' }, { quantity: 1 }), {
@@ -1267,8 +1086,7 @@ describe('Model', () => {
 				DBDriver.multiSave.returns();
 				await myClientModel.multiSave([{ id: 'some-id' }, null]);
 
-				sandbox.assert.calledOnce(Log.add);
-				sandbox.assert.calledWithExactly(Log.add, 'some-client', [
+				sandbox.assert.calledOnceWithExactly(Log.add, 'some-client', [
 					{
 						type: 'upserted',
 						entity: 'client',
@@ -1289,7 +1107,7 @@ describe('Model', () => {
 
 		].forEach(method => {
 
-			it(`Shouldn't log if ${method} does not receive items/filters`, async () => {
+			it(`Shouldn't log when ${method} does not receive items/filters`, async () => {
 
 				DBDriver[method].returns();
 				await myClientModel[method]();
@@ -1303,6 +1121,7 @@ describe('Model', () => {
 		const myClientModel = new ClientModel();
 
 		myClientModel.session = {
+			...fakeSession,
 			clientCode: 'some-client',
 			userId: 'some-user-id'
 		};
@@ -1342,6 +1161,7 @@ describe('Model', () => {
 		const myClientModel = new ClientModel();
 
 		myClientModel.session = {
+			...fakeSession,
 			clientCode: 'some-client',
 			userId: 'some-user-id'
 		};
@@ -1377,15 +1197,13 @@ describe('Model', () => {
 
 				await myCoreModel[method](...args);
 
-				sandbox.assert.calledOnce(DatabaseDispatcher.getDatabaseByKey);
-				sandbox.assert.calledWithExactly(DatabaseDispatcher.getDatabaseByKey, 'core');
+				sandbox.assert.calledOnce(DatabaseDispatcher.prototype.getDatabaseByKey);
+				sandbox.assert.calledWithExactly(DatabaseDispatcher.prototype.getDatabaseByKey, 'core', false);
 
-				// for debug use: DBDriver.getTotals.getCall(0).args
-				sandbox.assert.calledOnce(DBDriver[method]);
-				sandbox.assert.calledWithExactly(DBDriver[method], myCoreModel, ...args);
+				sandbox.assert.calledOnceWithExactly(DBDriver[method], myCoreModel, ...args);
 			});
 
-			it('Should reject if DB not support method', async () => {
+			it('Should reject when DB not support method', async () => {
 				delete DBDriver[method];
 
 				await assert.rejects(myCoreModel[method](...args), {
@@ -1397,21 +1215,20 @@ describe('Model', () => {
 
 	describe('Map ID By References IDs', () => {
 
-		it('Should reject if Reference Ids is not an Array', async () => {
+		it('Should reject when Reference Ids is not an Array', async () => {
 			await assert.rejects(myCoreModel.mapIdByReferenceId(), { code: ModelError.codes.INVALID_VALUE });
 			await assert.rejects(myCoreModel.mapIdByReferenceId('refId'), { code: ModelError.codes.INVALID_VALUE });
 			await assert.rejects(myCoreModel.mapIdByReferenceId({ refId: 'refId' }), { code: ModelError.codes.INVALID_VALUE });
 			await assert.rejects(myCoreModel.mapIdByReferenceId(1000), { code: ModelError.codes.INVALID_VALUE });
 		});
 
-		it('Should return empty object if ReferenceId is an empty Array', async () => {
+		it('Should return empty object when ReferenceId is an empty Array', async () => {
 
 			DBDriver.get.returns([]);
 
 			assert.deepStrictEqual(await myCoreModel.mapIdByReferenceId([]), {});
 
-			sandbox.assert.calledOnce(DBDriver.get);
-			sandbox.assert.calledWithExactly(DBDriver.get, myCoreModel, { filters: { referenceId: [] } });
+			sandbox.assert.calledOnceWithExactly(DBDriver.get, myCoreModel, { filters: { referenceId: [] } });
 		});
 
 		it('Should return object with referenceId key and Id value', async () => {
@@ -1423,11 +1240,10 @@ describe('Model', () => {
 				'other-ref-id': 'other-id'
 			});
 
-			sandbox.assert.calledOnce(DBDriver.get);
-			sandbox.assert.calledWithExactly(DBDriver.get, myCoreModel, { filters: { referenceId: ['some-ref-id', 'other-ref-id'] } });
+			sandbox.assert.calledOnceWithExactly(DBDriver.get, myCoreModel, { filters: { referenceId: ['some-ref-id', 'other-ref-id'] } });
 		});
 
-		it('Should return object with referenceId key and Id value if referenceId match', async () => {
+		it('Should return object with referenceId key and Id value when referenceId match', async () => {
 
 			DBDriver.get.returns([{ id: 'some-id', referenceId: 'some-ref-id' }]);
 
@@ -1435,8 +1251,7 @@ describe('Model', () => {
 				'some-ref-id': 'some-id'
 			});
 
-			sandbox.assert.calledOnce(DBDriver.get);
-			sandbox.assert.calledWithExactly(DBDriver.get, myCoreModel, { filters: { referenceId: ['some-ref-id', 'foo-ref-id'] } });
+			sandbox.assert.calledOnceWithExactly(DBDriver.get, myCoreModel, { filters: { referenceId: ['some-ref-id', 'foo-ref-id'] } });
 		});
 	});
 });
