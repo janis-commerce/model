@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- `hasReadDB` method
+- `database-dispatcher` as a helper instead a package dependency
+
+### Changed
+- Database connection settings structure for core and client models
+
+### Removed
+- `database-dispatcher` package dependency
 
 ## [4.1.0] - 2020-05-19
 ### Removed

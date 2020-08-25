@@ -1197,9 +1197,7 @@ describe('Model', () => {
 
 				await myCoreModel[method](...args);
 
-				sandbox.assert.calledOnce(DatabaseDispatcher.prototype.getDatabaseByKey);
-				sandbox.assert.calledWithExactly(DatabaseDispatcher.prototype.getDatabaseByKey, 'core', false);
-
+				sandbox.assert.calledOnceWithExactly(DatabaseDispatcher.prototype.getDatabaseByKey, 'core', false);
 				sandbox.assert.calledOnceWithExactly(DBDriver[method], myCoreModel, ...args);
 			});
 
