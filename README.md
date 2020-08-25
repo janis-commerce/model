@@ -1,7 +1,8 @@
 # model
 
-[![Build Status](https://travis-ci.org/janis-commerce/model.svg?branch=master)](https://travis-ci.org/janis-commerce/model)
+![Build Status](https://github.com/janis-commerce/model/workflows/Build%20Status/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/github/janis-commerce/model/badge.svg?branch=master)](https://coveralls.io/github/janis-commerce/model?branch=master)
+[![npm version](https://badge.fury.io/js/%40janiscommerce%2Fmodel.svg)](https://www.npmjs.com/package/@janiscommerce/model)
 
 ## 📦 Installation
 ```sh
