@@ -1,6 +1,6 @@
 {
   "name": "@janiscommerce/model",
-  "version": "4.1.0",
+  "version": "5.0.0",
   "description": "A package for managing Janis Models",
   "main": "lib/model.js",
   "scripts": {
@@ -18,13 +18,13 @@
   "license": "ISC",
   "homepage": "https://github.com/janis-commerce/model.git#readme",
   "devDependencies": {
-    "eslint": "^6.8.0",
+    "eslint": "^7.7.0",
     "eslint-config-airbnb-base": "^13.1.0",
     "eslint-plugin-import": "^2.20.2",
     "husky": "^4.2.5",
     "mocha": "^7.1.1",
-    "nyc": "^15.0.1",
-    "sinon": "^7.3.2",
+    "nyc": "^15.1.0",
+    "sinon": "^9.0.3",
     "mock-require": "^3.0.3"
   },
   "files": [
@@ -34,7 +34,7 @@
     "test": "tests"
   },
   "dependencies": {
-    "@janiscommerce/log": "^3.2.0",
+    "@janiscommerce/log": "^3.3.0",
     "@janiscommerce/settings": "^1.0.1",
     "lodash.omit": "4.5.0",
     "md5": "^2.3.0"
