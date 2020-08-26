@@ -13,7 +13,7 @@ npm install @janiscommerce/model
 In order to use this package with a DB, you must to add the database connection settings, it can be setted in service settings *`janiscommercerc.json`* **(Core model)** or in session **(Client Model)**.
 
 #### Configure database connection with `databaseKey`
-Regardless if you use a *Core* or *Client* model you should set the `databaseKey` that your model will use to get the database connection settings. Default: `'default'`.
+Regardless if you use a *Core* or *Client* model you may set the `databaseKey` that your model will use to get the database connection settings. Default: `'default'`.
 
 ```js
 class MyModel extends Model {
@@ -46,9 +46,11 @@ class MyModel extends Model {
 }
 ```
 
+### :information_source: Model types
+There are two different model types:
 
 <details>
-	<summary><h3 style="display: inline;">🛠 Setting up a core model</h3></summary>
+	<summary>🛠 <b>Core:</b> Intended for internal databases that manages common data between clients.</summary>
 
 #### :one: Set the `databaseKey` in your Model extended class
 
@@ -61,7 +63,7 @@ class MyModel extends Model {
 }
 ```
 
-#### :two: Model will try to find your databaseKey in database service settings
+#### :two: Model will try to find your `databaseKey` in database service settings
 
 Using [Settings](https://www.npmjs.com/package/@janiscommerce/settings), with settings in file `/path/to/root/.janiscommercerc.json`:
 
@@ -81,7 +83,7 @@ Using [Settings](https://www.npmjs.com/package/@janiscommerce/settings), with se
 </details>
 
 <details>
-	<summary><h3 style="display: inline;">👥 Setting up a client model</h3></summary>
+	<summary>👥 <b>Client:</b> Intended for only client databases that not shares data with other databases.</summary>
 
 #### 💉 Session injection
 The session injection is useful when you have a dedicated database per client.
@@ -155,17 +157,17 @@ Returns an `object` with the default statuses (`active` / `inactive`)
 ### :inbox_tray: Setters
 
 * **useReadDB** `[Boolean]` (*class setter*)
-Set if model should use the read DB in all methods that reads data from DB. (Same as using `{ readonly: true }` param in read methods). Default: `false`.
+Set if model should use the read DB in all read/write DB operations. Default: `false`.
 
 ---
 
 ## :gear: API
 
+### async `getDb()`
 <details>
-	<summary><h4 style="display:inline;font-weight:400;"><b style="color:darkmagenta;">async</b> <tt>getDb()</tt></summary>
+	<summary>Get the configured/sessionated DBDriver instance to use methods not supported by model.</summary>
 
-- Get the configured/sessionated DBDriver instance to use methods not supported by model.
-
+#### Example:
 ```js
 const dbDriver = await myModel.getDb();
 
@@ -173,63 +175,67 @@ await myModel.dbDriver.specialMethod(myModel);
 ```
 </details>
 
+### async `hasReadDB()`
 <details>
-	<summary><h4 style="display: inline;font-weight:400;"><b style="color:darkmagenta;">async</b> <tt>hasReadDB()</tt></h4></summary>
+	<summary>Returns <tt>true</tt> if the model databaseKey has a read DB available in settings, <tt>false</tt> otherwise or if the model is a core model.</summary>
 
-- Returns `true` if the model databaseKey has a read DB available in settings, `false` otherwise or if the model is a core model.
-
+#### Example:
 ```js
 const hasReadDB = await myModel.hasReadDB();
 ```
 </details>
 
+### async  `get(params)`
 <details>
-	<summary><h4 style="display: inline;font-weight:400;"><b style="color:darkmagenta;">async</b> <tt>get(params)</tt></h4></summary>
+	<summary>Returns items from database.</summary>
 
-- Returns items from database
+#### Parameters
+- `params` is an optional Object with filters, order, paginator.
 
-`params` is an optional Object with filters, order, paginator.
-
+#### Example
 ```js
 const items = await myModel.get({ filters: { status: 'active' } });
 ```
 </details>
 
+### async  `getById(id, [params])`
 <details>
-	<summary><h4 style="display: inline;font-weight:400;"><b style="color:darkmagenta;">async</b> <tt>getById(id, [params])</tt></h4></summary>
+	<summary>It's an alias of <tt>get()</tt>, passing and ID as filter and handling return value as an array if <tt>id</tt> is an array, or an object otherwise.</summary>
 
-- It's an alias of get(), passing and ID as filter and handling return value as an array if `id` is an array, or an object otherwise.
+#### Parameters
+- `id` is required. It can be one ID or an array of IDs
+- `params` is an optional Object with filters, order, paginator, changeKeys.
 
-`id` is required. It can be one ID or an array of IDs
-`params` is an optional Object with filters, order, paginator, changeKeys.
-
+#### Example
 ```js
 const items = await myModel.getById(123, { filters: { status: 'active' } });
 ```
 </details>
 
+### async  `getBy(field, id, [params])`
 <details>
-	<summary><h4 style="display: inline;font-weight:400;"><b style="color:darkmagenta;">async</b> <tt>getBy(field, id, [params])</tt></h4></summary>
+	<summary>It's an alias of <tt>get()</tt>, passing and field and the values of that field as filter and handling return value as an array if <tt>value</tt> is an array, or an object otherwise.</summary>
 
-- It's an alias of get(), passing and field and the values of that field as filter and handling return value as an array if `value` is an array, or an object otherwise.
+#### Parameters
+- `field` is required. A string as a field
+- `value` is required. It can be one value or an array of values
+- `params` is an optional Object with filters, order, paginator.
 
-`field` is required. A string as a field
-`value` is required. It can be one value or an array of values
-`params` is an optional Object with filters, order, paginator.
-
+#### Example
 ```js
 const items = await myModel.getBy(orderId, 123, { filters: { status: 'active' } });
 ```
 </details>
 
+### async  `getPaged(params, callback)`
 <details>
-	<summary><h4 style="display: inline;font-weight:400;"><b style="color:darkmagenta;">async</b> <tt>getPaged(params, callback)</tt></h4></summary>
+	<summary>Returns items from database using pages, the default limit is 500 items per page.</summary>
 
-- Returns items from database using pages, the default limit is 500 items per page.
+#### Parameters
+- `params` See get() method
+- `callback` A function to be executed for each page. Receives three arguments: the items found, the current page and the page limit
 
-`params` See get() method
-`callback` A function to be executed for each page. Receives three arguments: the items found, the current page and the page limit
-
+#### Example
 ```js
 await myModel.getPaged({ filters: { status: 'active' } }, (items, page, limit) => {
 	// items is an array with the result from DB
@@ -237,17 +243,17 @@ await myModel.getPaged({ filters: { status: 'active' } }, (items, page, limit) =
 ```
 </details>
 
+### async  `getTotals()`
 <details>
-	<summary><h4 style="display: inline;font-weight:400;"><b style="color:darkmagenta;">async</b> <tt>getTotals()</tt></h4></summary>
+	<summary>After performing a <tt>get()</tt> sometimes you need data of totals. This method returns an object with that information.</summary>
 
-- After performing a `get()` sometimes you need data of totals. This method returns an object with that information.
+#### Result object structure:
+- **pages**: The total pages for the filters applied
+- **page**: The current page
+- **limit**: The limit applied in get
+- **total**: The total number of items in DB for the applied filters
 
-Result object structure:
-**pages**: The total pages for the filters applied
-**page**: The current page
-**limit**: The limit applied in get
-**total**: The total number of items in DB for the applied filters
-
+#### Example
 ```js
 await myModel.get({ filters: { status: 'active' } });
 const totals = await myModel.getTotals();
@@ -263,13 +269,14 @@ const totals = await myModel.getTotals();
 ```
 </details>
 
+### async  `mapIdByReferenceId(referencesIds)`
 <details>
-	<summary><h4 style="display: inline;font-weight:400;"><b style="color:darkmagenta;">async</b> <tt>mapIdByReferenceId(referencesIds)</tt></h4></summary>
+	<summary>Search all References Ids and return an Object with key: <tt>referenceIds</tt> and values: <tt>id</tt>, only those founds.</summary>
 
-- Search all References Ids and return an Object with key: `referenceIds` and values: `id`, only those founds.
-- **referencesIds**: `Array<strings>` List of References Ids
+#### Parameters
+- `referencesIds` List of References Ids (`Array<strings>`)
 
-
+#### Example
 ```js
 await myModel.mapIdByReferenceId(['some-ref-id', 'other-ref-id', 'foo-ref-id']);
 
@@ -282,13 +289,14 @@ await myModel.mapIdByReferenceId(['some-ref-id', 'other-ref-id', 'foo-ref-id']);
 ```
 </details>
 
+### async  `distinct(key, params)`
 <details>
-	<summary><h4 style="display: inline;font-weight:400;"><b style="color:darkmagenta;">async</b> <tt>distinct(key, params)</tt></h4></summary>
+	<summary>Returns unique values of the key field from database.</summary>
 
-- Returns unique values of the key field from database
+#### Parameters
+- `params` is an optional Object with filters.
 
-`params` is an optional Object with filters.
-
+#### Examples
 ```js
 const uniqueValues = await myModel.distinct('status');
 ```
@@ -302,11 +310,11 @@ const uniqueValues = await myModel.distinct('status', {
 ```
 </details>
 
+### async  `insert(item)`
 <details>
-	<summary><h4 style="display: inline;font-weight:400;"><b style="color:darkmagenta;">async</b> <tt>insert(item)</tt></h4></summary>
+	<summary>Inserts an item in DB. This method is only for insert, will not perform an update.</summary>
 
-- Inserts an item in DB. This method is only for insert, will not perform an update.
-
+#### Example
 ```js
 await myModel.insert({ foo: 'bar' });
 
@@ -324,12 +332,14 @@ const items = await myModel.get({ filters: { foo: 'bar' }});
 ```
 </details>
 
+### async  `save(item, setOnInsert)`
 <details>
-	<summary><h4 style="display: inline;font-weight:400;"><b style="color:darkmagenta;">async</b> <tt>save(item, setOnInsert)</tt></h4></summary>
+	<summary>Inserts/updates an item in DB. This method will perfrom an upsert.</summary>
 
-- Inserts/updates an item in DB. This method will perfrom an upsert.
+#### Parameters
 - `setOnInsert` to add default values on Insert, optional
 
+#### Example
 ```js
 await myModel.save({ foo: 'bar' }, { status: 'active' });
 
@@ -348,22 +358,22 @@ const items = await myModel.get({ filters: { foo: 'bar' }});
 ```
 </details>
 
+### async  `update(values, filter)`
 <details>
-	<summary><h4 style="display: inline;font-weight:400;"><b style="color:darkmagenta;">async</b> <tt>update(values, filter)</tt></h4></summary>
+	<summary>Update items that match with the <tt>filter</tt>.</summary>
 
-- Update items that match with the `filter`.
-
+#### Example
 ```js
 await myModel.update({ updated: 1 }, { status: 5 });
 // will set updated = 1 for the items that has status = 5
 ```
 </details>
 
+### async  `remove(item)`
 <details>
-	<summary><h4 style="display: inline;font-weight:400;"><b style="color:darkmagenta;">async</b> <tt>remove(item)</tt></h4></summary>
+	<summary>Remove an item from DB.</summary>
 
-- Remove an item from DB.
-
+#### Example
 ```js
 await myModel.remove({ foo: 'bar' });
 
@@ -376,11 +386,12 @@ const items = await myModel.get({ filters: { foo: 'bar' }});
 ```
 </details>
 
+### async  `multiInsert(items)`
 <details>
-	<summary><h4 style="display: inline;font-weight:400;"><b style="color:darkmagenta;">async</b> <tt>multiInsert(items)</tt></h4></summary>
+	<summary>Perform a bulk insert of items in DB. This action will insert elements, and will not update elements.
+</summary>
 
-- Perform a bulk insert of items in DB. This action will insert elements, and will not update elements.
-
+#### Example
 ```js
 await myModel.multiInsert([{ foo: 1 }, { foo: 2 }]);
 
@@ -396,12 +407,14 @@ const items = await myModel.get();
 ```
 </details>
 
+### async  `multiSave(items, setOnInsert)`
 <details>
-	<summary><h4 style="display: inline;font-weight:400;"><b style="color:darkmagenta;">async</b> <tt>multiSave(items, setOnInsert)</tt></h4></summary>
+	<summary>Perform a bulk save of items in DB. This action will insert/update (upsert) elements.</summary>
 
-- Perform a bulk save of items in DB. This action will insert/update (upsert) elements.
+#### Parameters
 - `setOnInsert` to add default values on Insert, optional
 
+#### Example
 ```js
 await myModel.multiSave([{ foo: 1 }, { foo: 2, status: 'pending' }], { status: 'active' });
 
@@ -417,11 +430,11 @@ const items = await myModel.get();
 ```
 </details>
 
+### async  `multiRemove(filter)`
 <details>
-	<summary><h4 style="display: inline;font-weight:400;"><b style="color:darkmagenta;">async</b> <tt>multiRemove(filter)</tt></h4></summary>
+	<summary>Perform a bulk remove of items in DB.</summary>
 
-- Perform a bulk remove of items in DB.
-
+#### Example
 ```js
 await myModel.multiRemove({ status: 2 });
 
@@ -434,11 +447,11 @@ const items = await myModel.get({ filters: { status: 2 }});
 ```
 </details>
 
+### async  `increment(filters, incrementData)`
 <details>
-	<summary><h4 style="display: inline;font-weight:400;"><b style="color:darkmagenta;">async</b> <tt>increment(filters, incrementData)</tt></h4></summary>
+	<summary>Increment/decrement values from an item in DB. This method will not perfrom an upsert.</summary>
 
-- Increment/decrement values from an item in DB. This method will not perfrom an upsert.
-
+#### Example
 ```js
 await myModel.increment({ uniqueIndex: 'bar' }, { increment: 1, decrement: -1 });
 
@@ -467,13 +480,15 @@ after:
 ```
 </details>
 
+### static  `changeKeys(items, newKey)`
 <details>
-	<summary><h4 style="display: inline;font-weight:400;"><b style="color:darkred;">static</b> <tt>changeKeys(items, newKey)</tt></h4></summary>
+	<summary>Creates an <tt>object</tt> list from the received array of items, using the specified field as keys.</summary>
 
-- Creates an `object` list from the received array of items, using the specified field as keys.
+#### Parameters
 - `items` The items array
 - `newKey` The common field in items that will be used as key for each item
 
+#### Example
 ```js
 const myItems = await myModel.get();
 
@@ -508,14 +523,16 @@ const myItems = await myModel.get({ changeKeys: 'some' });
 ```
 </details>
 
+---
+
 ### :bookmark_tabs: Indexes Manipulation 
-##### :warning: Only if database supports it
+##### :warning: Only if DB Driver supports it
 
+### async `getIndexes()`
 <details>
-	<summary><h4 style="display:inline;font-weight:400;"><b style="color:darkmagenta;">async</b> <tt>getIndexes()</tt></summary>
+	<summary>Get an <i>array</i> of indexes in Database table.</summary>
 
-- Get an *array* of indexes in Database table
-
+### Example
 ```js
 await myModel.getIndexes();
 
@@ -528,45 +545,47 @@ await myModel.getIndexes();
 ```
 </details>
 
+### async `createIndex(index)`
 <details>
-	<summary><h4 style="display:inline;font-weight:400;"><b style="color:darkmagenta;">async</b> <tt>createIndex(index)</tt></summary>
+	<summary>Create a single index in Database Table.</summary>
 
-- Create a single index in Database Table.
-
+#### Example
 ```js
 await myModel.createIndex({ name: 'name', key: { name: 1}, unique: true });
 ```
 </details>
 
+### async `createIndexes(indexes)`
 <details>
-	<summary><h4 style="display:inline;font-weight:400;"><b style="color:darkmagenta;">async</b> <tt>createIndexes(indexes)</tt></summary>
+	<summary>Create a multiple indexes in Database Table.</summary>
 
-- Create a multiple indexes in Database Table.
-
+#### Example
 ```js
 await myModel.createIndexes([{ name: 'name', key: { name: 1}, unique: true }, { name: 'code', key: { code: -1 }}]);
 ```
 </details>
 
+### async `dropIndex(name)`
 <details>
-	<summary><h4 style="display:inline;font-weight:400;"><b style="color:darkmagenta;">async</b> <tt>dropIndex(name)</tt></summary>
+	<summary>Drop a single in Database Table.</summary>
 
-- Drop a single in Database Table.
-
+#### Example
 ```js
 await myModel.dropIndex('name');
 ```
 </details>
 
+### async `dropIndexes(names)`
 <details>
-	<summary><h4 style="display:inline;font-weight:400;"><b style="color:darkmagenta;">async</b> <tt>dropIndexes(names)</tt></summary>
+	<summary>Drop multiple indexes in Database Table.</summary>
 
-- Drop multiple indexes in Database Table.
-
+#### Example
 ```js
 await myModel.dropIndexes(['name', 'code']);
 ```
 </details>
+
+---
 
 ## :clipboard: Logging
 This package automatically logs any write operation such as:
@@ -579,7 +598,11 @@ This package automatically logs any write operation such as:
 - remove
 - multiRemove
 
-#### You can disable this functionality by setting the `static getter` `shouldCreateLogs` to false:
+### :no_mouth: Disabling automatic logging
+<details>
+	<summary>You can disable this functionality by setting the <tt>static getter shouldCreateLogs</tt> to <tt>false</tt>.</summary>
+
+#### Example
 ```js
 class MyModel extends Model {
 
@@ -589,9 +612,11 @@ class MyModel extends Model {
 }
 
 ```
+</details>
 
-### Excluding fields from logs
-You can exclude fields for logs in case you have sensitive information in your entries such as passwords, addresses, etc.
+### :no_entry_sign: Excluding fields from logs
+<details>
+	<summary>You can exclude fields for logs in case you have sensitive information in your entries such as passwords, addresses, etc.</summary>
 
 #### Specify the fields to exclude by setting them in the `static getter` `excludeFieldsInLog`:
 ```js
@@ -626,5 +651,5 @@ It will be logged as:
 	user: 'johndoe',
 	contry: 'AR'
 }
-
 ```
+</details>

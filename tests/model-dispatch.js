@@ -2,7 +2,6 @@
 
 const assert = require('assert');
 const mockRequire = require('mock-require');
-const path = require('path');
 const sandbox = require('sinon').createSandbox();
 
 const Settings = require('@janiscommerce/settings');
@@ -111,7 +110,7 @@ describe('Model', () => {
 		}
 
 		const databaseMock = dbDriverMock => {
-			mockRequire(path.join(process.cwd(), 'node_modules', DatabaseDispatcher.prototype.scope, 'mongodb'), dbDriverMock || DBDriverMock);
+			mockRequire(`${DatabaseDispatcher.prototype.scope}/mongodb`, dbDriverMock || DBDriverMock);
 		};
 
 		const assertDbDriverConfig = async (model, config) => {
@@ -136,7 +135,6 @@ describe('Model', () => {
 		});
 
 		describe('DBDriver dispatching', () => {
-
 
 			it('Should reject when model haven\'t a client injected or databaseKey getter', async () => {
 
@@ -222,7 +220,7 @@ describe('Model', () => {
 				'save',
 				'remove'
 
-			].forEach(async method => {
+			].forEach(method => {
 
 				it(`should call DBDriver using write DB when ${method} is executed after a readonly get`, async () => {
 
@@ -238,7 +236,6 @@ describe('Model', () => {
 					await myClientModel[method]({ foo: 'bar' });
 
 					await assertDbDriverConfig(myClientModel, client.databases.default.write);
-
 				});
 			});
 
@@ -247,7 +244,7 @@ describe('Model', () => {
 				'multiSave',
 				'multiRemove'
 
-			].forEach(async method => {
+			].forEach(method => {
 
 				it(`should call DBDriver using write DB when ${method} is executed after a readonly get`, async () => {
 
