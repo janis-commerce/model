@@ -82,7 +82,8 @@ describe('Model', () => {
 			createIndexes: sandbox.stub(),
 			createIndex: sandbox.stub(),
 			dropIndex: sandbox.stub(),
-			dropIndexes: sandbox.stub()
+			dropIndexes: sandbox.stub(),
+			dropDatabase: sandbox.stub()
 		};
 
 		sandbox.stub(Settings, 'get')
@@ -1207,6 +1208,25 @@ describe('Model', () => {
 				await assert.rejects(myCoreModel[method](...args), {
 					code: ModelError.codes.DRIVER_METHOD_NOT_IMPLEMENTED
 				});
+			});
+		});
+	});
+
+	describe('DB Methods', () => {
+
+		it('Should call DBDriver dropDatabase method passing the model', async () => {
+
+			await myCoreModel.dropDatabase();
+
+			sandbox.assert.calledOnceWithExactly(DatabaseDispatcher.prototype.getDatabaseByKey, 'core', false);
+			sandbox.assert.calledOnceWithExactly(DBDriver.dropDatabase, myCoreModel);
+		});
+
+		it('Should reject when DB not support method', async () => {
+			delete DBDriver.dropDatabase;
+
+			await assert.rejects(myCoreModel.dropDatabase(), {
+				code: ModelError.codes.DRIVER_METHOD_NOT_IMPLEMENTED
 			});
 		});
 	});
