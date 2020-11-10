@@ -523,6 +523,16 @@ const myItems = await myModel.get({ changeKeys: 'some' });
 ```
 </details>
 
+### async `dropDatabase()`
+<details>
+	<summary>Drop the Database.</summary>
+
+#### Example
+```js
+await myModel.dropDatabase();
+```
+</details>
+
 ---
 
 ### :bookmark_tabs: Indexes Manipulation 
@@ -582,16 +592,6 @@ await myModel.dropIndex('name');
 #### Example
 ```js
 await myModel.dropIndexes(['name', 'code']);
-```
-</details>
-
-### async `dropDatabase()`
-<details>
-	<summary>Drop the Database.</summary>
-
-#### Example
-```js
-await myModel.dropDatabase();
 ```
 </details>
 
