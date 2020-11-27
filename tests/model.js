@@ -1240,13 +1240,11 @@ describe('Model', () => {
 			await assert.rejects(myCoreModel.mapIdByReferenceId(1000), { code: ModelError.codes.INVALID_VALUE });
 		});
 
-		it('Should return empty object when ReferenceId is an empty Array', async () => {
-
-			DBDriver.get.returns([]);
+		it('Should return empty object when empty Array received', async () => {
 
 			assert.deepStrictEqual(await myCoreModel.mapIdByReferenceId([]), {});
 
-			sandbox.assert.calledOnceWithExactly(DBDriver.get, myCoreModel, { filters: { referenceId: [] } });
+			sandbox.assert.notCalled(DBDriver.get);
 		});
 
 		it('Should return object with referenceId key and Id value', async () => {
@@ -1258,18 +1256,29 @@ describe('Model', () => {
 				'other-ref-id': 'other-id'
 			});
 
-			sandbox.assert.calledOnceWithExactly(DBDriver.get, myCoreModel, { filters: { referenceId: ['some-ref-id', 'other-ref-id'] } });
+			sandbox.assert.calledOnceWithExactly(DBDriver.get, myCoreModel, {
+				filters: {
+					referenceId: ['some-ref-id', 'other-ref-id']
+				},
+				limit: 2
+			});
 		});
 
-		it('Should return object with referenceId key and Id value when referenceId match', async () => {
+		it('Should return object with referenceId key and Id value when just one referenceId matchs and other filters given', async () => {
 
 			DBDriver.get.returns([{ id: 'some-id', referenceId: 'some-ref-id' }]);
 
-			assert.deepStrictEqual(await myCoreModel.mapIdByReferenceId(['some-ref-id', 'foo-ref-id']), {
+			assert.deepStrictEqual(await myCoreModel.mapIdByReferenceId(['some-ref-id', 'foo-ref-id', 'bar-ref-id'], { filters: { foo: 'bar' } }), {
 				'some-ref-id': 'some-id'
 			});
 
-			sandbox.assert.calledOnceWithExactly(DBDriver.get, myCoreModel, { filters: { referenceId: ['some-ref-id', 'foo-ref-id'] } });
+			sandbox.assert.calledOnceWithExactly(DBDriver.get, myCoreModel, {
+				filters: {
+					referenceId: ['some-ref-id', 'foo-ref-id', 'bar-ref-id'],
+					foo: 'bar'
+				},
+				limit: 3
+			});
 		});
 	});
 });

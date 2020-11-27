@@ -269,16 +269,20 @@ const totals = await myModel.getTotals();
 ```
 </details>
 
-### async  `mapIdByReferenceId(referencesIds)`
+### async  `mapIdByReferenceId(referencesIds, [params])`
 <details>
 	<summary>Search all References Ids and return an Object with key: <tt>referenceIds</tt> and values: <tt>id</tt>, only those founds.</summary>
 
 #### Parameters
 - `referencesIds` List of References Ids (`Array<strings>`)
+- `params` See get() method
 
 #### Example
 ```js
-await myModel.mapIdByReferenceId(['some-ref-id', 'other-ref-id', 'foo-ref-id']);
+await myModel.mapIdByReferenceId(['some-ref-id', 'other-ref-id', 'foo-ref-id'], {
+	order: { date: 'asc' },
+	filters: { foo: 'bar' }
+});
 
 /**
 	{
