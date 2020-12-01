@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [5.3.0] - 2020-12-01
+### Added
+- `mapIdBy` new method
+
 ## [5.2.0] - 2020-11-27
 ### Added
 - `mapIdByReferenceId` now accepts params to use in `get` method

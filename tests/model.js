@@ -1231,7 +1231,7 @@ describe('Model', () => {
 		});
 	});
 
-	describe('Map ID By References IDs', () => {
+	describe('Map ID By', () => {
 
 		it('Should reject when Reference Ids is not an Array', async () => {
 			await assert.rejects(myCoreModel.mapIdByReferenceId(), { code: ModelError.codes.INVALID_VALUE });
@@ -1261,6 +1261,20 @@ describe('Model', () => {
 					referenceId: ['some-ref-id', 'other-ref-id']
 				},
 				limit: 2
+			});
+		});
+
+		it('Should return object with code key and Id value', async () => {
+
+			DBDriver.get.returns([{ id: 'some-id', code: 'some-code-123' }, { id: 'other-id-without-code' }]);
+
+			assert.deepStrictEqual(await myCoreModel.mapIdBy('code', ['some-code-123']), {
+				'some-code-123': 'some-id'
+			});
+
+			sandbox.assert.calledOnceWithExactly(DBDriver.get, myCoreModel, {
+				filters: { code: ['some-code-123'] },
+				limit: 1
 			});
 		});
 

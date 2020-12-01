@@ -269,6 +269,30 @@ const totals = await myModel.getTotals();
 ```
 </details>
 
+### async  `mapIdBy(field, fieldValues, [params])`
+<details>
+	<summary>Search all items filtering by field and fieldValues and return an Object with key: <tt>referenceIds</tt> and values: <tt>id</tt>, only those founds.</summary>
+
+#### Parameters
+- `field` Field to filter for (`String`)
+- `fieldValues` List of values to filter for (`Array<strings>`)
+- `params` See get() method
+
+#### Example
+```js
+await myModel.mapIdBy('code', ['code-123', 'code-456'], {
+	order: { code: 'desc' }
+});
+
+/**
+	{
+		code-456: 'the-code-456-id',
+		code-123: 'the-code-123-id'
+	}
+*/
+```
+</details>
+
 ### async  `mapIdByReferenceId(referencesIds, [params])`
 <details>
 	<summary>Search all References Ids and return an Object with key: <tt>referenceIds</tt> and values: <tt>id</tt>, only those founds.</summary>
