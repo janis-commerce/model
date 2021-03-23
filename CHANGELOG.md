@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [5.4.0] - 2021-03-23
+### Added
+- Fetched credentials in **AWS Secrets Manager** using `@janiscommerce/aws-secrets-manager`.
+
+### Changed
+- Now the `core` databases configured in Settings File can use the `read` type.
+
 ## [5.3.1] - 2021-01-27
 ### Added
 - Typings build from JSDoc
