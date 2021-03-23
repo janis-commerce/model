@@ -700,9 +700,7 @@ If the **secret** was found, the result will be merged with the settings found i
 The Secrets are stored in [AWS Secrets Manager](https://aws.amazon.com/secrets-manager) and obtained with the package [@janiscommerce/aws-secrets-manager](https://www.npmjs.com/package/@janiscommerce/aws-secrets-manager) 
 
 <details>
-	<summary>Full example.</summary>
-
-### Example
+	<summary>Complete example in which the settings are obtained for settings file or Client and merged with the fetched credentials in AWS Secrets Manager.</summary>
 
 1. Settings in file or Client.
 
