@@ -695,7 +695,7 @@ It will be logged as:
 
 ## 🔑 Secrets 
 The package will get the **secret** using the *JANIS_SERVICE_NAME* environment variable.  
-If the **secret** was found, the result will be merged with the settings found in the *`janiscommercerc.json`* file or in the Client databases configuration. See [Database connection settings](#Database connection settings).
+If the **secret** was found, the result will be merged with the settings found in the *`janiscommercerc.json`* file or in the Client databases configuration. See [Database connection settings](#Database-connection-settings).
 
 The Secrets are stored in [AWS Secrets Manager](https://aws.amazon.com/secrets-manager) and obtained with the package [@janiscommerce/aws-secrets-manager](https://www.npmjs.com/package/@janiscommerce/aws-secrets-manager) 
 
