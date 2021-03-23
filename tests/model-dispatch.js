@@ -6,10 +6,12 @@ const sandbox = require('sinon');
 
 const Settings = require('@janiscommerce/settings');
 
+const { AwsSecretsManager } = require('@janiscommerce/aws-secrets-manager');
+
 const Model = require('../lib/model');
 const ModelError = require('../lib/model-error');
 
-const DBDriverMock = require('./db-driver');
+const DBDriver = require('./db-driver');
 
 describe('Model Dispatch', () => {
 
@@ -29,6 +31,13 @@ describe('Model Dispatch', () => {
 					database: 'read-database-name',
 					username: 'read-username',
 					password: 'read-password'
+				},
+				admin: {
+					type: 'mongodb',
+					host: 'write-host',
+					database: 'write-database-name',
+					username: 'write-secure-username',
+					password: 'write-secure-password'
 				}
 			}
 		}
@@ -50,6 +59,15 @@ describe('Model Dispatch', () => {
 				username: 'read-username',
 				password: 'read-password'
 			}
+		},
+		other: {
+			write: {
+				type: 'mongodb',
+				host: 'write-host',
+				database: 'write-database-name',
+				username: 'write-username',
+				password: 'write-password'
+			}
 		}
 	};
 
@@ -60,6 +78,7 @@ describe('Model Dispatch', () => {
 			instance.session = fakeSession;
 			return instance;
 		},
+
 		client: Promise.resolve(client)
 	};
 
@@ -76,9 +95,9 @@ describe('Model Dispatch', () => {
 		get databaseKey() { return 'core'; }
 	}
 
-	const databaseMock = () => {
-		mockRequire('@janiscommerce/mongodb', DBDriverMock);
-	};
+	class OtherCoreModel extends Model {
+		get databaseKey() { return 'other'; }
+	}
 
 	const assertDbDriverConfig = async (model, config) => {
 
@@ -89,7 +108,7 @@ describe('Model Dispatch', () => {
 
 	beforeEach(() => {
 
-		databaseMock();
+		mockRequire('@janiscommerce/mongodb', DBDriver);
 
 		sandbox.stub(Settings, 'get')
 			.withArgs('database')
@@ -141,42 +160,42 @@ describe('Model Dispatch', () => {
 
 		it('Should call DBDriver get using local settings when it exists', async () => {
 
-			sandbox.stub(DBDriverMock.prototype, 'get')
+			sandbox.stub(DBDriver.prototype, 'get')
 				.resolves();
 
 			const myCoreModel = new CoreModel();
 
 			await myCoreModel.get();
 
-			sandbox.assert.calledOnceWithExactly(DBDriverMock.prototype.get, myCoreModel, {});
+			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, {});
 
 			await assertDbDriverConfig(myCoreModel, settings.core.write);
 		});
 
 		it('Should call DBDriver get using client config when it exists', async () => {
 
-			sandbox.stub(DBDriverMock.prototype, 'get')
+			sandbox.stub(DBDriver.prototype, 'get')
 				.resolves();
 
 			const myClientModel = new ClientModel();
 
 			await myClientModel.get();
 
-			sandbox.assert.calledOnceWithExactly(DBDriverMock.prototype.get, myClientModel, {});
+			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.get, myClientModel, {});
 
 			await assertDbDriverConfig(myClientModel, client.databases.default.write);
 		});
 
 		it('Should call DBDriver get using read DB when readonly param is true', async () => {
 
-			sandbox.stub(DBDriverMock.prototype, 'get')
+			sandbox.stub(DBDriver.prototype, 'get')
 				.resolves();
 
 			const myClientModel = new ClientModel();
 
 			await myClientModel.get({ readonly: true });
 
-			sandbox.assert.calledOnceWithExactly(DBDriverMock.prototype.get, myClientModel, { readonly: true });
+			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.get, myClientModel, { readonly: true });
 
 			await assertDbDriverConfig(myClientModel, client.databases.default.read);
 		});
@@ -185,27 +204,7 @@ describe('Model Dispatch', () => {
 			'insert',
 			'update',
 			'save',
-			'remove'
-		].forEach(method => {
-
-			it(`should call DBDriver using write DB when ${method} is executed after a readonly get`, async () => {
-
-				sandbox.stub(DBDriverMock.prototype, method)
-					.resolves();
-
-				const myClientModel = new ClientModel();
-
-				await myClientModel.get({ readonly: true });
-
-				await assertDbDriverConfig(myClientModel, client.databases.default.read);
-
-				await myClientModel[method]({ foo: 'bar' });
-
-				await assertDbDriverConfig(myClientModel, client.databases.default.write);
-			});
-		});
-
-		[
+			'remove',
 			'multiInsert',
 			'multiSave',
 			'multiRemove'
@@ -213,7 +212,7 @@ describe('Model Dispatch', () => {
 
 			it(`should call DBDriver using write DB when ${method} is executed after a readonly get`, async () => {
 
-				sandbox.stub(DBDriverMock.prototype, method)
+				sandbox.stub(DBDriver.prototype, method)
 					.resolves();
 
 				const myClientModel = new ClientModel();
@@ -222,11 +221,15 @@ describe('Model Dispatch', () => {
 
 				await assertDbDriverConfig(myClientModel, client.databases.default.read);
 
-				await myClientModel[method]([{ foo: 'bar' }]);
+				if(['multiInsert', 'multiSave', 'multiRemove'].includes(method))
+					await myClientModel[method]([{ foo: 'bar' }]);
+				else
+					await myClientModel[method]({ foo: 'bar' });
 
 				await assertDbDriverConfig(myClientModel, client.databases.default.write);
 			});
 		});
+
 	});
 
 	describe('Settings validations', () => {
@@ -237,15 +240,19 @@ describe('Model Dispatch', () => {
 			model = new CoreModel();
 		});
 
+		const rejects = async code => {
+			await assert.rejects(model.getDb(), {
+				name: 'ModelError',
+				code
+			});
+		};
+
 		it('Should throw when the database settings not exists', async () => {
 
 			Settings.get.withArgs('database')
 				.returns();
 
-			await assert.rejects(model.getDb(), {
-				name: 'ModelError',
-				code: ModelError.codes.DB_CONFIG_NOT_FOUND
-			});
+			await rejects(ModelError.codes.DB_CONFIG_NOT_FOUND);
 		});
 
 		it('Should throw when the specific database key do not exist ', async () => {
@@ -253,10 +260,7 @@ describe('Model Dispatch', () => {
 			Settings.get.withArgs('database')
 				.returns({ someKey: {} });
 
-			await assert.rejects(model.getDb(), {
-				name: 'ModelError',
-				code: ModelError.codes.DB_CONFIG_NOT_FOUND
-			});
+			await rejects(ModelError.codes.DB_CONFIG_NOT_FOUND);
 		});
 
 		it('Should throw when the database settings is not an object', async () => {
@@ -264,10 +268,7 @@ describe('Model Dispatch', () => {
 			Settings.get.withArgs('database')
 				.returns('databases');
 
-			await assert.rejects(model.getDb(), {
-				name: 'ModelError',
-				code: ModelError.codes.INVALID_SETTINGS
-			});
+			await rejects(ModelError.codes.INVALID_SETTINGS);
 		});
 
 		it('Should throw when the database settings is an array', async () => {
@@ -275,10 +276,7 @@ describe('Model Dispatch', () => {
 			Settings.get.withArgs('database')
 				.returns([settings]);
 
-			await assert.rejects(model.getDb(), {
-				name: 'ModelError',
-				code: ModelError.codes.INVALID_SETTINGS
-			});
+			await rejects(ModelError.codes.INVALID_SETTINGS);
 		});
 
 		it('Should throw when the database key is not an object', async () => {
@@ -286,10 +284,7 @@ describe('Model Dispatch', () => {
 			Settings.get.withArgs('database')
 				.returns({ core: 'not an object' });
 
-			await assert.rejects(model.getDb(), {
-				name: 'ModelError',
-				code: ModelError.codes.INVALID_DB_CONFIG
-			});
+			await rejects(ModelError.codes.INVALID_DB_CONFIG);
 		});
 
 		it('Should throw when the database key is an array', async () => {
@@ -297,10 +292,7 @@ describe('Model Dispatch', () => {
 			Settings.get.withArgs('database')
 				.returns({ core: ['not an object'] });
 
-			await assert.rejects(model.getDb(), {
-				name: 'ModelError',
-				code: ModelError.codes.INVALID_DB_CONFIG
-			});
+			await rejects(ModelError.codes.INVALID_DB_CONFIG);
 		});
 	});
 
@@ -312,15 +304,19 @@ describe('Model Dispatch', () => {
 			model = new ClientModel();
 		});
 
+		const rejects = async code => {
+			await assert.rejects(model.getDb(), {
+				name: 'ModelError',
+				code
+			});
+		};
+
 		it('Should throw when client not exists', async () => {
 
 			sandbox.stub(model.session, 'client')
 				.get(() => null);
 
-			await assert.rejects(model.getDb(), {
-				name: 'ModelError',
-				code: ModelError.codes.INVALID_CLIENT
-			});
+			await rejects(ModelError.codes.INVALID_CLIENT);
 		});
 
 		it('Should throw when \'client\' database config is not an object', async () => {
@@ -328,10 +324,7 @@ describe('Model Dispatch', () => {
 			sandbox.stub(model.session, 'client')
 				.get(() => ({ databases: 'not an object' }));
 
-			await assert.rejects(model.getDb(), {
-				name: 'ModelError',
-				code: ModelError.codes.INVALID_CLIENT
-			});
+			await rejects(ModelError.codes.INVALID_CLIENT);
 		});
 
 		it('Should throw when \'clients\' database config is an array', async () => {
@@ -339,10 +332,7 @@ describe('Model Dispatch', () => {
 			sandbox.stub(model.session, 'client')
 				.get(() => ({ databases: ['not an object'] }));
 
-			await assert.rejects(model.getDb(), {
-				name: 'ModelError',
-				code: ModelError.codes.INVALID_CLIENT
-			});
+			await rejects(ModelError.codes.INVALID_CLIENT);
 		});
 
 		it('Should throw when the specific database key do not exist ', async () => {
@@ -350,10 +340,7 @@ describe('Model Dispatch', () => {
 			sandbox.stub(model.session, 'client')
 				.get(() => ({ databases: { someKey: {} } }));
 
-			await assert.rejects(model.getDb(), {
-				name: 'ModelError',
-				code: ModelError.codes.DB_CONFIG_NOT_FOUND
-			});
+			await rejects(ModelError.codes.DB_CONFIG_NOT_FOUND);
 		});
 
 		it('Should throw when the database key is not an object', async () => {
@@ -361,10 +348,7 @@ describe('Model Dispatch', () => {
 			sandbox.stub(model.session, 'client')
 				.get(() => ({ databases: { default: 'not an object' } }));
 
-			await assert.rejects(model.getDb(), {
-				name: 'ModelError',
-				code: ModelError.codes.INVALID_DB_CONFIG
-			});
+			await rejects(ModelError.codes.INVALID_DB_CONFIG);
 		});
 
 		it('Should throw when the database key is an array', async () => {
@@ -372,18 +356,22 @@ describe('Model Dispatch', () => {
 			sandbox.stub(model.session, 'client')
 				.get(() => ({ databases: { default: ['not an object'] } }));
 
-			await assert.rejects(model.getDb(), {
-				name: 'ModelError',
-				code: ModelError.codes.INVALID_DB_CONFIG
-			});
+			await rejects(ModelError.codes.INVALID_DB_CONFIG);
 		});
 	});
 
 	describe('hasReadDB()', () => {
 
-		it('Should return false when the received databaseKey is for a core database', async () => {
+		it('Should return true when the received databaseKey is for a core database and has a read DB', async () => {
 
 			const model = new CoreModel();
+
+			assert.deepStrictEqual(await model.hasReadDB('core'), true);
+		});
+
+		it('Should return false when the received databaseKey is for a core database and hasn\'t a read DB', async () => {
+
+			const model = new OtherCoreModel();
 
 			assert.deepStrictEqual(await model.hasReadDB('core'), false);
 		});
@@ -424,5 +412,27 @@ describe('Model Dispatch', () => {
 
 			assert.deepStrictEqual(await clientModel.hasReadDB(), false);
 		});
+	});
+
+	describe('Fetching credentials', () => {
+
+		it('should call DBDriver using admin config DB when dropDatabase is executed', async () => {
+
+			sandbox.stub(DBDriver.prototype, 'dropDatabase')
+				.resolves();
+
+			const stubGetValue = sandbox.stub()
+				.resolves(123);
+
+			sandbox.stub(AwsSecretsManager, 'secret')
+				.returns(stubGetValue);
+
+			const myClientModel = new ClientModel();
+
+			await myClientModel.dropDatabase();
+
+			await assertDbDriverConfig(myClientModel, client.databases.default.admin);
+		});
+
 	});
 });

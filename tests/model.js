@@ -7,12 +7,14 @@ const sandbox = require('sinon');
 const Log = require('@janiscommerce/log');
 const Settings = require('@janiscommerce/settings');
 
+const { AwsSecretsManager } = require('@janiscommerce/aws-secrets-manager');
+
 const Model = require('../lib/model');
 const ModelError = require('../lib/model-error');
 
 const DBDriver = require('./db-driver');
 
-describe.only('Model', () => {
+describe('Model', () => {
 
 	const client = {
 		databases: {
@@ -47,6 +49,10 @@ describe.only('Model', () => {
 			write: {
 				skipFetchCredentials: true,
 				type: 'other'
+			},
+			admin: {
+				skipFetchCredentials: true,
+				type: 'mongodb'
 			}
 		}
 	};
@@ -65,6 +71,10 @@ describe.only('Model', () => {
 
 	class CoreModel extends Model {
 		get databaseKey() { return 'core'; }
+
+		formatGet({ ...item }) { return item; }
+
+		afterGet([...newItems]) { return newItems; }
 	}
 
 	class OtherModel extends Model {
@@ -94,19 +104,14 @@ describe.only('Model', () => {
 
 		otherModel = new OtherModel();
 
-		myCoreModel.formatGet = () => { };
-
-		sandbox.stub(myCoreModel, 'formatGet')
-			.callsFake(({ ...item }) => item);
-
-		myCoreModel.afterGet = () => { };
-
-		sandbox.stub(myCoreModel, 'afterGet')
-			.callsFake(([...newItems]) => newItems);
-
 		sandbox.spy(Model, 'changeKeys');
 
 		getPagedCallback = sandbox.stub();
+
+		sandbox.stub(AwsSecretsManager, 'secret')
+			.returns({
+				getValue() {}
+			});
 	});
 
 	afterEach(() => {
@@ -114,31 +119,23 @@ describe.only('Model', () => {
 		mockRequire.stopAll();
 	});
 
-	it('Should return the statuses', async () => {
+	it('Should return the default statuses', async () => {
 
-		assert.deepStrictEqual(ClientModel.statuses, {
+		const statuses = {
 			active: 'active',
 			inactive: 'inactive'
-		});
+		};
 
-		assert.deepStrictEqual(CoreModel.statuses, {
-			active: 'active',
-			inactive: 'inactive'
-		});
+		assert.deepStrictEqual(ClientModel.statuses, statuses);
+		assert.deepStrictEqual(CoreModel.statuses, statuses);
 	});
 
 	describe('distinct()', async () => {
 
-		it('Should reject when DB Driver does not support the distinct method', async () => {
-			await assert.rejects(() => myCoreModel.distinct('status'), {
-				code: ModelError.codes.DRIVER_METHOD_NOT_IMPLEMENTED
-			});
-		});
-
 		it('Should reject when DB Driver rejects', async () => {
 
 			sandbox.stub(DBDriver.prototype, 'distinct')
-				.rejects('Some internal error');
+				.rejects(new Error('Some internal error'));
 
 			await assert.rejects(() => myCoreModel.distinct('status'), {
 				message: 'Some internal error'
@@ -192,10 +189,8 @@ describe.only('Model', () => {
 
 			await model.getById(1);
 
-			sandbox.assert.calledWithExactly(ClientModel.prototype.get, {
-				filters: {
-					id: 1
-				}
+			sandbox.assert.calledOnceWithExactly(ClientModel.prototype.get, {
+				filters: { id: 1 }
 			});
 		});
 
@@ -203,10 +198,8 @@ describe.only('Model', () => {
 
 			await model.getById([1, 2]);
 
-			sandbox.assert.calledWithExactly(ClientModel.prototype.get, {
-				filters: {
-					id: [1, 2]
-				}
+			sandbox.assert.calledOnceWithExactly(ClientModel.prototype.get, {
+				filters: { id: [1, 2] }
 			});
 		});
 
@@ -214,10 +207,8 @@ describe.only('Model', () => {
 
 			await model.getById(1, { limit: 10 });
 
-			sandbox.assert.calledWithExactly(ClientModel.prototype.get, {
-				filters: {
-					id: 1
-				},
+			sandbox.assert.calledOnceWithExactly(ClientModel.prototype.get, {
+				filters: { id: 1 },
 				limit: 10
 			});
 		});
@@ -225,17 +216,12 @@ describe.only('Model', () => {
 		it('Should merge the ID filter with the other params passed (including other filters)', async () => {
 
 			await model.getById(1, {
-				filters: {
-					status: 'active'
-				},
+				filters: { status: 'active' },
 				limit: 10
 			});
 
-			sandbox.assert.calledWithExactly(ClientModel.prototype.get, {
-				filters: {
-					status: 'active',
-					id: 1
-				},
+			sandbox.assert.calledOnceWithExactly(ClientModel.prototype.get, {
+				filters: { status: 'active', id: 1 },
 				limit: 10
 			});
 		});
@@ -283,7 +269,6 @@ describe.only('Model', () => {
 
 			assert.deepStrictEqual(result, null);
 		});
-
 	});
 
 	describe('getBy()', () => {
@@ -300,9 +285,7 @@ describe.only('Model', () => {
 			await model.getBy('orderId', 1);
 
 			sandbox.assert.calledWithExactly(ClientModel.prototype.get, {
-				filters: {
-					orderId: 1
-				}
+				filters: { orderId: 1 }
 			});
 		});
 
@@ -311,9 +294,7 @@ describe.only('Model', () => {
 			await model.getBy('orderId', [1, 2]);
 
 			sandbox.assert.calledWithExactly(ClientModel.prototype.get, {
-				filters: {
-					orderId: [1, 2]
-				}
+				filters: { orderId: [1, 2] }
 			});
 		});
 
@@ -322,9 +303,7 @@ describe.only('Model', () => {
 			await model.getBy('orderId', 1, { limit: 10 });
 
 			sandbox.assert.calledWithExactly(ClientModel.prototype.get, {
-				filters: {
-					orderId: 1
-				},
+				filters: { orderId: 1 },
 				limit: 10
 			});
 		});
@@ -332,17 +311,12 @@ describe.only('Model', () => {
 		it('Should merge the orderId filter with the other params passed (including other filters)', async () => {
 
 			await model.getBy('orderId', 1, {
-				filters: {
-					status: 'active'
-				},
+				filters: { status: 'active' },
 				limit: 10
 			});
 
 			sandbox.assert.calledWithExactly(ClientModel.prototype.get, {
-				filters: {
-					status: 'active',
-					orderId: 1
-				},
+				filters: { status: 'active', orderId: 1 },
 				limit: 10
 			});
 		});
@@ -538,6 +512,9 @@ describe.only('Model', () => {
 
 	it('Should call DBDriver getTotals method passing the model', async () => {
 
+		sandbox.stub(DBDriver.prototype, 'getTotals')
+			.resolves();
+
 		await myCoreModel.getTotals();
 
 		sandbox.assert.calledOnceWithExactly(DBDriver.prototype.getTotals, myCoreModel);
@@ -547,13 +524,19 @@ describe.only('Model', () => {
 
 		it(`should call DBDriver ${method} method passing the model and the item received`, async () => {
 
+			sandbox.stub(DBDriver.prototype, method)
+				.resolves();
+
 			await myCoreModel[method]({ foo: 'bar' });
 
-			sandbox.assert.calledOnceWithExactly(DBDriver[method], myCoreModel, { foo: 'bar' });
+			sandbox.assert.calledOnceWithExactly(DBDriver.prototype[method], myCoreModel, { foo: 'bar' });
 		});
 	});
 
 	it('should call DBDriver save method passing the model and the item received', async () => {
+
+		sandbox.stub(DBDriver.prototype, 'save')
+			.resolves();
 
 		await myCoreModel.save({ foo: 'bar' });
 
@@ -562,12 +545,18 @@ describe.only('Model', () => {
 
 	it('Should call DBDriver update method passing the model and the values and filter received', async () => {
 
+		sandbox.stub(DBDriver.prototype, 'update')
+			.resolves();
+
 		await myCoreModel.update({ status: -1 }, { foo: 'bar' });
 
 		sandbox.assert.calledOnceWithExactly(DBDriver.prototype.update, myCoreModel, { status: -1 }, { foo: 'bar' });
 	});
 
 	it('should call DBDriver multiInsert method passing the model and the items received', async () => {
+
+		sandbox.stub(DBDriver.prototype, 'multiInsert')
+			.resolves();
 
 		await myCoreModel.multiInsert([{ foo: 'bar' }, { foo2: 'bar2' }]);
 
@@ -576,12 +565,18 @@ describe.only('Model', () => {
 
 	it('should call DBDriver multiSave method passing the model and the items received', async () => {
 
+		sandbox.stub(DBDriver.prototype, 'multiSave')
+			.resolves();
+
 		await myCoreModel.multiSave([{ foo: 'bar' }, { foo2: 'bar2' }]);
 
 		sandbox.assert.calledOnceWithExactly(DBDriver.prototype.multiSave, myCoreModel, [{ foo: 'bar' }, { foo2: 'bar2' }], undefined);
 	});
 
 	it('Should call DBDriver multiRemove method passing the model and the filter received', async () => {
+
+		sandbox.stub(DBDriver.prototype, 'multiRemove')
+			.resolves();
 
 		await myCoreModel.multiRemove({ foo: 'bar' });
 
@@ -624,9 +619,9 @@ describe.only('Model', () => {
 		});
 	});
 
-	it('Should call controller \'formatGet\' with each item', async () => {
+	it('Should call method \'formatGet\' with each item', async () => {
 
-		myCoreModel.formatGet
+		sandbox.stub(myCoreModel, 'formatGet')
 			.callsFake(({ ...item }) => {
 				item.added = 123;
 				return item;
@@ -649,10 +644,12 @@ describe.only('Model', () => {
 		]);
 	});
 
-	it('Should call controller \'afterGet\' with all items', async () => {
+	it('Should call method \'afterGet\' with all items', async () => {
 
 		sandbox.stub(DBDriver.prototype, 'get')
 			.resolves([{ foo: 1 }, { bar: 2 }]);
+
+		sandbox.spy(myCoreModel, 'afterGet');
 
 		const result = await myCoreModel.get();
 
@@ -662,10 +659,12 @@ describe.only('Model', () => {
 		assert.deepStrictEqual(result, [{ foo: 1 }, { bar: 2 }]);
 	});
 
-	it('Should call controller \'afterGet\' with all items, params, indexes and ids', async () => {
+	it('Should call method \'afterGet\' with all items, params, indexes and ids', async () => {
 
 		sandbox.stub(DBDriver.prototype, 'get')
 			.resolves([{ id: 33, foo: 45 }, { id: 78, bar: 987 }]);
+
+		sandbox.spy(myCoreModel, 'afterGet');
 
 		const result = await myCoreModel.get({ extraParam: true });
 
@@ -1015,12 +1014,6 @@ describe.only('Model', () => {
 					log: { _id: 'some-id', quantity: 2, userModified }
 				});
 			});
-
-			it('Should reject when DB not support method', async () => {
-				await assert.rejects(otherModel.increment({ id: 'some-id' }, { quantity: 1 }), {
-					code: ModelError.codes.DRIVER_METHOD_NOT_IMPLEMENTED
-				});
-			});
 		});
 
 		describe('multiSave()', () => {
@@ -1113,7 +1106,6 @@ describe.only('Model', () => {
 			'multiSave',
 			'multiInsert',
 			'multiRemove'
-
 		].forEach(method => {
 
 			it(`Shouldn't log when ${method} does not receive items/filters`, async () => {
@@ -1122,6 +1114,7 @@ describe.only('Model', () => {
 					.resolves();
 
 				await myClientModel[method]();
+
 				sandbox.assert.notCalled(Log.add);
 			});
 		});
@@ -1218,14 +1211,6 @@ describe.only('Model', () => {
 		});
 	});
 
-	describe('DB Methods', () => {
-		it('Should reject when DB not support method', async () => {
-			await assert.rejects(otherModel.get(), {
-				code: ModelError.codes.DRIVER_METHOD_NOT_IMPLEMENTED
-			});
-		});
-	});
-
 	describe('Map ID By', () => {
 
 		it('Should reject when Reference Ids is not an Array', async () => {
@@ -1277,7 +1262,7 @@ describe.only('Model', () => {
 			});
 		});
 
-		it('Should return object with referenceId key and Id value when just one referenceId matchs and other filters given', async () => {
+		it('Should return object with referenceId key and Id value when just one referenceId matches and other filters given', async () => {
 
 			sandbox.stub(DBDriver.prototype, 'get')
 				.resolves([{ id: 'some-id', referenceId: 'some-ref-id' }]);
@@ -1295,4 +1280,30 @@ describe.only('Model', () => {
 			});
 		});
 	});
+
+	describe('DB Methods not implemented', () => {
+
+		Object.entries({
+			get: [],
+			distinct: ['status'],
+			increment: [{ id: 'some-id' }, { quantity: 1 }]
+		}).forEach(async ([method, params]) => {
+
+			it(`Should reject when DB not support method ${method}`, async () => {
+				await assert.rejects(otherModel[method](...params), {
+					code: ModelError.codes.DRIVER_METHOD_NOT_IMPLEMENTED
+				});
+			});
+
+		});
+	});
+
+	describe('Admin privileges model methods', () => {
+		it('Should reject when Model hasn\'t admin config', async () => {
+			await assert.rejects(myCoreModel.dropDatabase(), {
+				code: ModelError.codes.INVALID_DB_CONFIG
+			});
+		});
+	});
+
 });
