@@ -20,6 +20,7 @@ describe('Model', () => {
 		databases: {
 			default: {
 				write: {
+					skipFetchCredentials: true,
 					type: 'mongodb',
 					host: 'the-host',
 					database: 'the-database-name',
@@ -480,7 +481,7 @@ describe('Model', () => {
 
 	it('Should get normally when no \'formatGet\' method exists', async () => {
 
-		delete myCoreModel.formatGet;
+		myCoreModel.formatGet = undefined;
 
 		sandbox.stub(DBDriver.prototype, 'get')
 			.resolves([{ fooItem: 88 }]);
@@ -496,7 +497,7 @@ describe('Model', () => {
 
 	it('Should get normally when no \'afterGet\' method exists', async () => {
 
-		delete myCoreModel.afterGet;
+		myCoreModel.afterGet = undefined;
 
 		sandbox.stub(DBDriver.prototype, 'get')
 			.resolves([{ fooItem: 7787 }]);

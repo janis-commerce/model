@@ -106,7 +106,23 @@ describe('Model Dispatch', () => {
 		assert.deepStrictEqual(dbDriverInstance.config, config);
 	};
 
+	const SecretHandler = class SecretHandler {
+		getValue() {}
+	};
+
+	const stubGetSecret = value => {
+
+		sandbox.stub(SecretHandler.prototype, 'getValue')
+			.resolves(value || {});
+
+		sandbox.stub(AwsSecretsManager, 'secret')
+			.returns(new SecretHandler());
+	};
+
 	beforeEach(() => {
+
+		process.env.JANIS_ENV = 'test';
+		process.env.JANIS_SERVICE_NAME = 'service-name';
 
 		mockRequire('@janiscommerce/mongodb', DBDriver);
 
@@ -228,6 +244,20 @@ describe('Model Dispatch', () => {
 
 				await assertDbDriverConfig(myClientModel, client.databases.default.write);
 			});
+		});
+
+		it('should call DBDriver using admin config DB when dropDatabase is executed', async () => {
+
+			sandbox.stub(DBDriver.prototype, 'dropDatabase')
+				.resolves();
+
+			stubGetSecret();
+
+			const myClientModel = new ClientModel();
+
+			await myClientModel.dropDatabase();
+
+			await assertDbDriverConfig(myClientModel, client.databases.default.admin);
 		});
 
 	});
@@ -416,22 +446,164 @@ describe('Model Dispatch', () => {
 
 	describe('Fetching credentials', () => {
 
-		it('should call DBDriver using admin config DB when dropDatabase is executed', async () => {
+		it('should fetch credentials for read config database', async () => {
+
+			sandbox.stub(DBDriver.prototype, 'get')
+				.resolves();
+
+			stubGetSecret({
+				default: {
+					write: { writeExtraData: 123 },
+					read: { readExtraData: 123 },
+					admin: { adminExtraData: 123 }
+				}
+			});
+
+			const clientModel = new ClientModel();
+
+			await clientModel.get({ readonly: true });
+
+			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.get, clientModel, { readonly: true });
+
+			await assertDbDriverConfig(clientModel, {
+				...client.databases.default.read,
+				readExtraData: 123
+			});
+
+			sandbox.assert.calledOnceWithExactly(AwsSecretsManager.secret, 'service-name');
+		});
+
+		it('should fetch credentials for write config database', async () => {
+
+			sandbox.stub(DBDriver.prototype, 'save')
+				.resolves();
+
+			stubGetSecret({
+				default: {
+					write: { writeExtraData: 123 },
+					read: { readExtraData: 123 },
+					admin: { adminExtraData: 123 }
+				}
+			});
+
+			const clientModel = new ClientModel();
+
+			await clientModel.save({ code: 'clientCode', foo: 'bar' });
+
+			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.save, clientModel, { code: 'clientCode', foo: 'bar' }, undefined);
+
+			await assertDbDriverConfig(clientModel, {
+				...client.databases.default.write,
+				writeExtraData: 123
+			});
+		});
+
+		it('should fetch credentials for admin config database', async () => {
 
 			sandbox.stub(DBDriver.prototype, 'dropDatabase')
 				.resolves();
 
-			const stubGetValue = sandbox.stub()
-				.resolves(123);
+			stubGetSecret({
+				default: {
+					write: { writeExtraData: 123 },
+					read: { readExtraData: 123 },
+					admin: { adminExtraData: 123 }
+				}
+			});
+
+			const clientModel = new ClientModel();
+
+			await clientModel.dropDatabase();
+
+			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.dropDatabase, clientModel);
+
+			await assertDbDriverConfig(clientModel, {
+				...client.databases.default.admin,
+				adminExtraData: 123
+			});
+		});
+
+		it('shouldn\'t fetch credentials when config has the skip config set', async () => {
+
+			sandbox.stub(DBDriver.prototype, 'save')
+				.resolves();
+
+			sandbox.spy(AwsSecretsManager, 'secret');
+			sandbox.spy(SecretHandler.prototype, 'getValue');
+
+			const clientModel = new ClientModel();
+
+			sandbox.stub(clientModel.session, 'client')
+				.get(() => ({
+					databases: {
+						default: {
+							write: {
+								...client.databases.default.write,
+								skipFetchCredentials: true
+							}
+						}
+					}
+				}));
+
+			await clientModel.save({ code: 'clientCode', foo: 'bar' });
+
+			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.save, clientModel, { code: 'clientCode', foo: 'bar' }, undefined);
+
+			sandbox.assert.notCalled(AwsSecretsManager.secret);
+			sandbox.assert.notCalled(SecretHandler.prototype.getValue);
+		});
+
+		it('shouldn\'t fetch credentials when the environment is local', async () => {
+
+			process.env.JANIS_ENV = 'local';
+
+			sandbox.stub(DBDriver.prototype, 'save')
+				.resolves();
+
+			sandbox.spy(AwsSecretsManager, 'secret');
+			sandbox.spy(SecretHandler.prototype, 'getValue');
+
+			const clientModel = new ClientModel();
+
+			await clientModel.save({ code: 'clientCode', foo: 'bar' });
+
+			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.save, clientModel, { code: 'clientCode', foo: 'bar' }, undefined);
+
+			sandbox.assert.notCalled(AwsSecretsManager.secret);
+			sandbox.assert.notCalled(SecretHandler.prototype.getValue);
+		});
+
+		it('shouldn\'t reject when instance the secretHandler', async () => {
+
+			sandbox.stub(DBDriver.prototype, 'save')
+				.resolves();
 
 			sandbox.stub(AwsSecretsManager, 'secret')
-				.returns(stubGetValue);
+				.throws(new Error('some secret handler error'));
 
-			const myClientModel = new ClientModel();
+			const clientModel = new ClientModel();
 
-			await myClientModel.dropDatabase();
+			await clientModel.save({ code: 'clientCode', foo: 'bar' });
 
-			await assertDbDriverConfig(myClientModel, client.databases.default.admin);
+			await assertDbDriverConfig(clientModel, client.databases.default.write);
+		});
+
+		it('shouldn\'t reject when getting credentials rejects', async () => {
+
+			sandbox.stub(DBDriver.prototype, 'save')
+				.resolves();
+
+			sandbox.stub(AwsSecretsManager, 'secret')
+				.returns(new SecretHandler());
+
+			sandbox.stub(SecretHandler.prototype, 'getValue')
+				.rejects(new Error('some getting credentials error'));
+
+			const clientModel = new ClientModel();
+
+			await clientModel.save({ code: 'clientCode', foo: 'bar' });
+
+			await assertDbDriverConfig(clientModel, client.databases.default.write);
 		});
 
 	});

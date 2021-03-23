@@ -101,7 +101,7 @@ class MyModel extends Model {
 }
 ```
 
-#### :two: Database connection configurated with session injected
+#### :two: Database connection configured with session injected
 Your client should have the config for read (optional) and/or write (required) databases.
 
 **Example of received client:**
@@ -177,7 +177,7 @@ await myModel.dbDriver.specialMethod(myModel);
 
 ### async `hasReadDB()`
 <details>
-	<summary>Returns <tt>true</tt> if the model databaseKey has a read DB available in settings, <tt>false</tt> otherwise or if the model is a core model.</summary>
+	<summary>Returns <tt>true</tt> if the model databaseKey has a read DB available in settings, <tt>false</tt> otherwise.</summary>
 
 #### Example:
 ```js
@@ -191,6 +191,7 @@ const hasReadDB = await myModel.hasReadDB();
 
 #### Parameters
 - `params` is an optional Object with filters, order, paginator.
+- `params.readonly` as `true` if you want to use the Read Database.
 
 #### Example
 ```js
@@ -691,3 +692,39 @@ It will be logged as:
 }
 ```
 </details>
+
+## 🔑 Secrets 
+The package will get the **secret** using the *JANIS_SERVICE_NAME* environment variable.  
+If the **secret** was found, the result will be merged with the settings found in the *`janiscommercerc.json`* file or in the Client databases configuration. See [Database connection settings](#Database connection settings).
+
+The Secrets are stored in [AWS Secrets Manager](https://aws.amazon.com/secrets-manager) and obtained with the package [@janiscommerce/aws-secrets-manager](https://www.npmjs.com/package/@janiscommerce/aws-secrets-manager) 
+
+```json
+{
+	"core": {
+		"write": {
+			"type": "mongodb",
+			"database": "core",
+			"otherDBDriverConfig": 100
+		}
+	}
+}
+```
+
+To skip the fetch of the credentials, it can be used the setting `skipFetchCredentials` set as **true**.
+
+
+```json
+{
+	"core": {
+		"write": {
+			"type": "mongodb",
+			"skipFetchCredentials": true,
+			"protocol": "mongodb+srv://",
+			"host": "mongodb+srv://some-host.mongodb.net",
+			"user": "some-user",
+			"password": "insecure-password"
+		}
+	}
+}
+```
