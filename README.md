@@ -699,6 +699,13 @@ If the **secret** was found, the result will be merged with the settings found i
 
 The Secrets are stored in [AWS Secrets Manager](https://aws.amazon.com/secrets-manager) and obtained with the package [@janiscommerce/aws-secrets-manager](https://www.npmjs.com/package/@janiscommerce/aws-secrets-manager) 
 
+<details>
+	<summary>Full example.</summary>
+
+### Example
+
+1. Settings in file or Client.
+
 ```json
 {
 	"core": {
@@ -711,8 +718,42 @@ The Secrets are stored in [AWS Secrets Manager](https://aws.amazon.com/secrets-m
 }
 ```
 
-To skip the fetch of the credentials, it can be used the setting `skipFetchCredentials` set as **true**.
+2. Secret fetched.
 
+```json
+{
+	"core": {
+		"write": {
+			"host": "mongodb+srv://some-host.mongodb.net",
+			"user": "secure-user",
+			"password": "secure-password",
+		}
+	}
+}
+```
+
+3. File database config passed to the Database Driver.
+
+```json
+{
+	"core": {
+		"write": {
+			"type": "mongodb",
+			"database": "core",
+			"otherDBDriverConfig": 100,
+			"host": "mongodb+srv://some-host.mongodb.net",
+			"user": "secure-user",
+			"password": "secure-password",
+		}
+	}
+}
+```
+
+</details>
+
+### Skip Credential Fetching
+
+To skip the fetch of the credentials, it can be used the setting `skipFetchCredentials` set as **true**.
 
 ```json
 {
