@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [5.4.1] - 2021-03-26
+### Fixed
+- Credentials used from `databases` field in Secret value fetched
+
 ## [5.4.0] - 2021-03-23
 ### Added
 - Fetched credentials in **AWS Secrets Manager** using `@janiscommerce/aws-secrets-manager`.
