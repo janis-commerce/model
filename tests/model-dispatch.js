@@ -452,10 +452,12 @@ describe('Model Dispatch', () => {
 				.resolves();
 
 			stubGetSecret({
-				default: {
-					write: { writeExtraData: 123 },
-					read: { readExtraData: 123 },
-					admin: { adminExtraData: 123 }
+				databases: {
+					default: {
+						write: { writeExtraData: 123 },
+						read: { readExtraData: 123 },
+						admin: { adminExtraData: 123 }
+					}
 				}
 			});
 
@@ -479,10 +481,12 @@ describe('Model Dispatch', () => {
 				.resolves();
 
 			stubGetSecret({
-				default: {
-					write: { writeExtraData: 123 },
-					read: { readExtraData: 123 },
-					admin: { adminExtraData: 123 }
+				databases: {
+					default: {
+						write: { writeExtraData: 123 },
+						read: { readExtraData: 123 },
+						admin: { adminExtraData: 123 }
+					}
 				}
 			});
 
@@ -504,10 +508,12 @@ describe('Model Dispatch', () => {
 				.resolves();
 
 			stubGetSecret({
-				default: {
-					write: { writeExtraData: 123 },
-					read: { readExtraData: 123 },
-					admin: { adminExtraData: 123 }
+				databases: {
+					default: {
+						write: { writeExtraData: 123 },
+						read: { readExtraData: 123 },
+						admin: { adminExtraData: 123 }
+					}
 				}
 			});
 

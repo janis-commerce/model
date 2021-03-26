@@ -694,8 +694,8 @@ It will be logged as:
 </details>
 
 ## 🔑 Secrets 
-The package will get the **secret** using the *JANIS_SERVICE_NAME* environment variable.  
-If the **secret** was found, the result will be merged with the settings found in the *`janiscommercerc.json`* file or in the Client databases configuration. See [Database connection settings](#Database-connection-settings).
+The package will get the **secret** using the `JANIS_SERVICE_NAME` environment variable.  
+If the **secret** is found, the result will be merged with the settings found in the *`janiscommercerc.json`* file or in the Client databases configuration. See [Database connection settings](#Database-connection-settings).
 
 The Secrets are stored in [AWS Secrets Manager](https://aws.amazon.com/secrets-manager) and obtained with the package [@janiscommerce/aws-secrets-manager](https://www.npmjs.com/package/@janiscommerce/aws-secrets-manager) 
 
@@ -720,17 +720,19 @@ The Secrets are stored in [AWS Secrets Manager](https://aws.amazon.com/secrets-m
 
 ```json
 {
-	"core": {
-		"write": {
-			"host": "mongodb+srv://some-host.mongodb.net",
-			"user": "secure-user",
-			"password": "secure-password",
+	"databases": {
+		"core": {
+			"write": {
+				"host": "mongodb+srv://some-host.mongodb.net",
+				"user": "secure-user",
+				"password": "secure-password",
+			}
 		}
 	}
 }
 ```
 
-3. File database config passed to the Database Driver.
+3. Config passed to the Database Driver.
 
 ```json
 {
@@ -757,8 +759,8 @@ To skip the fetch of the credentials, it can be used the setting `skipFetchCrede
 {
 	"core": {
 		"write": {
-			"type": "mongodb",
 			"skipFetchCredentials": true,
+			"type": "mongodb",
 			"protocol": "mongodb+srv://",
 			"host": "mongodb+srv://some-host.mongodb.net",
 			"user": "some-user",
