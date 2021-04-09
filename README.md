@@ -1,3 +1,4 @@
+
 # model
 
 ![Build Status](https://github.com/janis-commerce/model/workflows/Build%20Status/badge.svg)
@@ -26,7 +27,7 @@ class MyModel extends Model {
 
 👀 Either in Core or Client model the `databaseKey` connection settings structure is the same:
 
-:information_source: The `type` property is the only one used by this package to fetch the correct DB Driver package to use.  
+:information_source: The `type` property is the only one used by this package to fetch the correct DB Driver package to use.
 :warning: The rest of the connection properties depends entirely by the DB Driver that you will use.
 
 ```js
@@ -387,9 +388,12 @@ const items = await myModel.get({ filters: { foo: 'bar' }});
 ```
 </details>
 
-### async  `update(values, filter)`
+### async  `update(values, filter, params)`
 <details>
 	<summary>Update items that match with the <tt>filter</tt>.</summary>
+
+#### Parameters
+- `params` optional parameters to define some behavior of the query
 
 #### Example
 ```js
@@ -521,7 +525,7 @@ after:
 ```js
 const myItems = await myModel.get();
 
-/*  
+/*
 	[
 		{ some: 'item', otherProp: false },
 		{ some: 'otherItem', otherProp: true }
@@ -564,7 +568,7 @@ await myModel.dropDatabase();
 
 ---
 
-### :bookmark_tabs: Indexes Manipulation 
+### :bookmark_tabs: Indexes Manipulation
 ##### :warning: Only if DB Driver supports it
 
 ### async `getIndexes()`
@@ -693,11 +697,11 @@ It will be logged as:
 ```
 </details>
 
-## 🔑 Secrets 
-The package will get the **secret** using the `JANIS_SERVICE_NAME` environment variable.  
+## 🔑 Secrets
+The package will get the **secret** using the `JANIS_SERVICE_NAME` environment variable.
 If the **secret** is found, the result will be merged with the settings found in the *`janiscommercerc.json`* file or in the Client databases configuration. See [Database connection settings](#Database-connection-settings).
 
-The Secrets are stored in [AWS Secrets Manager](https://aws.amazon.com/secrets-manager) and obtained with the package [@janiscommerce/aws-secrets-manager](https://www.npmjs.com/package/@janiscommerce/aws-secrets-manager) 
+The Secrets are stored in [AWS Secrets Manager](https://aws.amazon.com/secrets-manager) and obtained with the package [@janiscommerce/aws-secrets-manager](https://www.npmjs.com/package/@janiscommerce/aws-secrets-manager)
 
 <details>
 	<summary>Complete example in which the settings are obtained for settings file or Client and merged with the fetched credentials in AWS Secrets Manager.</summary>
