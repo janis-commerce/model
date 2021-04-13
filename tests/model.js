@@ -551,7 +551,7 @@ describe('Model', () => {
 
 		await myCoreModel.update({ status: -1 }, { foo: 'bar' });
 
-		sandbox.assert.calledOnceWithExactly(DBDriver.prototype.update, myCoreModel, { status: -1 }, { foo: 'bar' });
+		sandbox.assert.calledOnceWithExactly(DBDriver.prototype.update, myCoreModel, { status: -1 }, { foo: 'bar' }, undefined);
 	});
 
 	it('should call DBDriver multiInsert method passing the model and the items received', async () => {
@@ -844,7 +844,7 @@ describe('Model', () => {
 				sandbox.assert.calledOnceWithExactly(DBDriver.prototype.update, myClientModel, {
 					some: 'data',
 					userModified
-				}, {});
+				}, {}, undefined);
 			});
 
 			it('Should log the update operation when session exists', async () => {
@@ -852,7 +852,7 @@ describe('Model', () => {
 				sandbox.stub(DBDriver.prototype, 'update')
 					.resolves(1);
 
-				await myClientModel.update({ some: 'data' }, { id: 'some-id' });
+				await myClientModel.update({ some: 'data' }, { id: 'some-id' }, { some: 'param' });
 
 				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
 					type: 'updated',
@@ -861,7 +861,8 @@ describe('Model', () => {
 					userCreated,
 					log: {
 						values: { some: 'data', userModified },
-						filter: { id: 'some-id' }
+						filter: { id: 'some-id' },
+						params: { some: 'param' }
 					}
 				});
 			});
