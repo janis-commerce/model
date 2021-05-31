@@ -733,6 +733,15 @@ describe('Model', () => {
 		});
 	});
 
+	context('seLogData()', () => {
+
+		it('Should throw an error when recived invalid data to log', () => {
+			assert.throws(() => myCoreModel.setLogData(['invalid data']), {
+				message: 'The custom data to log must be string or an object'
+			});
+		});
+	});
+
 	context('Write methods', () => {
 
 		const myClientModel = new ClientModel();
@@ -780,6 +789,33 @@ describe('Model', () => {
 					log: { some: 'data', userCreated }
 				});
 			});
+
+			it('Should log the custom data when pre-set before insertion', async () => {
+
+				sandbox.stub(DBDriver.prototype, 'insert')
+					.resolves('some-id');
+
+				await myClientModel.setLogData('custom message').insert({ some: 'data' });
+				await myClientModel.insert({ some: 'other data' });
+
+				sandbox.assert.calledWithExactly(Log.add.getCall(0), 'some-client', {
+					type: 'inserted',
+					entity: 'client',
+					entityId: 'some-id',
+					userCreated,
+					log: { some: 'data', userCreated, message: 'custom message' }
+				});
+
+				sandbox.assert.calledWithExactly(Log.add.getCall(1), 'some-client', {
+					type: 'inserted',
+					entity: 'client',
+					entityId: 'some-id',
+					userCreated,
+					log: { some: 'other data', userCreated }
+				});
+
+				assert.strictEqual(myClientModel.logData, null);
+			});
 		});
 
 		describe('multiInsert()', () => {
@@ -812,6 +848,25 @@ describe('Model', () => {
 						log: { some: 'data', userCreated }
 					}
 				]);
+			});
+
+			it('Should log the custom data when pre-set before the multiInsert operation', async () => {
+
+				sandbox.stub(DBDriver.prototype, 'multiInsert')
+					.resolves(true);
+
+				await myClientModel.setLogData({ message: 'custom message', isData: true }).multiInsert([{ some: 'data' }]);
+
+				sandbox.assert.calledOnceWithExactly(Log.add, 'some-client', [
+					{
+						type: 'inserted',
+						entity: 'client',
+						userCreated,
+						log: { some: 'data', userCreated, message: 'custom message', isData: true }
+					}
+				]);
+
+				assert.strictEqual(myClientModel.logData, null);
 			});
 
 			it('Shouldn\'t log the invalid entries when multiInsert method receives invalid items', async () => {
@@ -866,6 +921,32 @@ describe('Model', () => {
 					}
 				});
 			});
+
+			it('Should log the custom data when pre-set before the update operation', async () => {
+
+				sandbox.stub(DBDriver.prototype, 'update')
+					.resolves(1);
+
+				await myClientModel
+					.setLogData({ message: 'update message log', isUpdated: true })
+					.update({ some: 'data' }, { id: 'some-id' }, { some: 'param' });
+
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+					type: 'updated',
+					entity: 'client',
+					entityId: 'some-id',
+					userCreated,
+					log: {
+						values: { some: 'data', userModified },
+						filter: { id: 'some-id' },
+						params: { some: 'param' },
+						message: 'update message log',
+						isUpdated: true
+					}
+				});
+
+				assert.strictEqual(myClientModel.logData, null);
+			});
 		});
 
 		describe('remove()', () => {
@@ -885,6 +966,24 @@ describe('Model', () => {
 					log: { id: 'some-id', some: 'data' }
 				});
 			});
+
+			it('Should log the custom data when pre-set before the remove operation', async () => {
+
+				sandbox.stub(DBDriver.prototype, 'remove')
+					.resolves('some-id');
+
+				await myClientModel.setLogData('removing record').remove({ id: 'some-id', some: 'data' });
+
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+					type: 'removed',
+					entity: 'client',
+					entityId: 'some-id',
+					userCreated,
+					log: { id: 'some-id', some: 'data', message: 'removing record' }
+				});
+
+				assert.strictEqual(myClientModel.logData, null);
+			});
 		});
 
 		describe('multiRemove()', () => {
@@ -902,6 +1001,22 @@ describe('Model', () => {
 					entityId: 'some-id',
 					userCreated,
 					log: { id: 'some-id' }
+				});
+			});
+
+			it('Should log the custom data when pre-set before the multiRemove operation', async () => {
+
+				sandbox.stub(DBDriver.prototype, 'multiRemove')
+					.resolves('some-id');
+
+				await myClientModel.setLogData({ message: 'removing!' }).multiRemove({ id: 'some-id' });
+
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+					type: 'removed',
+					entity: 'client',
+					entityId: 'some-id',
+					userCreated,
+					log: { id: 'some-id', message: 'removing!' }
 				});
 			});
 		});
@@ -969,6 +1084,24 @@ describe('Model', () => {
 					log: { id: 'some-id', some: 'data', userModified }
 				});
 			});
+
+			it('Should log the custom data when pre-set before the save operation', async () => {
+
+				sandbox.stub(DBDriver.prototype, 'save')
+					.resolves('some-id');
+
+				await myClientModel.setLogData('saved').save({ id: 'some-id', some: 'data' });
+
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+					type: 'upserted',
+					entity: 'client',
+					entityId: 'some-id',
+					userCreated,
+					log: { id: 'some-id', some: 'data', userModified, message: 'saved' }
+				});
+
+				assert.strictEqual(myClientModel.logData, null);
+			});
 		});
 
 		describe('increment', () => {
@@ -1015,6 +1148,26 @@ describe('Model', () => {
 					userCreated,
 					log: { _id: 'some-id', quantity: 2, userModified }
 				});
+			});
+
+			it('Should log the custom data when pre-set before the increment operation', async () => {
+
+				sandbox.stub(DBDriver.prototype, 'increment')
+					.resolves({ _id: 'some-id', quantity: 2, userModified });
+
+				await myClientModel.setLogData({ importCarriers: true }).increment({ id: 'some-id' }, { quantity: 1 });
+
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+					type: 'incremented',
+					entity: 'client',
+					entityId: 'some-id',
+					userCreated,
+					log: {
+						_id: 'some-id', quantity: 2, userModified, importCarriers: true
+					}
+				});
+
+				assert.strictEqual(myClientModel.logData, null);
 			});
 		});
 
@@ -1081,6 +1234,28 @@ describe('Model', () => {
 						log: { id: 'some-id', some: 'data', userModified }
 					}
 				]);
+			});
+
+			it('Should log the custom data when pre-set before the multiSave operation', async () => {
+
+				sandbox.stub(DBDriver.prototype, 'multiSave')
+					.resolves('some-id');
+
+				await myClientModel
+					.setLogData('multisave log message')
+					.multiSave([{ id: 'some-id', some: 'data' }]);
+
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', [
+					{
+						type: 'upserted',
+						entity: 'client',
+						entityId: 'some-id',
+						userCreated,
+						log: { id: 'some-id', some: 'data', userModified, message: 'multisave log message' }
+					}
+				]);
+
+				assert.strictEqual(myClientModel.logData, null);
 			});
 
 			it('Shouldn\'t log the invalid entries when multiSave method receives invalid items', async () => {
