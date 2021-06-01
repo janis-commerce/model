@@ -733,11 +733,57 @@ describe('Model', () => {
 		});
 	});
 
+
 	context('seLogData()', () => {
+
+		const myClientModel = new ClientModel();
+
+		const userCreated = 'some-user-id';
+
+		myClientModel.session = {
+			...fakeSession,
+			clientCode: 'some-client',
+			userId: 'some-user-id'
+		};
+
+		afterEach(() => {
+			delete ClientModel.excludeFieldsInLog;
+		});
 
 		it('Should throw an error when recived invalid data to log', () => {
 			assert.throws(() => myCoreModel.setLogData(['invalid data']), {
 				message: 'The custom data to log must be string or an object'
+			});
+		});
+
+		it('Should throw an error when recived an invalid custom log property', () => {
+			assert.throws(() => myCoreModel.setLogData({ log: 'invalid-log' }), {
+				message: 'The property name log in custom log data must be an object'
+			});
+		});
+
+		it('Should log only the default log data when the second insert operation does not set custom data', async () => {
+
+			sandbox.stub(DBDriver.prototype, 'insert')
+				.resolves('some-id');
+
+			await myClientModel.setLogData({ type: 'super inserted', log: { isInternal: true } }).insert({ some: 'data' });
+			await myClientModel.insert({ some: 'other data' });
+
+			sandbox.assert.calledWithExactly(Log.add.getCall(0), 'some-client', {
+				type: 'super inserted',
+				entity: 'client',
+				entityId: 'some-id',
+				userCreated,
+				log: { some: 'data', userCreated, isInternal: true }
+			});
+
+			sandbox.assert.calledWithExactly(Log.add.getCall(1), 'some-client', {
+				type: 'inserted',
+				entity: 'client',
+				entityId: 'some-id',
+				userCreated,
+				log: { some: 'other data', userCreated }
 			});
 		});
 	});
@@ -795,26 +841,15 @@ describe('Model', () => {
 				sandbox.stub(DBDriver.prototype, 'insert')
 					.resolves('some-id');
 
-				await myClientModel.setLogData('custom message').insert({ some: 'data' });
-				await myClientModel.insert({ some: 'other data' });
+				await myClientModel.setLogData({ type: 'super inserted', log: { isInternal: true } }).insert({ some: 'data' });
 
 				sandbox.assert.calledWithExactly(Log.add.getCall(0), 'some-client', {
-					type: 'inserted',
+					type: 'super inserted',
 					entity: 'client',
 					entityId: 'some-id',
 					userCreated,
-					log: { some: 'data', userCreated, message: 'custom message' }
+					log: { some: 'data', userCreated, isInternal: true }
 				});
-
-				sandbox.assert.calledWithExactly(Log.add.getCall(1), 'some-client', {
-					type: 'inserted',
-					entity: 'client',
-					entityId: 'some-id',
-					userCreated,
-					log: { some: 'other data', userCreated }
-				});
-
-				assert.strictEqual(myClientModel.logData, null);
 			});
 		});
 
@@ -862,11 +897,11 @@ describe('Model', () => {
 						type: 'inserted',
 						entity: 'client',
 						userCreated,
-						log: { some: 'data', userCreated, message: 'custom message', isData: true }
+						message: 'custom message',
+						isData: true,
+						log: { some: 'data', userCreated }
 					}
 				]);
-
-				assert.strictEqual(myClientModel.logData, null);
 			});
 
 			it('Shouldn\'t log the invalid entries when multiInsert method receives invalid items', async () => {
@@ -936,16 +971,14 @@ describe('Model', () => {
 					entity: 'client',
 					entityId: 'some-id',
 					userCreated,
+					message: 'update message log',
+					isUpdated: true,
 					log: {
 						values: { some: 'data', userModified },
 						filter: { id: 'some-id' },
-						params: { some: 'param' },
-						message: 'update message log',
-						isUpdated: true
+						params: { some: 'param' }
 					}
 				});
-
-				assert.strictEqual(myClientModel.logData, null);
 			});
 		});
 
@@ -979,10 +1012,9 @@ describe('Model', () => {
 					entity: 'client',
 					entityId: 'some-id',
 					userCreated,
-					log: { id: 'some-id', some: 'data', message: 'removing record' }
+					message: 'removing record',
+					log: { id: 'some-id', some: 'data' }
 				});
-
-				assert.strictEqual(myClientModel.logData, null);
 			});
 		});
 
@@ -1016,7 +1048,8 @@ describe('Model', () => {
 					entity: 'client',
 					entityId: 'some-id',
 					userCreated,
-					log: { id: 'some-id', message: 'removing!' }
+					message: 'removing!',
+					log: { id: 'some-id' }
 				});
 			});
 		});
@@ -1097,10 +1130,9 @@ describe('Model', () => {
 					entity: 'client',
 					entityId: 'some-id',
 					userCreated,
-					log: { id: 'some-id', some: 'data', userModified, message: 'saved' }
+					message: 'saved',
+					log: { id: 'some-id', some: 'data', userModified }
 				});
-
-				assert.strictEqual(myClientModel.logData, null);
 			});
 		});
 
@@ -1162,12 +1194,11 @@ describe('Model', () => {
 					entity: 'client',
 					entityId: 'some-id',
 					userCreated,
+					importCarriers: true,
 					log: {
-						_id: 'some-id', quantity: 2, userModified, importCarriers: true
+						_id: 'some-id', quantity: 2, userModified
 					}
 				});
-
-				assert.strictEqual(myClientModel.logData, null);
 			});
 		});
 
@@ -1251,11 +1282,10 @@ describe('Model', () => {
 						entity: 'client',
 						entityId: 'some-id',
 						userCreated,
-						log: { id: 'some-id', some: 'data', userModified, message: 'multisave log message' }
+						message: 'multisave log message',
+						log: { id: 'some-id', some: 'data', userModified }
 					}
 				]);
-
-				assert.strictEqual(myClientModel.logData, null);
 			});
 
 			it('Shouldn\'t log the invalid entries when multiSave method receives invalid items', async () => {
