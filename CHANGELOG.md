@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Now can add custom data to log in any write operation
 ## [5.5.0] - 2021-04-13
 ### Changed
 - `update` Method now supports optional parameters for the query.
