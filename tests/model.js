@@ -734,7 +734,7 @@ describe('Model', () => {
 	});
 
 
-	context('seLogData()', () => {
+	context('setLogData()', () => {
 
 		const myClientModel = new ClientModel();
 

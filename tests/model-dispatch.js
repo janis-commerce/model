@@ -150,6 +150,8 @@ describe('Model Dispatch', () => {
 
 		it('Should reject when the required DBDriver is not installed', async () => {
 
+			stubGetSecret();
+
 			Settings.get.withArgs('database')
 				.returns({ core: { write: { ...settings.core.write, type: 'unknown-driver' } } });
 
@@ -163,6 +165,8 @@ describe('Model Dispatch', () => {
 
 		it('Should reject when the required DBDriver rejects while creating instance', async () => {
 
+			stubGetSecret();
+
 			Settings.get.withArgs('database')
 				.returns({ core: { write: { ...settings.core.write, fail: true } } });
 
@@ -175,6 +179,8 @@ describe('Model Dispatch', () => {
 		});
 
 		it('Should call DBDriver get using local settings when it exists', async () => {
+
+			stubGetSecret();
 
 			sandbox.stub(DBDriver.prototype, 'get')
 				.resolves();
@@ -190,6 +196,8 @@ describe('Model Dispatch', () => {
 
 		it('Should call DBDriver get using client config when it exists', async () => {
 
+			stubGetSecret();
+
 			sandbox.stub(DBDriver.prototype, 'get')
 				.resolves();
 
@@ -203,6 +211,8 @@ describe('Model Dispatch', () => {
 		});
 
 		it('Should call DBDriver get using read DB when readonly param is true', async () => {
+
+			stubGetSecret();
 
 			sandbox.stub(DBDriver.prototype, 'get')
 				.resolves();
@@ -227,6 +237,8 @@ describe('Model Dispatch', () => {
 		].forEach(method => {
 
 			it(`should call DBDriver using write DB when ${method} is executed after a readonly get`, async () => {
+
+				stubGetSecret();
 
 				sandbox.stub(DBDriver.prototype, method)
 					.resolves();
