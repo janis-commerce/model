@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "@janiscommerce/aws-secrets-manager": "^0.2.0",
-    "@janiscommerce/log": "^3.3.0",
+    "@janiscommerce/log": "^3.4.1",
     "@janiscommerce/settings": "^1.0.1",
     "lodash.omit": "4.5.0",
     "md5": "^2.3.0"
