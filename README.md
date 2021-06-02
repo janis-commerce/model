@@ -697,6 +697,62 @@ It will be logged as:
 ```
 </details>
 
+### :memo: Set custom log data
+<details>
+	<summary>You can add custom message or object data to log</summary>
+	<br>
+
+Adding a custom message:
+```js
+await myModel
+  .setLogData('custom message!')
+  .insert({ foo: 'bar' });
+
+/*
+	Log: {
+		...logData,
+		message: 'custom message!'
+	}
+*/
+```
+
+Adding a custom object data:	
+```js
+await myModel
+  .setLogData({message:'custom message!', type:'some type'})
+  .insert({ foo: 'bar' });
+
+/*
+	Log: {
+		...logData,
+		message: 'custom message!',
+		type:'some type'
+	}
+*/
+```
+
+Adding a custom object data with log property name:	
+```js
+await myModel
+  .setLogData({message:'custom message!', type:'some type', log: { isTest: true }})
+  .insert({ foo: 'bar' });
+
+/*
+	Log: {
+		...logData,
+		message: 'custom message!',
+		type:'some type',
+		log:{
+			...defaultModelLogData,
+			isTest: true
+		}
+	}
+*/
+```
+
+</details>
+
+
 ## 🔑 Secrets
 The package will get the **secret** using the `JANIS_SERVICE_NAME` environment variable.
 If the **secret** is found, the result will be merged with the settings found in the *`janiscommercerc.json`* file or in the Client databases configuration. See [Database connection settings](#Database-connection-settings).

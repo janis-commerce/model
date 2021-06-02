@@ -733,6 +733,61 @@ describe('Model', () => {
 		});
 	});
 
+
+	context('seLogData()', () => {
+
+		const myClientModel = new ClientModel();
+
+		const userCreated = 'some-user-id';
+
+		myClientModel.session = {
+			...fakeSession,
+			clientCode: 'some-client',
+			userId: 'some-user-id'
+		};
+
+		afterEach(() => {
+			delete ClientModel.excludeFieldsInLog;
+		});
+
+		it('Should throw an error when recived invalid data to log', () => {
+			assert.throws(() => myCoreModel.setLogData(['invalid data']), {
+				message: 'The custom data to log must be string or an object'
+			});
+		});
+
+		it('Should throw an error when recived an invalid custom log property', () => {
+			assert.throws(() => myCoreModel.setLogData({ log: 'invalid-log' }), {
+				message: 'The property name log in custom log data must be an object'
+			});
+		});
+
+		it('Should log only the default log data when the second insert operation does not set custom data', async () => {
+
+			sandbox.stub(DBDriver.prototype, 'insert')
+				.resolves('some-id');
+
+			await myClientModel.setLogData({ type: 'super inserted', log: { isInternal: true } }).insert({ some: 'data' });
+			await myClientModel.insert({ some: 'other data' });
+
+			sandbox.assert.calledWithExactly(Log.add.getCall(0), 'some-client', {
+				type: 'super inserted',
+				entity: 'client',
+				entityId: 'some-id',
+				userCreated,
+				log: { some: 'data', userCreated, isInternal: true }
+			});
+
+			sandbox.assert.calledWithExactly(Log.add.getCall(1), 'some-client', {
+				type: 'inserted',
+				entity: 'client',
+				entityId: 'some-id',
+				userCreated,
+				log: { some: 'other data', userCreated }
+			});
+		});
+	});
+
 	context('Write methods', () => {
 
 		const myClientModel = new ClientModel();
@@ -780,6 +835,22 @@ describe('Model', () => {
 					log: { some: 'data', userCreated }
 				});
 			});
+
+			it('Should log the custom data when pre-set before insertion', async () => {
+
+				sandbox.stub(DBDriver.prototype, 'insert')
+					.resolves('some-id');
+
+				await myClientModel.setLogData({ type: 'super inserted', log: { isInternal: true } }).insert({ some: 'data' });
+
+				sandbox.assert.calledWithExactly(Log.add.getCall(0), 'some-client', {
+					type: 'super inserted',
+					entity: 'client',
+					entityId: 'some-id',
+					userCreated,
+					log: { some: 'data', userCreated, isInternal: true }
+				});
+			});
 		});
 
 		describe('multiInsert()', () => {
@@ -809,6 +880,25 @@ describe('Model', () => {
 						type: 'inserted',
 						entity: 'client',
 						userCreated,
+						log: { some: 'data', userCreated }
+					}
+				]);
+			});
+
+			it('Should log the custom data when pre-set before the multiInsert operation', async () => {
+
+				sandbox.stub(DBDriver.prototype, 'multiInsert')
+					.resolves(true);
+
+				await myClientModel.setLogData({ message: 'custom message', isData: true }).multiInsert([{ some: 'data' }]);
+
+				sandbox.assert.calledOnceWithExactly(Log.add, 'some-client', [
+					{
+						type: 'inserted',
+						entity: 'client',
+						userCreated,
+						message: 'custom message',
+						isData: true,
 						log: { some: 'data', userCreated }
 					}
 				]);
@@ -866,6 +956,30 @@ describe('Model', () => {
 					}
 				});
 			});
+
+			it('Should log the custom data when pre-set before the update operation', async () => {
+
+				sandbox.stub(DBDriver.prototype, 'update')
+					.resolves(1);
+
+				await myClientModel
+					.setLogData({ message: 'update message log', isUpdated: true })
+					.update({ some: 'data' }, { id: 'some-id' }, { some: 'param' });
+
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+					type: 'updated',
+					entity: 'client',
+					entityId: 'some-id',
+					userCreated,
+					message: 'update message log',
+					isUpdated: true,
+					log: {
+						values: { some: 'data', userModified },
+						filter: { id: 'some-id' },
+						params: { some: 'param' }
+					}
+				});
+			});
 		});
 
 		describe('remove()', () => {
@@ -885,6 +999,23 @@ describe('Model', () => {
 					log: { id: 'some-id', some: 'data' }
 				});
 			});
+
+			it('Should log the custom data when pre-set before the remove operation', async () => {
+
+				sandbox.stub(DBDriver.prototype, 'remove')
+					.resolves('some-id');
+
+				await myClientModel.setLogData('removing record').remove({ id: 'some-id', some: 'data' });
+
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+					type: 'removed',
+					entity: 'client',
+					entityId: 'some-id',
+					userCreated,
+					message: 'removing record',
+					log: { id: 'some-id', some: 'data' }
+				});
+			});
 		});
 
 		describe('multiRemove()', () => {
@@ -901,6 +1032,23 @@ describe('Model', () => {
 					entity: 'client',
 					entityId: 'some-id',
 					userCreated,
+					log: { id: 'some-id' }
+				});
+			});
+
+			it('Should log the custom data when pre-set before the multiRemove operation', async () => {
+
+				sandbox.stub(DBDriver.prototype, 'multiRemove')
+					.resolves('some-id');
+
+				await myClientModel.setLogData({ message: 'removing!' }).multiRemove({ id: 'some-id' });
+
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+					type: 'removed',
+					entity: 'client',
+					entityId: 'some-id',
+					userCreated,
+					message: 'removing!',
 					log: { id: 'some-id' }
 				});
 			});
@@ -969,6 +1117,23 @@ describe('Model', () => {
 					log: { id: 'some-id', some: 'data', userModified }
 				});
 			});
+
+			it('Should log the custom data when pre-set before the save operation', async () => {
+
+				sandbox.stub(DBDriver.prototype, 'save')
+					.resolves('some-id');
+
+				await myClientModel.setLogData('saved').save({ id: 'some-id', some: 'data' });
+
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+					type: 'upserted',
+					entity: 'client',
+					entityId: 'some-id',
+					userCreated,
+					message: 'saved',
+					log: { id: 'some-id', some: 'data', userModified }
+				});
+			});
 		});
 
 		describe('increment', () => {
@@ -1014,6 +1179,25 @@ describe('Model', () => {
 					entityId: 'some-id',
 					userCreated,
 					log: { _id: 'some-id', quantity: 2, userModified }
+				});
+			});
+
+			it('Should log the custom data when pre-set before the increment operation', async () => {
+
+				sandbox.stub(DBDriver.prototype, 'increment')
+					.resolves({ _id: 'some-id', quantity: 2, userModified });
+
+				await myClientModel.setLogData({ importCarriers: true }).increment({ id: 'some-id' }, { quantity: 1 });
+
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+					type: 'incremented',
+					entity: 'client',
+					entityId: 'some-id',
+					userCreated,
+					importCarriers: true,
+					log: {
+						_id: 'some-id', quantity: 2, userModified
+					}
 				});
 			});
 		});
@@ -1078,6 +1262,27 @@ describe('Model', () => {
 						entity: 'client',
 						entityId: 'some-id',
 						userCreated,
+						log: { id: 'some-id', some: 'data', userModified }
+					}
+				]);
+			});
+
+			it('Should log the custom data when pre-set before the multiSave operation', async () => {
+
+				sandbox.stub(DBDriver.prototype, 'multiSave')
+					.resolves('some-id');
+
+				await myClientModel
+					.setLogData('multisave log message')
+					.multiSave([{ id: 'some-id', some: 'data' }]);
+
+				sandbox.assert.calledWithExactly(Log.add, 'some-client', [
+					{
+						type: 'upserted',
+						entity: 'client',
+						entityId: 'some-id',
+						userCreated,
+						message: 'multisave log message',
 						log: { id: 'some-id', some: 'data', userModified }
 					}
 				]);
