@@ -1506,7 +1506,19 @@ describe('Model', () => {
 	});
 
 	describe('Admin privileges model methods', () => {
-		it('Should reject when Model hasn\'t admin config', async () => {
+		it('Should reject when Model hasn\'t write config', async () => {
+
+			sandbox.restore();
+
+			const noWriteConfigSettings = {
+				...settings,
+				core: {}
+			};
+
+			sandbox.stub(Settings, 'get')
+				.withArgs('database')
+				.returns(noWriteConfigSettings);
+
 			await assert.rejects(myCoreModel.dropDatabase(), {
 				code: ModelError.codes.INVALID_DB_CONFIG
 			});

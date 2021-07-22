@@ -258,7 +258,7 @@ describe('Model Dispatch', () => {
 			});
 		});
 
-		it('should call DBDriver using admin config DB when dropDatabase is executed', async () => {
+		it('should call DBDriver using write config DB when dropDatabase is executed', async () => {
 
 			sandbox.stub(DBDriver.prototype, 'dropDatabase')
 				.resolves();
@@ -269,7 +269,7 @@ describe('Model Dispatch', () => {
 
 			await myClientModel.dropDatabase();
 
-			await assertDbDriverConfig(myClientModel, client.databases.default.admin);
+			await assertDbDriverConfig(myClientModel, client.databases.default.write);
 		});
 
 	});
@@ -536,7 +536,7 @@ describe('Model Dispatch', () => {
 			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.dropDatabase, clientModel);
 
 			await assertDbDriverConfig(clientModel, {
-				...client.databases.default.admin,
+				...client.databases.default.write,
 				adminExtraData: 123
 			});
 		});
