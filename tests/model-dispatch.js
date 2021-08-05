@@ -12,6 +12,7 @@ const Model = require('../lib/model');
 const ModelError = require('../lib/model-error');
 
 const DBDriver = require('./db-driver');
+const DatabaseDispatcher = require('../lib/helpers/database-dispatcher');
 
 describe('Model Dispatch', () => {
 
@@ -120,6 +121,8 @@ describe('Model Dispatch', () => {
 	};
 
 	beforeEach(() => {
+
+		DatabaseDispatcher.databasesCache = null;
 
 		process.env.JANIS_ENV = 'test';
 		process.env.JANIS_SERVICE_NAME = 'service-name';
