@@ -10,6 +10,9 @@
 npm install @janiscommerce/model
 ```
 
+## Breaking changes _Since 6.0.0_ :warning:
+When use `changeKeys` param and cannot get any items, it will return an empty object (before returns an empty array)
+
 ## 🔧 Database connection settings
 In order to use this package with a DB, you must to add the database connection settings, it can be setted in service settings *`janiscommercerc.json`* **(Core model)** or in session **(Client Model)**.
 
@@ -554,6 +557,17 @@ const myItems = await myModel.get({ changeKeys: 'some' });
 	}
 */
 ```
+
+:information_source:  _Since 6.0.0_: When no items were found it will return an empty object
+
+```js
+const myItems = await myModel.get({ filters: { status: 'active' }, changeKeys: 'other' });
+
+/*
+	{}
+*/
+```
+
 </details>
 
 ### async `dropDatabase()`
@@ -716,7 +730,7 @@ await myModel
 */
 ```
 
-Adding a custom object data:	
+Adding a custom object data:
 ```js
 await myModel
   .setLogData({message:'custom message!', type:'some type'})
@@ -731,7 +745,7 @@ await myModel
 */
 ```
 
-Adding a custom object data with log property name:	
+Adding a custom object data with log property name:
 ```js
 await myModel
   .setLogData({message:'custom message!', type:'some type', log: { isTest: true }})
