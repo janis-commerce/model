@@ -618,6 +618,21 @@ describe('Model', () => {
 
 			assert.deepStrictEqual(result, {});
 		});
+
+		it('Should return empty object when items cannot be found', async () => {
+
+			sandbox.stub(DBDriver.prototype, 'get')
+				.resolves([]);
+
+			const result = await myCoreModel.get({
+				changeKeys: 'id'
+			});
+
+			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, { changeKeys: 'id' });
+			sandbox.assert.notCalled(Model.changeKeys);
+
+			assert.deepStrictEqual(result, {});
+		});
 	});
 
 	it('Should call method \'formatGet\' with each item', async () => {
