@@ -939,7 +939,7 @@ describe('Model', () => {
 
 		describe('update()', () => {
 
-			it('Should add the userModified field when session exists', async () => {
+			it('Should add the userModified field when session exists (data is object)', async () => {
 
 				sandbox.stub(DBDriver.prototype, 'update')
 					.resolves();
@@ -950,6 +950,20 @@ describe('Model', () => {
 					some: 'data',
 					userModified
 				}, {}, undefined);
+			});
+
+			it('Should add the userModified field when session exists (data is array)', async () => {
+
+				sandbox.stub(DBDriver.prototype, 'update')
+					.resolves();
+
+				await myClientModel.update([{ some: 'data' }, { name: 'Johnsson' }], {});
+
+				sandbox.assert.calledOnceWithExactly(DBDriver.prototype.update, myClientModel, [
+					{ some: 'data' },
+					{ name: 'Johnsson' },
+					{ userModified }
+				], {}, undefined);
 			});
 
 			it('Should log the update operation when session exists', async () => {
