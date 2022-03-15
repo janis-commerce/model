@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Support multiple data `update`
 ## [6.0.0] - 2021-11-01
 ### Fixed
 - When use `changeKeys` param and cannot get any items, it will return an empty object (before returns an empty array)
