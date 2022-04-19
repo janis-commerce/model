@@ -1554,4 +1554,55 @@ describe('Model', () => {
 		});
 	});
 
+	describe('aggregate()', () => {
+
+		const itemId = '5df0151dbc1d570011949d87';
+
+		const stages = [
+			{ $match: { id: itemId, referenceId: 'display-id' } },
+			{ $unset: 'category' }
+		];
+
+		const results = [{
+			id: itemId,
+			name: 'Some name',
+			referenceId: 'display-id'
+		}];
+
+		it('Should failed if Driver has not aggregate function', async () => {
+
+			const myClientModel = new ClientModel();
+			myClientModel.session = fakeSession;
+
+			await assert.rejects(myClientModel.aggregate(stages));
+		});
+
+		it('Should resolves the aggregation stages', async () => {
+
+			const myClientModel = new ClientModel();
+			myClientModel.session = fakeSession;
+
+			const aggregate = sandbox.stub().resolves(results);
+
+			DBDriver.prototype.aggregate = aggregate;
+
+			assert.deepStrictEqual(await myClientModel.aggregate(stages), results);
+
+			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.aggregate, myClientModel, stages);
+		});
+
+		it('Should failed if aggregates function rejects', async () => {
+
+			const myClientModel = new ClientModel();
+			myClientModel.session = fakeSession;
+
+			const aggregate = sandbox.stub().rejects();
+
+			DBDriver.prototype.aggregate = aggregate;
+
+			await assert.rejects(myClientModel.aggregate(stages));
+
+			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.aggregate, myClientModel, stages);
+		});
+	});
 });
