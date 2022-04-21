@@ -485,7 +485,7 @@ const items = await myModel.get({ filters: { status: 2 }});
 
 ### async  `increment(filters, incrementData)`
 <details>
-	<summary>Increment/decrement values from an item in DB. This method will not perfrom an upsert.</summary>
+	<summary>Increment/decrement values from an item in DB. This method will not perform an upsert.</summary>
 
 #### Example
 ```js
@@ -577,6 +577,35 @@ const myItems = await myModel.get({ filters: { status: 'active' }, changeKeys: '
 #### Example
 ```js
 await myModel.dropDatabase();
+```
+</details>
+
+### async  `aggregate(stages)`
+<details>
+	<summary>Execute Aggregation operations to obtain computed results in Databases</summary>
+	
+> :warning: Not supported by all database connectors
+
+#### Parameters
+- `stages` An array with the aggregation stages
+
+#### Example
+```js
+
+const results = await myModel.aggregate([
+	{ $match: { id: '0000000055f2255a1a8e0c54' } }, // find the document with that id
+	{ $unset: 'category' }, // Removes the category field
+]);
+
+/**
+	[
+		{
+			id: '0000000055f2255a1a8e0c54',
+			name: 'Product 1',
+			description: 'Product 1 description'
+		}
+	]
+*/
 ```
 </details>
 
