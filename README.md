@@ -485,7 +485,7 @@ const items = await myModel.get({ filters: { status: 2 }});
 
 ### async  `increment(filters, incrementData)`
 <details>
-	<summary>Increment/decrement values from an item in DB. This method will not perform an upset.</summary>
+	<summary>Increment/decrement values from an item in DB. This method will not perform an upsert.</summary>
 
 #### Example
 ```js
@@ -582,7 +582,9 @@ await myModel.dropDatabase();
 
 ### async  `aggregate(stages)`
 <details>
-	<summary>Execute Aggregation operations to obtain computed results in Mongodb Databases</summary>
+	<summary>Execute Aggregation operations to obtain computed results in Databases</summary>
+	
+> :warning: Not supported by all database connectors
 
 #### Parameters
 - `stages` An array with the aggregation stages

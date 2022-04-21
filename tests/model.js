@@ -1569,7 +1569,7 @@ describe('Model', () => {
 			referenceId: 'display-id'
 		}];
 
-		it('Should failed if Driver has not aggregate function', async () => {
+		it('Should fail if Driver does not support aggregate function', async () => {
 
 			const myClientModel = new ClientModel();
 			myClientModel.session = fakeSession;
@@ -1577,7 +1577,7 @@ describe('Model', () => {
 			await assert.rejects(myClientModel.aggregate(stages));
 		});
 
-		it('Should resolves the aggregation stages', async () => {
+		it('Should resolve the aggregation stages result', async () => {
 
 			const myClientModel = new ClientModel();
 			myClientModel.session = fakeSession;
@@ -1591,7 +1591,7 @@ describe('Model', () => {
 			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.aggregate, myClientModel, stages);
 		});
 
-		it('Should failed if aggregates function rejects', async () => {
+		it('Should fail if database driver aggregate function rejects', async () => {
 
 			const myClientModel = new ClientModel();
 			myClientModel.session = fakeSession;
