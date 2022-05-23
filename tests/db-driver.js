@@ -1,5 +1,7 @@
 'use strict';
 
+const { struct } = require('@janiscommerce/superstruct');
+
 module.exports = class DBDriver {
 
 	constructor(config = {}) {
@@ -43,4 +45,8 @@ module.exports = class DBDriver {
 	dropIndexes() {}
 
 	dropDatabase() {}
+
+	get idStruct() {
+		return struct('objectId');
+	}
 };

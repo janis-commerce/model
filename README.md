@@ -671,6 +671,22 @@ await myModel.dropIndexes(['name', 'code']);
 ```
 </details>
 
+
+### async  `getIdStruct()`
+<details>
+	<summary> Returns struct function to validate ID Type. This struct will vary according to the implemented DB by the model </summary>
+
+#### Example (for mongodb DB)
+```js
+const idStruct = await myModel.getIdStruct();
+
+/*
+	struct('objectId')
+*/
+
+```
+
+</details>
 ---
 
 ## :clipboard: Logging

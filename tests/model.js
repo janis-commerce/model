@@ -5,6 +5,7 @@ const mockRequire = require('mock-require');
 const sandbox = require('sinon');
 
 const Log = require('@janiscommerce/log');
+
 const Settings = require('@janiscommerce/settings');
 
 const { AwsSecretsManager } = require('@janiscommerce/aws-secrets-manager');
@@ -1603,6 +1604,20 @@ describe('Model', () => {
 			await assert.rejects(myClientModel.aggregate(stages));
 
 			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.aggregate, myClientModel, stages);
+		});
+	});
+
+	describe('idStruct()', () => {
+
+		it('Should return an idStruct function', async () => {
+
+			const myModel = new OtherModel();
+
+			try {
+				await myModel.getIdStruct('123');
+			} catch(error) {
+				assert.deepStrictEqual(error.message, 'Expected a value of type `objectId` but received `"123"`.');
+			}
 		});
 	});
 });
