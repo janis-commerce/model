@@ -1609,12 +1609,13 @@ describe('Model', () => {
 
 	describe('idStruct()', () => {
 
-		it('Should return an idStruct function', async () => {
+		it.only('Should return an idStruct function', async () => {
 
-			const myModel = new OtherModel();
+			const myClientModel = new ClientModel();
+			myClientModel.session = fakeSession;
 
 			try {
-				await myModel.getIdStruct('123');
+				(await myClientModel.getIdStruct())('123');
 			} catch(error) {
 				assert.deepStrictEqual(error.message, 'Expected a value of type `objectId` but received `"123"`.');
 			}
