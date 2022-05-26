@@ -1609,7 +1609,7 @@ describe('Model', () => {
 
 	describe('idStruct()', () => {
 
-		it.only('Should return an idStruct function', async () => {
+		it('Should return an idStruct function', async () => {
 
 			const myClientModel = new ClientModel();
 			myClientModel.session = fakeSession;
