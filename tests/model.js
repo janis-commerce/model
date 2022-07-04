@@ -2,7 +2,7 @@
 
 const assert = require('assert');
 const mockRequire = require('mock-require');
-const sandbox = require('sinon');
+const sinon = require('sinon');
 
 const Log = require('@janiscommerce/log');
 
@@ -91,7 +91,7 @@ describe('Model', () => {
 
 	beforeEach(() => {
 
-		sandbox.stub(Settings, 'get')
+		sinon.stub(Settings, 'get')
 			.withArgs('database')
 			.returns(settings);
 
@@ -99,25 +99,25 @@ describe('Model', () => {
 
 		mockRequire('@janiscommerce/other', class OtherDBDriver {});
 
-		sandbox.stub(Log, 'add')
+		sinon.stub(Log, 'add')
 			.resolves();
 
 		myCoreModel = new CoreModel();
 
 		otherModel = new OtherModel();
 
-		sandbox.spy(Model, 'changeKeys');
+		sinon.spy(Model, 'changeKeys');
 
-		getPagedCallback = sandbox.stub();
+		getPagedCallback = sinon.stub();
 
-		sandbox.stub(AwsSecretsManager, 'secret')
+		sinon.stub(AwsSecretsManager, 'secret')
 			.returns({
 				getValue() {}
 			});
 	});
 
 	afterEach(() => {
-		sandbox.restore();
+		sinon.restore();
 		mockRequire.stopAll();
 	});
 
@@ -136,7 +136,7 @@ describe('Model', () => {
 
 		it('Should reject when DB Driver rejects', async () => {
 
-			sandbox.stub(DBDriver.prototype, 'distinct')
+			sinon.stub(DBDriver.prototype, 'distinct')
 				.rejects(new Error('Some internal error'));
 
 			await assert.rejects(() => myCoreModel.distinct('status'), {
@@ -146,12 +146,12 @@ describe('Model', () => {
 
 		it('Should resolve an array of distinct values when DB Driver resolves', async () => {
 
-			sandbox.stub(DBDriver.prototype, 'distinct')
+			sinon.stub(DBDriver.prototype, 'distinct')
 				.resolves(['Value 1', 'Value 2']);
 
 			const distinctValues = await myCoreModel.distinct('status');
 
-			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.distinct, myCoreModel, {
+			sinon.assert.calledOnceWithExactly(DBDriver.prototype.distinct, myCoreModel, {
 				key: 'status'
 			});
 
@@ -160,7 +160,7 @@ describe('Model', () => {
 
 		it('Should pass extra params to the DB Driver', async () => {
 
-			sandbox.stub(DBDriver.prototype, 'distinct')
+			sinon.stub(DBDriver.prototype, 'distinct')
 				.resolves([]);
 
 			await myCoreModel.distinct('status', {
@@ -169,7 +169,7 @@ describe('Model', () => {
 				}
 			});
 
-			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.distinct, myCoreModel, {
+			sinon.assert.calledOnceWithExactly(DBDriver.prototype.distinct, myCoreModel, {
 				filters: {
 					type: 'foo'
 				},
@@ -183,7 +183,7 @@ describe('Model', () => {
 		let model;
 
 		beforeEach(() => {
-			sandbox.stub(ClientModel.prototype, 'get');
+			sinon.stub(ClientModel.prototype, 'get');
 			model = new ClientModel();
 		});
 
@@ -191,7 +191,7 @@ describe('Model', () => {
 
 			await model.getById(1);
 
-			sandbox.assert.calledOnceWithExactly(ClientModel.prototype.get, {
+			sinon.assert.calledOnceWithExactly(ClientModel.prototype.get, {
 				filters: { id: 1 }
 			});
 		});
@@ -200,7 +200,7 @@ describe('Model', () => {
 
 			await model.getById([1, 2]);
 
-			sandbox.assert.calledOnceWithExactly(ClientModel.prototype.get, {
+			sinon.assert.calledOnceWithExactly(ClientModel.prototype.get, {
 				filters: { id: [1, 2] }
 			});
 		});
@@ -209,7 +209,7 @@ describe('Model', () => {
 
 			await model.getById(1, { limit: 10 });
 
-			sandbox.assert.calledOnceWithExactly(ClientModel.prototype.get, {
+			sinon.assert.calledOnceWithExactly(ClientModel.prototype.get, {
 				filters: { id: 1 },
 				limit: 10
 			});
@@ -222,7 +222,7 @@ describe('Model', () => {
 				limit: 10
 			});
 
-			sandbox.assert.calledOnceWithExactly(ClientModel.prototype.get, {
+			sinon.assert.calledOnceWithExactly(ClientModel.prototype.get, {
 				filters: { status: 'active', id: 1 },
 				limit: 10
 			});
@@ -278,7 +278,7 @@ describe('Model', () => {
 		let model;
 
 		beforeEach(() => {
-			sandbox.stub(ClientModel.prototype, 'get');
+			sinon.stub(ClientModel.prototype, 'get');
 			model = new ClientModel();
 		});
 
@@ -286,7 +286,7 @@ describe('Model', () => {
 
 			await model.getBy('orderId', 1);
 
-			sandbox.assert.calledWithExactly(ClientModel.prototype.get, {
+			sinon.assert.calledWithExactly(ClientModel.prototype.get, {
 				filters: { orderId: 1 }
 			});
 		});
@@ -295,7 +295,7 @@ describe('Model', () => {
 
 			await model.getBy('orderId', [1, 2]);
 
-			sandbox.assert.calledWithExactly(ClientModel.prototype.get, {
+			sinon.assert.calledWithExactly(ClientModel.prototype.get, {
 				filters: { orderId: [1, 2] }
 			});
 		});
@@ -304,7 +304,7 @@ describe('Model', () => {
 
 			await model.getBy('orderId', 1, { limit: 10 });
 
-			sandbox.assert.calledWithExactly(ClientModel.prototype.get, {
+			sinon.assert.calledWithExactly(ClientModel.prototype.get, {
 				filters: { orderId: 1 },
 				limit: 10
 			});
@@ -317,7 +317,7 @@ describe('Model', () => {
 				limit: 10
 			});
 
-			sandbox.assert.calledWithExactly(ClientModel.prototype.get, {
+			sinon.assert.calledWithExactly(ClientModel.prototype.get, {
 				filters: { status: 'active', orderId: 1 },
 				limit: 10
 			});
@@ -333,7 +333,7 @@ describe('Model', () => {
 				limit: 10
 			});
 
-			sandbox.assert.calledWithExactly(ClientModel.prototype.get, {
+			sinon.assert.calledWithExactly(ClientModel.prototype.get, {
 				filters: [
 					{
 						status: 'active',
@@ -454,14 +454,14 @@ describe('Model', () => {
 
 	it('Should admit object result from model', async () => {
 
-		sandbox.stub(DBDriver.prototype, 'get')
+		sinon.stub(DBDriver.prototype, 'get')
 			.resolves({ foo: 456 });
 
 		const result = await myCoreModel.get({
 			fooParam: 1
 		});
 
-		sandbox.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, {
+		sinon.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, {
 			fooParam: 1
 		});
 
@@ -470,12 +470,12 @@ describe('Model', () => {
 
 	it('Should return an empty array when driver returns an empty array', async () => {
 
-		sandbox.stub(DBDriver.prototype, 'get')
+		sinon.stub(DBDriver.prototype, 'get')
 			.resolves([]);
 
 		const result = await myCoreModel.get();
 
-		sandbox.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, {});
+		sinon.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, {});
 
 		assert.deepStrictEqual(result, []);
 	});
@@ -484,14 +484,14 @@ describe('Model', () => {
 
 		myCoreModel.formatGet = undefined;
 
-		sandbox.stub(DBDriver.prototype, 'get')
+		sinon.stub(DBDriver.prototype, 'get')
 			.resolves([{ fooItem: 88 }]);
 
 		const result = await myCoreModel.get({
 			fooParam: 1
 		});
 
-		sandbox.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, { fooParam: 1 });
+		sinon.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, { fooParam: 1 });
 
 		assert.deepStrictEqual(result, [{ fooItem: 88 }]);
 	});
@@ -500,104 +500,104 @@ describe('Model', () => {
 
 		myCoreModel.afterGet = undefined;
 
-		sandbox.stub(DBDriver.prototype, 'get')
+		sinon.stub(DBDriver.prototype, 'get')
 			.resolves([{ fooItem: 7787 }]);
 
 		const result = await myCoreModel.get({
 			fooParam: 1
 		});
 
-		sandbox.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, { fooParam: 1 });
+		sinon.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, { fooParam: 1 });
 
 		assert.deepStrictEqual(result, [{ fooItem: 7787 }]);
 	});
 
 	it('Should call DBDriver getTotals method passing the model', async () => {
 
-		sandbox.stub(DBDriver.prototype, 'getTotals')
+		sinon.stub(DBDriver.prototype, 'getTotals')
 			.resolves();
 
 		await myCoreModel.getTotals();
 
-		sandbox.assert.calledOnceWithExactly(DBDriver.prototype.getTotals, myCoreModel);
+		sinon.assert.calledOnceWithExactly(DBDriver.prototype.getTotals, myCoreModel);
 	});
 
 	['insert', 'remove'].forEach(method => {
 
 		it(`should call DBDriver ${method} method passing the model and the item received`, async () => {
 
-			sandbox.stub(DBDriver.prototype, method)
+			sinon.stub(DBDriver.prototype, method)
 				.resolves();
 
 			await myCoreModel[method]({ foo: 'bar' });
 
-			sandbox.assert.calledOnceWithExactly(DBDriver.prototype[method], myCoreModel, { foo: 'bar' });
+			sinon.assert.calledOnceWithExactly(DBDriver.prototype[method], myCoreModel, { foo: 'bar' });
 		});
 	});
 
 	it('should call DBDriver save method passing the model and the item received', async () => {
 
-		sandbox.stub(DBDriver.prototype, 'save')
+		sinon.stub(DBDriver.prototype, 'save')
 			.resolves();
 
 		await myCoreModel.save({ foo: 'bar' });
 
-		sandbox.assert.calledOnceWithExactly(DBDriver.prototype.save, myCoreModel, { foo: 'bar' }, undefined);
+		sinon.assert.calledOnceWithExactly(DBDriver.prototype.save, myCoreModel, { foo: 'bar' }, undefined);
 	});
 
 	it('Should call DBDriver update method passing the model and the values and filter received', async () => {
 
-		sandbox.stub(DBDriver.prototype, 'update')
+		sinon.stub(DBDriver.prototype, 'update')
 			.resolves();
 
 		await myCoreModel.update({ status: -1 }, { foo: 'bar' });
 
-		sandbox.assert.calledOnceWithExactly(DBDriver.prototype.update, myCoreModel, { status: -1 }, { foo: 'bar' }, undefined);
+		sinon.assert.calledOnceWithExactly(DBDriver.prototype.update, myCoreModel, { status: -1 }, { foo: 'bar' }, undefined);
 	});
 
 	it('should call DBDriver multiInsert method passing the model and the items received', async () => {
 
-		sandbox.stub(DBDriver.prototype, 'multiInsert')
+		sinon.stub(DBDriver.prototype, 'multiInsert')
 			.resolves();
 
 		await myCoreModel.multiInsert([{ foo: 'bar' }, { foo2: 'bar2' }]);
 
-		sandbox.assert.calledOnceWithExactly(DBDriver.prototype.multiInsert, myCoreModel, [{ foo: 'bar' }, { foo2: 'bar2' }]);
+		sinon.assert.calledOnceWithExactly(DBDriver.prototype.multiInsert, myCoreModel, [{ foo: 'bar' }, { foo2: 'bar2' }]);
 	});
 
 	it('should call DBDriver multiSave method passing the model and the items received', async () => {
 
-		sandbox.stub(DBDriver.prototype, 'multiSave')
+		sinon.stub(DBDriver.prototype, 'multiSave')
 			.resolves();
 
 		await myCoreModel.multiSave([{ foo: 'bar' }, { foo2: 'bar2' }]);
 
-		sandbox.assert.calledOnceWithExactly(DBDriver.prototype.multiSave, myCoreModel, [{ foo: 'bar' }, { foo2: 'bar2' }], undefined);
+		sinon.assert.calledOnceWithExactly(DBDriver.prototype.multiSave, myCoreModel, [{ foo: 'bar' }, { foo2: 'bar2' }], undefined);
 	});
 
 	it('Should call DBDriver multiRemove method passing the model and the filter received', async () => {
 
-		sandbox.stub(DBDriver.prototype, 'multiRemove')
+		sinon.stub(DBDriver.prototype, 'multiRemove')
 			.resolves();
 
 		await myCoreModel.multiRemove({ foo: 'bar' });
 
-		sandbox.assert.calledOnceWithExactly(DBDriver.prototype.multiRemove, myCoreModel, { foo: 'bar' });
+		sinon.assert.calledOnceWithExactly(DBDriver.prototype.multiRemove, myCoreModel, { foo: 'bar' });
 	});
 
 	context('when param \'changeKeys\' received', () => {
 
 		it('Should change keys when key found in items', async () => {
 
-			sandbox.stub(DBDriver.prototype, 'get')
+			sinon.stub(DBDriver.prototype, 'get')
 				.resolves([{ id: 1, foo: 'bar' }, { id: 2, bar: 'foo' }]);
 
 			const result = await myCoreModel.get({
 				changeKeys: 'id'
 			});
 
-			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, { changeKeys: 'id' });
-			sandbox.assert.calledOnceWithExactly(Model.changeKeys, [{ id: 1, foo: 'bar' }, { id: 2, bar: 'foo' }], 'id');
+			sinon.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, { changeKeys: 'id' });
+			sinon.assert.calledOnceWithExactly(Model.changeKeys, [{ id: 1, foo: 'bar' }, { id: 2, bar: 'foo' }], 'id');
 
 			assert.deepStrictEqual(result, {
 				1: { id: 1, foo: 'bar' },
@@ -607,30 +607,30 @@ describe('Model', () => {
 
 		it('Should ignore items that hasn\'t the key', async () => {
 
-			sandbox.stub(DBDriver.prototype, 'get')
+			sinon.stub(DBDriver.prototype, 'get')
 				.resolves([{ foo: 'bar' }, { bar: 'foo' }]);
 
 			const result = await myCoreModel.get({
 				changeKeys: 'id'
 			});
 
-			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, { changeKeys: 'id' });
-			sandbox.assert.calledOnceWithExactly(Model.changeKeys, [{ foo: 'bar' }, { bar: 'foo' }], 'id');
+			sinon.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, { changeKeys: 'id' });
+			sinon.assert.calledOnceWithExactly(Model.changeKeys, [{ foo: 'bar' }, { bar: 'foo' }], 'id');
 
 			assert.deepStrictEqual(result, {});
 		});
 
 		it('Should return empty object when items cannot be found', async () => {
 
-			sandbox.stub(DBDriver.prototype, 'get')
+			sinon.stub(DBDriver.prototype, 'get')
 				.resolves([]);
 
 			const result = await myCoreModel.get({
 				changeKeys: 'id'
 			});
 
-			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, { changeKeys: 'id' });
-			sandbox.assert.notCalled(Model.changeKeys);
+			sinon.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, { changeKeys: 'id' });
+			sinon.assert.notCalled(Model.changeKeys);
 
 			assert.deepStrictEqual(result, {});
 		});
@@ -638,22 +638,22 @@ describe('Model', () => {
 
 	it('Should call method \'formatGet\' with each item', async () => {
 
-		sandbox.stub(myCoreModel, 'formatGet')
+		sinon.stub(myCoreModel, 'formatGet')
 			.callsFake(({ ...item }) => {
 				item.added = 123;
 				return item;
 			});
 
-		sandbox.stub(DBDriver.prototype, 'get')
+		sinon.stub(DBDriver.prototype, 'get')
 			.resolves([{ fooItem: 2 }, { anotherFooItem: 3 }]);
 
 		const result = await myCoreModel.get();
 
-		sandbox.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, {});
+		sinon.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, {});
 
-		sandbox.assert.calledTwice(myCoreModel.formatGet);
-		sandbox.assert.calledWithExactly(myCoreModel.formatGet.getCall(0), { fooItem: 2 });
-		sandbox.assert.calledWithExactly(myCoreModel.formatGet.getCall(1), { anotherFooItem: 3 });
+		sinon.assert.calledTwice(myCoreModel.formatGet);
+		sinon.assert.calledWithExactly(myCoreModel.formatGet.getCall(0), { fooItem: 2 });
+		sinon.assert.calledWithExactly(myCoreModel.formatGet.getCall(1), { anotherFooItem: 3 });
 
 		assert.deepStrictEqual(result, [
 			{ fooItem: 2, added: 123 },
@@ -663,30 +663,30 @@ describe('Model', () => {
 
 	it('Should call method \'afterGet\' with all items', async () => {
 
-		sandbox.stub(DBDriver.prototype, 'get')
+		sinon.stub(DBDriver.prototype, 'get')
 			.resolves([{ foo: 1 }, { bar: 2 }]);
 
-		sandbox.spy(myCoreModel, 'afterGet');
+		sinon.spy(myCoreModel, 'afterGet');
 
 		const result = await myCoreModel.get();
 
-		sandbox.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, {});
-		sandbox.assert.calledOnceWithExactly(myCoreModel.afterGet, [{ foo: 1 }, { bar: 2 }], {}, {}, []);
+		sinon.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, {});
+		sinon.assert.calledOnceWithExactly(myCoreModel.afterGet, [{ foo: 1 }, { bar: 2 }], {}, {}, []);
 
 		assert.deepStrictEqual(result, [{ foo: 1 }, { bar: 2 }]);
 	});
 
 	it('Should call method \'afterGet\' with all items, params, indexes and ids', async () => {
 
-		sandbox.stub(DBDriver.prototype, 'get')
+		sinon.stub(DBDriver.prototype, 'get')
 			.resolves([{ id: 33, foo: 45 }, { id: 78, bar: 987 }]);
 
-		sandbox.spy(myCoreModel, 'afterGet');
+		sinon.spy(myCoreModel, 'afterGet');
 
 		const result = await myCoreModel.get({ extraParam: true });
 
-		sandbox.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, { extraParam: true });
-		sandbox.assert.calledOnceWithExactly(myCoreModel.afterGet, [{ id: 33, foo: 45 }, { id: 78, bar: 987 }], { extraParam: true }, { 33: 0, 78: 1 }, [33, 78]); // eslint-disable-line max-len
+		sinon.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, { extraParam: true });
+		sinon.assert.calledOnceWithExactly(myCoreModel.afterGet, [{ id: 33, foo: 45 }, { id: 78, bar: 987 }], { extraParam: true }, { 33: 0, 78: 1 }, [33, 78]); // eslint-disable-line max-len
 
 		assert.deepStrictEqual(result, [{ id: 33, foo: 45 }, { id: 78, bar: 987 }]);
 	});
@@ -715,22 +715,22 @@ describe('Model', () => {
 
 		it('Shouldn\'t call the callback when get response empty results', async () => {
 
-			sandbox.stub(myCoreModel, 'get')
+			sinon.stub(myCoreModel, 'get')
 				.returns([]);
 
 			await myCoreModel.getPaged({}, getPagedCallback);
 
-			sandbox.assert.calledOnceWithExactly(myCoreModel.get, {
+			sinon.assert.calledOnceWithExactly(myCoreModel.get, {
 				page: 1,
 				limit: Model.defaultPageLimit
 			});
 
-			sandbox.assert.notCalled(getPagedCallback);
+			sinon.assert.notCalled(getPagedCallback);
 		});
 
 		it('Should call the callback one time when get response an array of items, passing custom limit', async () => {
 
-			sandbox.stub(myCoreModel, 'get')
+			sinon.stub(myCoreModel, 'get')
 				.onCall(0)
 				.returns([{ foo: 1 }, { bar: 2 }])
 				.onCall(1)
@@ -739,13 +739,13 @@ describe('Model', () => {
 
 			await myCoreModel.getPaged({ limit: 2 }, getPagedCallback);
 
-			sandbox.assert.calledTwice(myCoreModel.get);
-			sandbox.assert.calledWithExactly(myCoreModel.get.getCall(0), { page: 1, limit: 2 });
-			sandbox.assert.calledWithExactly(myCoreModel.get.getCall(1), { page: 2, limit: 2 });
+			sinon.assert.calledTwice(myCoreModel.get);
+			sinon.assert.calledWithExactly(myCoreModel.get.getCall(0), { page: 1, limit: 2 });
+			sinon.assert.calledWithExactly(myCoreModel.get.getCall(1), { page: 2, limit: 2 });
 
-			sandbox.assert.calledTwice(getPagedCallback);
-			sandbox.assert.calledWithExactly(getPagedCallback.getCall(0), [{ foo: 1 }, { bar: 2 }], 1, 2);
-			sandbox.assert.calledWithExactly(getPagedCallback.getCall(1), [{ foo: 5 }], 2, 2);
+			sinon.assert.calledTwice(getPagedCallback);
+			sinon.assert.calledWithExactly(getPagedCallback.getCall(0), [{ foo: 1 }, { bar: 2 }], 1, 2);
+			sinon.assert.calledWithExactly(getPagedCallback.getCall(1), [{ foo: 5 }], 2, 2);
 		});
 	});
 
@@ -780,13 +780,13 @@ describe('Model', () => {
 
 		it('Should log only the default log data when the second insert operation does not set custom data', async () => {
 
-			sandbox.stub(DBDriver.prototype, 'insert')
+			sinon.stub(DBDriver.prototype, 'insert')
 				.resolves('some-id');
 
 			await myClientModel.setLogData({ type: 'super inserted', log: { isInternal: true } }).insert({ some: 'data' });
 			await myClientModel.insert({ some: 'other data' });
 
-			sandbox.assert.calledWithExactly(Log.add.getCall(0), 'some-client', {
+			sinon.assert.calledWithExactly(Log.add.getCall(0), 'some-client', {
 				type: 'super inserted',
 				entity: 'client',
 				entityId: 'some-id',
@@ -794,7 +794,7 @@ describe('Model', () => {
 				log: { some: 'data', userCreated, isInternal: true }
 			});
 
-			sandbox.assert.calledWithExactly(Log.add.getCall(1), 'some-client', {
+			sinon.assert.calledWithExactly(Log.add.getCall(1), 'some-client', {
 				type: 'inserted',
 				entity: 'client',
 				entityId: 'some-id',
@@ -825,46 +825,64 @@ describe('Model', () => {
 
 			it('Should add the userCreated field when session exists', async () => {
 
-				sandbox.stub(DBDriver.prototype, 'insert')
+				sinon.stub(DBDriver.prototype, 'insert')
 					.resolves();
 
 				await myClientModel.insert({ some: 'data' });
 
-				sandbox.assert.calledOnceWithExactly(DBDriver.prototype.insert, myClientModel, {
+				sinon.assert.calledOnceWithExactly(DBDriver.prototype.insert, myClientModel, {
 					some: 'data',
-					userCreated: 'some-user-id'
+					userCreated,
+					dateCreated: sinon.match.date,
+					userModified,
+					dateModified: sinon.match.date
 				});
 			});
 
 			it('Should log the insert operation when session exists', async () => {
 
-				sandbox.stub(DBDriver.prototype, 'insert')
+				sinon.stub(DBDriver.prototype, 'insert')
 					.resolves('some-id');
 
 				await myClientModel.insert({ some: 'data' });
 
-				sandbox.assert.calledOnceWithExactly(Log.add, 'some-client', {
+				sinon.assert.calledOnceWithExactly(Log.add, 'some-client', {
 					type: 'inserted',
 					entity: 'client',
 					entityId: 'some-id',
 					userCreated,
-					log: { some: 'data', userCreated }
+					log: {
+						some: 'data',
+						userCreated,
+						dateCreated: sinon.match.date,
+						userModified,
+						dateModified: sinon.match.date
+					}
 				});
 			});
 
 			it('Should log the custom data when pre-set before insertion', async () => {
 
-				sandbox.stub(DBDriver.prototype, 'insert')
+				sinon.stub(DBDriver.prototype, 'insert')
 					.resolves('some-id');
 
-				await myClientModel.setLogData({ type: 'super inserted', log: { isInternal: true } }).insert({ some: 'data' });
+				await myClientModel
+					.setLogData({ type: 'super inserted', log: { isInternal: true } })
+					.insert({ some: 'data' });
 
-				sandbox.assert.calledWithExactly(Log.add.getCall(0), 'some-client', {
+				sinon.assert.calledWithExactly(Log.add.getCall(0), 'some-client', {
 					type: 'super inserted',
 					entity: 'client',
 					entityId: 'some-id',
 					userCreated,
-					log: { some: 'data', userCreated, isInternal: true }
+					log: {
+						some: 'data',
+						userCreated,
+						dateCreated: sinon.match.date,
+						userModified,
+						dateModified: sinon.match.date,
+						isInternal: true
+					}
 				});
 			});
 		});
@@ -873,68 +891,75 @@ describe('Model', () => {
 
 			it('Should add the userCreated field when session exists', async () => {
 
-				sandbox.stub(DBDriver.prototype, 'multiInsert')
+				sinon.stub(DBDriver.prototype, 'multiInsert')
 					.resolves();
 
 				await myClientModel.multiInsert([{ some: 'data' }, { other: 'data' }]);
 
-				sandbox.assert.calledOnceWithExactly(DBDriver.prototype.multiInsert, myClientModel, [
-					{ some: 'data', userCreated },
-					{ other: 'data', userCreated }
+				sinon.assert.calledOnceWithExactly(DBDriver.prototype.multiInsert, myClientModel, [
+					{
+						some: 'data',
+						userCreated,
+						dateCreated: sinon.match.date,
+						userModified,
+						dateModified: sinon.match.date
+					},
+					{
+						other: 'data',
+						userCreated,
+						dateCreated: sinon.match.date,
+						userModified,
+						dateModified: sinon.match.date
+					}
 				]);
 			});
 
 			it('Should log the multiInsert operation when session exists', async () => {
 
-				sandbox.stub(DBDriver.prototype, 'multiInsert')
+				sinon.stub(DBDriver.prototype, 'multiInsert')
 					.resolves(true);
 
 				await myClientModel.multiInsert([{ some: 'data' }]);
 
-				sandbox.assert.calledOnceWithExactly(Log.add, 'some-client', [
+				sinon.assert.calledOnceWithExactly(Log.add, 'some-client', [
 					{
 						type: 'inserted',
 						entity: 'client',
 						userCreated,
-						log: { some: 'data', userCreated }
+						log: {
+							some: 'data',
+							userCreated,
+							dateCreated: sinon.match.date,
+							userModified,
+							dateModified: sinon.match.date
+						}
 					}
 				]);
 			});
 
 			it('Should log the custom data when pre-set before the multiInsert operation', async () => {
 
-				sandbox.stub(DBDriver.prototype, 'multiInsert')
+				sinon.stub(DBDriver.prototype, 'multiInsert')
 					.resolves(true);
 
 				await myClientModel.setLogData({ message: 'custom message', isData: true }).multiInsert([{ some: 'data' }]);
 
-				sandbox.assert.calledOnceWithExactly(Log.add, 'some-client', [
+				sinon.assert.calledOnceWithExactly(Log.add, 'some-client', [
 					{
 						type: 'inserted',
 						entity: 'client',
 						userCreated,
 						message: 'custom message',
 						isData: true,
-						log: { some: 'data', userCreated }
+						log: {
+							some: 'data',
+							userCreated,
+							dateCreated: sinon.match.date,
+							userModified,
+							dateModified: sinon.match.date
+						}
 					}
 				]);
-			});
-
-			it('Shouldn\'t log the invalid entries when multiInsert method receives invalid items', async () => {
-
-				sandbox.stub(DBDriver.prototype, 'multiInsert')
-					.resolves();
-
-				await myClientModel.multiInsert([{ some: 'data' }, null]);
-
-				sandbox.assert.calledOnceWithExactly(Log.add, 'some-client', [
-					{
-						type: 'inserted',
-						entity: 'client',
-						userCreated,
-						log: { some: 'data', userCreated }
-					}]
-				);
 			});
 		});
 
@@ -942,45 +967,46 @@ describe('Model', () => {
 
 			it('Should add the userModified field when session exists (data is object)', async () => {
 
-				sandbox.stub(DBDriver.prototype, 'update')
+				sinon.stub(DBDriver.prototype, 'update')
 					.resolves();
 
 				await myClientModel.update({ some: 'data' }, {});
 
-				sandbox.assert.calledOnceWithExactly(DBDriver.prototype.update, myClientModel, {
+				sinon.assert.calledOnceWithExactly(DBDriver.prototype.update, myClientModel, {
 					some: 'data',
-					userModified
+					userModified,
+					dateModified: sinon.match.date
 				}, {}, undefined);
 			});
 
 			it('Should add the userModified field when session exists (data is array)', async () => {
 
-				sandbox.stub(DBDriver.prototype, 'update')
+				sinon.stub(DBDriver.prototype, 'update')
 					.resolves();
 
-				await myClientModel.update([{ some: 'data' }, { name: 'Johnsson' }], {});
+				await myClientModel.update([{ some: 'data' }, { name: 'Johnson' }], {});
 
-				sandbox.assert.calledOnceWithExactly(DBDriver.prototype.update, myClientModel, [
+				sinon.assert.calledOnceWithExactly(DBDriver.prototype.update, myClientModel, [
 					{ some: 'data' },
-					{ name: 'Johnsson' },
-					{ userModified }
+					{ name: 'Johnson' },
+					{ userModified, dateModified: sinon.match.date }
 				], {}, undefined);
 			});
 
 			it('Should log the update operation when session exists', async () => {
 
-				sandbox.stub(DBDriver.prototype, 'update')
+				sinon.stub(DBDriver.prototype, 'update')
 					.resolves(1);
 
 				await myClientModel.update({ some: 'data' }, { id: 'some-id' }, { some: 'param' });
 
-				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+				sinon.assert.calledWithExactly(Log.add, 'some-client', {
 					type: 'updated',
 					entity: 'client',
 					entityId: 'some-id',
 					userCreated,
 					log: {
-						values: { some: 'data', userModified },
+						values: { some: 'data', userModified, dateModified: sinon.match.date },
 						filter: { id: 'some-id' },
 						params: { some: 'param' }
 					}
@@ -989,14 +1015,14 @@ describe('Model', () => {
 
 			it('Should log the custom data when pre-set before the update operation', async () => {
 
-				sandbox.stub(DBDriver.prototype, 'update')
+				sinon.stub(DBDriver.prototype, 'update')
 					.resolves(1);
 
 				await myClientModel
 					.setLogData({ message: 'update message log', isUpdated: true })
 					.update({ some: 'data' }, { id: 'some-id' }, { some: 'param' });
 
-				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+				sinon.assert.calledWithExactly(Log.add, 'some-client', {
 					type: 'updated',
 					entity: 'client',
 					entityId: 'some-id',
@@ -1004,7 +1030,7 @@ describe('Model', () => {
 					message: 'update message log',
 					isUpdated: true,
 					log: {
-						values: { some: 'data', userModified },
+						values: { some: 'data', userModified, dateModified: sinon.match.date },
 						filter: { id: 'some-id' },
 						params: { some: 'param' }
 					}
@@ -1016,12 +1042,12 @@ describe('Model', () => {
 
 			it('Should log the remove operation when session exists', async () => {
 
-				sandbox.stub(DBDriver.prototype, 'remove')
+				sinon.stub(DBDriver.prototype, 'remove')
 					.resolves('some-id');
 
 				await myClientModel.remove({ id: 'some-id', some: 'data' });
 
-				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+				sinon.assert.calledWithExactly(Log.add, 'some-client', {
 					type: 'removed',
 					entity: 'client',
 					entityId: 'some-id',
@@ -1032,12 +1058,12 @@ describe('Model', () => {
 
 			it('Should log the custom data when pre-set before the remove operation', async () => {
 
-				sandbox.stub(DBDriver.prototype, 'remove')
+				sinon.stub(DBDriver.prototype, 'remove')
 					.resolves('some-id');
 
 				await myClientModel.setLogData('removing record').remove({ id: 'some-id', some: 'data' });
 
-				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+				sinon.assert.calledWithExactly(Log.add, 'some-client', {
 					type: 'removed',
 					entity: 'client',
 					entityId: 'some-id',
@@ -1052,12 +1078,12 @@ describe('Model', () => {
 
 			it('Should log the multiRemove operation when session exists', async () => {
 
-				sandbox.stub(DBDriver.prototype, 'multiRemove')
+				sinon.stub(DBDriver.prototype, 'multiRemove')
 					.resolves('some-id');
 
 				await myClientModel.multiRemove({ id: 'some-id' });
 
-				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+				sinon.assert.calledWithExactly(Log.add, 'some-client', {
 					type: 'removed',
 					entity: 'client',
 					entityId: 'some-id',
@@ -1068,12 +1094,12 @@ describe('Model', () => {
 
 			it('Should log the custom data when pre-set before the multiRemove operation', async () => {
 
-				sandbox.stub(DBDriver.prototype, 'multiRemove')
+				sinon.stub(DBDriver.prototype, 'multiRemove')
 					.resolves('some-id');
 
 				await myClientModel.setLogData({ message: 'removing!' }).multiRemove({ id: 'some-id' });
 
-				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+				sinon.assert.calledWithExactly(Log.add, 'some-client', {
 					type: 'removed',
 					entity: 'client',
 					entityId: 'some-id',
@@ -1088,28 +1114,37 @@ describe('Model', () => {
 
 			it('Should add the userCreated field when session exists and the received item not have id', async () => {
 
-				sandbox.stub(DBDriver.prototype, 'save')
+				sinon.stub(DBDriver.prototype, 'save')
 					.resolves();
 
 				await myClientModel.save({ some: 'data' });
 
-				sandbox.assert.calledOnceWithExactly(DBDriver.prototype.save, myClientModel, {
+				sinon.assert.calledOnceWithExactly(DBDriver.prototype.save, myClientModel, {
 					some: 'data',
-					userCreated
-				}, undefined);
+					userModified,
+					dateModified: sinon.match.date
+				}, {
+					userCreated,
+					dateCreated: sinon.match.date
+				});
 			});
 
 			it('Should add the setOnInsert when it is passed', async () => {
 
-				sandbox.stub(DBDriver.prototype, 'save')
+				sinon.stub(DBDriver.prototype, 'save')
 					.resolves();
 
 				await myClientModel.save({ some: 'data' }, { status: 'active' });
 
-				sandbox.assert.calledOnceWithExactly(DBDriver.prototype.save, myClientModel, {
+				sinon.assert.calledOnceWithExactly(DBDriver.prototype.save, myClientModel, {
 					some: 'data',
-					userCreated
-				}, { status: 'active' });
+					userModified,
+					dateModified: sinon.match.date
+				}, {
+					status: 'active',
+					userCreated,
+					dateCreated: sinon.match.date
+				});
 			});
 
 			[
@@ -1119,49 +1154,63 @@ describe('Model', () => {
 
 				it(`Should add the userModified field when session exists and the received item have ${idField}`, async () => {
 
-					sandbox.stub(DBDriver.prototype, 'save')
+					sinon.stub(DBDriver.prototype, 'save')
 						.resolves();
 
 					await myClientModel.save({ [idField]: 'some-id', some: 'data' });
 
-					sandbox.assert.calledOnceWithExactly(DBDriver.prototype.save, myClientModel, {
+					sinon.assert.calledOnceWithExactly(DBDriver.prototype.save, myClientModel, {
 						[idField]: 'some-id',
 						some: 'data',
-						userModified
-					}, undefined);
+						userModified,
+						dateModified: sinon.match.date
+					}, {
+						userCreated,
+						dateCreated: sinon.match.date
+					});
 				});
 			});
 
 			it('Should log the save operation when session exists', async () => {
 
-				sandbox.stub(DBDriver.prototype, 'save')
+				sinon.stub(DBDriver.prototype, 'save')
 					.resolves('some-id');
 
 				await myClientModel.save({ id: 'some-id', some: 'data' });
 
-				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+				sinon.assert.calledWithExactly(Log.add, 'some-client', {
 					type: 'upserted',
 					entity: 'client',
 					entityId: 'some-id',
 					userCreated,
-					log: { id: 'some-id', some: 'data', userModified }
+					log: {
+						id: 'some-id',
+						some: 'data',
+						userModified,
+						dateModified: sinon.match.date
+					}
 				});
 			});
 
 			it('Should log the custom data when pre-set before the save operation', async () => {
 
-				sandbox.stub(DBDriver.prototype, 'save')
+				sinon.stub(DBDriver.prototype, 'save')
 					.resolves('some-id');
 
 				await myClientModel.setLogData('saved').save({ id: 'some-id', some: 'data' });
 
-				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+				sinon.assert.calledWithExactly(Log.add, 'some-client', {
 					type: 'upserted',
 					entity: 'client',
 					entityId: 'some-id',
 					userCreated,
 					message: 'saved',
-					log: { id: 'some-id', some: 'data', userModified }
+					log: {
+						id: 'some-id',
+						some: 'data',
+						userModified,
+						dateModified: sinon.match.date
+					}
 				});
 			});
 		});
@@ -1170,63 +1219,75 @@ describe('Model', () => {
 
 			it('Should add the userModified field when session exists', async () => {
 
-				sandbox.stub(DBDriver.prototype, 'increment')
+				sinon.stub(DBDriver.prototype, 'increment')
 					.resolves({ _id: 'some-id', quantity: 2, userModified });
 
 				await myClientModel.increment({ id: 'some-id' }, { quantity: 1 });
 
-				sandbox.assert.calledOnceWithExactly(DBDriver.prototype.increment, myClientModel,
+				sinon.assert.calledOnceWithExactly(DBDriver.prototype.increment, myClientModel,
 					{ id: 'some-id' },
 					{ quantity: 1 },
-					{ userModified }
+					{
+						userModified,
+						dateModified: sinon.match.date
+					}
 				);
 			});
 
 			it('Should not add the userModified field when not session exists', async () => {
 
-				sandbox.stub(DBDriver.prototype, 'increment')
+				sinon.stub(DBDriver.prototype, 'increment')
 					.resolves({ _id: 'some-id', quantity: 2, userModified });
 
 				await myCoreModel.increment({ id: 'some-id' }, { quantity: 1 });
 
-				sandbox.assert.calledOnceWithExactly(DBDriver.prototype.increment, myCoreModel,
+				sinon.assert.calledOnceWithExactly(DBDriver.prototype.increment, myCoreModel,
 					{ id: 'some-id' },
 					{ quantity: 1 },
-					{}
+					{
+						userModified: null,
+						dateModified: sinon.match.date
+					}
 				);
 			});
 
 			it('Should log the save operation when session exists', async () => {
 
-				sandbox.stub(DBDriver.prototype, 'increment')
+				sinon.stub(DBDriver.prototype, 'increment')
 					.resolves({ _id: 'some-id', quantity: 2, userModified });
 
 				await myClientModel.increment({ id: 'some-id' }, { quantity: 1 });
 
-				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+				sinon.assert.calledWithExactly(Log.add, 'some-client', {
 					type: 'incremented',
 					entity: 'client',
 					entityId: 'some-id',
 					userCreated,
-					log: { _id: 'some-id', quantity: 2, userModified }
+					log: {
+						incrementData: { quantity: 1 },
+						updatedData: { userModified, dateModified: sinon.match.date },
+						result: { _id: 'some-id', quantity: 2, userModified }
+					}
 				});
 			});
 
 			it('Should log the custom data when pre-set before the increment operation', async () => {
 
-				sandbox.stub(DBDriver.prototype, 'increment')
+				sinon.stub(DBDriver.prototype, 'increment')
 					.resolves({ _id: 'some-id', quantity: 2, userModified });
 
 				await myClientModel.setLogData({ importCarriers: true }).increment({ id: 'some-id' }, { quantity: 1 });
 
-				sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+				sinon.assert.calledWithExactly(Log.add, 'some-client', {
 					type: 'incremented',
 					entity: 'client',
 					entityId: 'some-id',
 					userCreated,
 					importCarriers: true,
 					log: {
-						_id: 'some-id', quantity: 2, userModified
+						incrementData: { quantity: 1 },
+						updatedData: { userModified, dateModified: sinon.match.date },
+						result: { _id: 'some-id', quantity: 2, userModified }
 					}
 				});
 			});
@@ -1236,28 +1297,35 @@ describe('Model', () => {
 
 			it('Should add the userCreated field when session exists and the received item not have id', async () => {
 
-				sandbox.stub(DBDriver.prototype, 'multiSave')
+				sinon.stub(DBDriver.prototype, 'multiSave')
 					.resolves();
 
 				await myClientModel.multiSave([{ some: 'data' }, { other: 'data' }]);
 
-				sandbox.assert.calledOnceWithExactly(DBDriver.prototype.multiSave, myClientModel, [
-					{ some: 'data', userCreated },
-					{ other: 'data', userCreated }
-				], undefined);
+				sinon.assert.calledOnceWithExactly(DBDriver.prototype.multiSave, myClientModel, [
+					{ some: 'data', userModified, dateModified: sinon.match.date },
+					{ other: 'data', userModified, dateModified: sinon.match.date }
+				], {
+					userCreated,
+					dateCreated: sinon.match.date
+				});
 			});
 
 			it('Should add setOnInsert when it is passed', async () => {
 
-				sandbox.stub(DBDriver.prototype, 'multiSave')
+				sinon.stub(DBDriver.prototype, 'multiSave')
 					.resolves();
 
 				await myClientModel.multiSave([{ some: 'data' }, { other: 'data' }], { quantity: 100 });
 
-				sandbox.assert.calledOnceWithExactly(DBDriver.prototype.multiSave, myClientModel, [
-					{ some: 'data', userCreated },
-					{ other: 'data', userCreated }
-				], { quantity: 100 });
+				sinon.assert.calledOnceWithExactly(DBDriver.prototype.multiSave, myClientModel, [
+					{ some: 'data', userModified, dateModified: sinon.match.date },
+					{ other: 'data', userModified, dateModified: sinon.match.date }
+				], {
+					quantity: 100,
+					userCreated,
+					dateCreated: sinon.match.date
+				});
 			});
 
 			[
@@ -1267,71 +1335,59 @@ describe('Model', () => {
 
 				it(`Should add the userModified field when session exists and the received item have ${idField}`, async () => {
 
-					sandbox.stub(DBDriver.prototype, 'multiSave')
+					sinon.stub(DBDriver.prototype, 'multiSave')
 						.resolves();
 
-					await myClientModel.multiSave([{ [idField]: 'some-id', some: 'data' }, { [idField]: 'other-id', other: 'data' }]);
+					await myClientModel.multiSave([
+						{ [idField]: 'some-id', some: 'data' },
+						{ [idField]: 'other-id', other: 'data' }
+					]);
 
-					sandbox.assert.calledOnceWithExactly(DBDriver.prototype.multiSave, myClientModel, [
-						{ [idField]: 'some-id', some: 'data', userModified },
-						{ [idField]: 'other-id', other: 'data', userModified }
-					], undefined);
+					sinon.assert.calledOnceWithExactly(DBDriver.prototype.multiSave, myClientModel, [
+						{ [idField]: 'some-id', some: 'data', userModified, dateModified: sinon.match.date },
+						{ [idField]: 'other-id', other: 'data', userModified, dateModified: sinon.match.date }
+					], {
+						userCreated,
+						dateCreated: sinon.match.date
+					});
 				});
 			});
 
 			it('Should log the multiSave operation', async () => {
 
-				sandbox.stub(DBDriver.prototype, 'multiSave')
+				sinon.stub(DBDriver.prototype, 'multiSave')
 					.resolves('some-id');
 
 				await myClientModel.multiSave([{ id: 'some-id', some: 'data' }]);
 
-				sandbox.assert.calledWithExactly(Log.add, 'some-client', [
+				sinon.assert.calledWithExactly(Log.add, 'some-client', [
 					{
 						type: 'upserted',
 						entity: 'client',
 						entityId: 'some-id',
 						userCreated,
-						log: { id: 'some-id', some: 'data', userModified }
+						log: { id: 'some-id', some: 'data', userModified, dateModified: sinon.match.date }
 					}
 				]);
 			});
 
 			it('Should log the custom data when pre-set before the multiSave operation', async () => {
 
-				sandbox.stub(DBDriver.prototype, 'multiSave')
+				sinon.stub(DBDriver.prototype, 'multiSave')
 					.resolves('some-id');
 
 				await myClientModel
 					.setLogData('multisave log message')
 					.multiSave([{ id: 'some-id', some: 'data' }]);
 
-				sandbox.assert.calledWithExactly(Log.add, 'some-client', [
+				sinon.assert.calledWithExactly(Log.add, 'some-client', [
 					{
 						type: 'upserted',
 						entity: 'client',
 						entityId: 'some-id',
 						userCreated,
 						message: 'multisave log message',
-						log: { id: 'some-id', some: 'data', userModified }
-					}
-				]);
-			});
-
-			it('Shouldn\'t log the invalid entries when multiSave method receives invalid items', async () => {
-
-				sandbox.stub(DBDriver.prototype, 'multiSave')
-					.resolves();
-
-				await myClientModel.multiSave([{ id: 'some-id' }, null]);
-
-				sandbox.assert.calledOnceWithExactly(Log.add, 'some-client', [
-					{
-						type: 'upserted',
-						entity: 'client',
-						entityId: 'some-id',
-						userCreated,
-						log: { id: 'some-id', userModified }
+						log: { id: 'some-id', some: 'data', userModified, dateModified: sinon.match.date }
 					}
 				]);
 			});
@@ -1347,12 +1403,12 @@ describe('Model', () => {
 
 			it(`Shouldn't log when ${method} does not receive items/filters`, async () => {
 
-				sandbox.stub(DBDriver.prototype, method)
+				sinon.stub(DBDriver.prototype, method)
 					.resolves();
 
 				await myClientModel[method]();
 
-				sandbox.assert.notCalled(Log.add);
+				sinon.assert.notCalled(Log.add);
 			});
 		});
 	});
@@ -1371,7 +1427,7 @@ describe('Model', () => {
 			'password', 'address'
 		];
 
-		sandbox.stub(DBDriver.prototype, 'insert')
+		sinon.stub(DBDriver.prototype, 'insert')
 			.resolves('some-id');
 
 		await myClientModel.insert({
@@ -1383,7 +1439,7 @@ describe('Model', () => {
 			}
 		});
 
-		sandbox.assert.calledWithExactly(Log.add, 'some-client', {
+		sinon.assert.calledWithExactly(Log.add, 'some-client', {
 			type: 'inserted',
 			entity: 'client',
 			entityId: 'some-id',
@@ -1408,10 +1464,10 @@ describe('Model', () => {
 			userId: 'some-user-id'
 		};
 
-		sandbox.stub(ClientModel, 'shouldCreateLogs')
+		sinon.stub(ClientModel, 'shouldCreateLogs')
 			.get(() => false);
 
-		sandbox.stub(DBDriver.prototype, 'insert')
+		sinon.stub(DBDriver.prototype, 'insert')
 			.resolves('some-id');
 
 		await myClientModel.insert({
@@ -1423,7 +1479,7 @@ describe('Model', () => {
 			}
 		});
 
-		sandbox.assert.notCalled(Log.add);
+		sinon.assert.notCalled(Log.add);
 	});
 
 	describe('Indexes Methods', () => {
@@ -1438,12 +1494,12 @@ describe('Model', () => {
 
 			it(`Should call DBDriver ${method} method passing the model`, async () => {
 
-				sandbox.stub(DBDriver.prototype, method)
+				sinon.stub(DBDriver.prototype, method)
 					.resolves();
 
 				await myCoreModel[method](...args);
 
-				sandbox.assert.calledOnceWithExactly(DBDriver.prototype[method], myCoreModel, ...args);
+				sinon.assert.calledOnceWithExactly(DBDriver.prototype[method], myCoreModel, ...args);
 			});
 		});
 	});
@@ -1459,16 +1515,16 @@ describe('Model', () => {
 
 		it('Should return empty object when empty Array received', async () => {
 
-			sandbox.spy(DBDriver.prototype, 'get');
+			sinon.spy(DBDriver.prototype, 'get');
 
 			assert.deepStrictEqual(await myCoreModel.mapIdByReferenceId([]), {});
 
-			sandbox.assert.notCalled(DBDriver.prototype.get);
+			sinon.assert.notCalled(DBDriver.prototype.get);
 		});
 
 		it('Should return object with referenceId key and Id value', async () => {
 
-			sandbox.stub(DBDriver.prototype, 'get')
+			sinon.stub(DBDriver.prototype, 'get')
 				.resolves([{ id: 'some-id', referenceId: 'some-ref-id' }, { id: 'other-id', referenceId: 'other-ref-id' }]);
 
 			assert.deepStrictEqual(await myCoreModel.mapIdByReferenceId(['some-ref-id', 'other-ref-id']), {
@@ -1476,7 +1532,7 @@ describe('Model', () => {
 				'other-ref-id': 'other-id'
 			});
 
-			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, {
+			sinon.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, {
 				filters: {
 					referenceId: ['some-ref-id', 'other-ref-id']
 				},
@@ -1486,14 +1542,14 @@ describe('Model', () => {
 
 		it('Should return object with code key and Id value', async () => {
 
-			sandbox.stub(DBDriver.prototype, 'get')
+			sinon.stub(DBDriver.prototype, 'get')
 				.resolves([{ id: 'some-id', code: 'some-code-123' }, { id: 'other-id-without-code' }]);
 
 			assert.deepStrictEqual(await myCoreModel.mapIdBy('code', ['some-code-123']), {
 				'some-code-123': 'some-id'
 			});
 
-			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, {
+			sinon.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, {
 				filters: { code: ['some-code-123'] },
 				limit: 1
 			});
@@ -1501,14 +1557,14 @@ describe('Model', () => {
 
 		it('Should return object with referenceId key and Id value when just one referenceId matches and other filters given', async () => {
 
-			sandbox.stub(DBDriver.prototype, 'get')
+			sinon.stub(DBDriver.prototype, 'get')
 				.resolves([{ id: 'some-id', referenceId: 'some-ref-id' }]);
 
 			assert.deepStrictEqual(await myCoreModel.mapIdByReferenceId(['some-ref-id', 'foo-ref-id', 'bar-ref-id'], { filters: { foo: 'bar' } }), {
 				'some-ref-id': 'some-id'
 			});
 
-			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, {
+			sinon.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, {
 				filters: {
 					referenceId: ['some-ref-id', 'foo-ref-id', 'bar-ref-id'],
 					foo: 'bar'
@@ -1538,14 +1594,14 @@ describe('Model', () => {
 	describe('Admin privileges model methods', () => {
 		it('Should reject when Model hasn\'t write config', async () => {
 
-			sandbox.restore();
+			sinon.restore();
 
 			const noWriteConfigSettings = {
 				...settings,
 				core: {}
 			};
 
-			sandbox.stub(Settings, 'get')
+			sinon.stub(Settings, 'get')
 				.withArgs('database')
 				.returns(noWriteConfigSettings);
 
@@ -1583,13 +1639,13 @@ describe('Model', () => {
 			const myClientModel = new ClientModel();
 			myClientModel.session = fakeSession;
 
-			const aggregate = sandbox.stub().resolves(results);
+			const aggregate = sinon.stub().resolves(results);
 
 			DBDriver.prototype.aggregate = aggregate;
 
 			assert.deepStrictEqual(await myClientModel.aggregate(stages), results);
 
-			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.aggregate, myClientModel, stages);
+			sinon.assert.calledOnceWithExactly(DBDriver.prototype.aggregate, myClientModel, stages);
 		});
 
 		it('Should fail if database driver aggregate function rejects', async () => {
@@ -1597,13 +1653,13 @@ describe('Model', () => {
 			const myClientModel = new ClientModel();
 			myClientModel.session = fakeSession;
 
-			const aggregate = sandbox.stub().rejects();
+			const aggregate = sinon.stub().rejects();
 
 			DBDriver.prototype.aggregate = aggregate;
 
 			await assert.rejects(myClientModel.aggregate(stages));
 
-			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.aggregate, myClientModel, stages);
+			sinon.assert.calledOnceWithExactly(DBDriver.prototype.aggregate, myClientModel, stages);
 		});
 	});
 

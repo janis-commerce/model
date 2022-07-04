@@ -2,7 +2,7 @@
 
 const assert = require('assert');
 const mockRequire = require('mock-require');
-const sandbox = require('sinon');
+const sinon = require('sinon');
 
 const Settings = require('@janiscommerce/settings');
 
@@ -113,10 +113,10 @@ describe('Model Dispatch', () => {
 
 	const stubGetSecret = value => {
 
-		sandbox.stub(SecretHandler.prototype, 'getValue')
+		sinon.stub(SecretHandler.prototype, 'getValue')
 			.resolves(value || {});
 
-		sandbox.stub(AwsSecretsManager, 'secret')
+		sinon.stub(AwsSecretsManager, 'secret')
 			.returns(new SecretHandler());
 	};
 
@@ -129,13 +129,13 @@ describe('Model Dispatch', () => {
 
 		mockRequire('@janiscommerce/mongodb', DBDriver);
 
-		sandbox.stub(Settings, 'get')
+		sinon.stub(Settings, 'get')
 			.withArgs('database')
 			.returns(settings);
 	});
 
 	afterEach(async () => {
-		sandbox.restore();
+		sinon.restore();
 		mockRequire.stopAll();
 	});
 
@@ -185,14 +185,14 @@ describe('Model Dispatch', () => {
 
 			stubGetSecret();
 
-			sandbox.stub(DBDriver.prototype, 'get')
+			sinon.stub(DBDriver.prototype, 'get')
 				.resolves();
 
 			const myCoreModel = new CoreModel();
 
 			await myCoreModel.get();
 
-			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, {});
+			sinon.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, {});
 
 			await assertDbDriverConfig(myCoreModel, settings.core.write);
 		});
@@ -201,14 +201,14 @@ describe('Model Dispatch', () => {
 
 			stubGetSecret();
 
-			sandbox.stub(DBDriver.prototype, 'get')
+			sinon.stub(DBDriver.prototype, 'get')
 				.resolves();
 
 			const myClientModel = new ClientModel();
 
 			await myClientModel.get();
 
-			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.get, myClientModel, {});
+			sinon.assert.calledOnceWithExactly(DBDriver.prototype.get, myClientModel, {});
 
 			await assertDbDriverConfig(myClientModel, client.databases.default.write);
 		});
@@ -217,14 +217,14 @@ describe('Model Dispatch', () => {
 
 			stubGetSecret();
 
-			sandbox.stub(DBDriver.prototype, 'get')
+			sinon.stub(DBDriver.prototype, 'get')
 				.resolves();
 
 			const myClientModel = new ClientModel();
 
 			await myClientModel.get({ readonly: true });
 
-			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.get, myClientModel, { readonly: true });
+			sinon.assert.calledOnceWithExactly(DBDriver.prototype.get, myClientModel, { readonly: true });
 
 			await assertDbDriverConfig(myClientModel, client.databases.default.read);
 		});
@@ -243,7 +243,7 @@ describe('Model Dispatch', () => {
 
 				stubGetSecret();
 
-				sandbox.stub(DBDriver.prototype, method)
+				sinon.stub(DBDriver.prototype, method)
 					.resolves();
 
 				const myClientModel = new ClientModel();
@@ -263,7 +263,7 @@ describe('Model Dispatch', () => {
 
 		it('should call DBDriver using write config DB when dropDatabase is executed', async () => {
 
-			sandbox.stub(DBDriver.prototype, 'dropDatabase')
+			sinon.stub(DBDriver.prototype, 'dropDatabase')
 				.resolves();
 
 			stubGetSecret();
@@ -358,7 +358,7 @@ describe('Model Dispatch', () => {
 
 		it('Should throw when client not exists', async () => {
 
-			sandbox.stub(model.session, 'client')
+			sinon.stub(model.session, 'client')
 				.get(() => null);
 
 			await rejects(ModelError.codes.INVALID_CLIENT);
@@ -366,7 +366,7 @@ describe('Model Dispatch', () => {
 
 		it('Should throw when \'client\' database config is not an object', async () => {
 
-			sandbox.stub(model.session, 'client')
+			sinon.stub(model.session, 'client')
 				.get(() => ({ databases: 'not an object' }));
 
 			await rejects(ModelError.codes.INVALID_CLIENT);
@@ -374,7 +374,7 @@ describe('Model Dispatch', () => {
 
 		it('Should throw when \'clients\' database config is an array', async () => {
 
-			sandbox.stub(model.session, 'client')
+			sinon.stub(model.session, 'client')
 				.get(() => ({ databases: ['not an object'] }));
 
 			await rejects(ModelError.codes.INVALID_CLIENT);
@@ -382,7 +382,7 @@ describe('Model Dispatch', () => {
 
 		it('Should throw when the specific database key do not exist ', async () => {
 
-			sandbox.stub(model.session, 'client')
+			sinon.stub(model.session, 'client')
 				.get(() => ({ databases: { someKey: {} } }));
 
 			await rejects(ModelError.codes.DB_CONFIG_NOT_FOUND);
@@ -390,7 +390,7 @@ describe('Model Dispatch', () => {
 
 		it('Should throw when the database key is not an object', async () => {
 
-			sandbox.stub(model.session, 'client')
+			sinon.stub(model.session, 'client')
 				.get(() => ({ databases: { default: 'not an object' } }));
 
 			await rejects(ModelError.codes.INVALID_DB_CONFIG);
@@ -398,7 +398,7 @@ describe('Model Dispatch', () => {
 
 		it('Should throw when the database key is an array', async () => {
 
-			sandbox.stub(model.session, 'client')
+			sinon.stub(model.session, 'client')
 				.get(() => ({ databases: { default: ['not an object'] } }));
 
 			await rejects(ModelError.codes.INVALID_DB_CONFIG);
@@ -432,7 +432,7 @@ describe('Model Dispatch', () => {
 
 			const clientModel = new ClientModel();
 
-			sandbox.stub(clientModel.session, 'client')
+			sinon.stub(clientModel.session, 'client')
 				.get(() => ({ databases: { default: { write: {} } } }));
 
 			assert.deepStrictEqual(await clientModel.hasReadDB(), false);
@@ -442,7 +442,7 @@ describe('Model Dispatch', () => {
 
 			const clientModel = new ClientModel();
 
-			sandbox.stub(clientModel.session, 'client')
+			sinon.stub(clientModel.session, 'client')
 				.get(() => ({ databases: { someKey: {} } }));
 
 			assert.deepStrictEqual(await clientModel.hasReadDB(), false);
@@ -452,7 +452,7 @@ describe('Model Dispatch', () => {
 
 			const clientModel = new ClientModel();
 
-			sandbox.stub(clientModel.session, 'client')
+			sinon.stub(clientModel.session, 'client')
 				.get(() => ({}));
 
 			assert.deepStrictEqual(await clientModel.hasReadDB(), false);
@@ -463,7 +463,7 @@ describe('Model Dispatch', () => {
 
 		it('should fetch credentials for read config database', async () => {
 
-			sandbox.stub(DBDriver.prototype, 'get')
+			sinon.stub(DBDriver.prototype, 'get')
 				.resolves();
 
 			stubGetSecret({
@@ -480,19 +480,19 @@ describe('Model Dispatch', () => {
 
 			await clientModel.get({ readonly: true });
 
-			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.get, clientModel, { readonly: true });
+			sinon.assert.calledOnceWithExactly(DBDriver.prototype.get, clientModel, { readonly: true });
 
 			await assertDbDriverConfig(clientModel, {
 				...client.databases.default.read,
 				readExtraData: 123
 			});
 
-			sandbox.assert.calledOnceWithExactly(AwsSecretsManager.secret, 'service-name');
+			sinon.assert.calledOnceWithExactly(AwsSecretsManager.secret, 'service-name');
 		});
 
 		it('should fetch credentials for write config database', async () => {
 
-			sandbox.stub(DBDriver.prototype, 'save')
+			sinon.stub(DBDriver.prototype, 'save')
 				.resolves();
 
 			stubGetSecret({
@@ -509,7 +509,7 @@ describe('Model Dispatch', () => {
 
 			await clientModel.save({ code: 'clientCode', foo: 'bar' });
 
-			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.save, clientModel, { code: 'clientCode', foo: 'bar' }, undefined);
+			sinon.assert.calledOnceWithExactly(DBDriver.prototype.save, clientModel, { code: 'clientCode', foo: 'bar' }, undefined);
 
 			await assertDbDriverConfig(clientModel, {
 				...client.databases.default.write,
@@ -519,7 +519,7 @@ describe('Model Dispatch', () => {
 
 		it('should fetch credentials for admin config database', async () => {
 
-			sandbox.stub(DBDriver.prototype, 'dropDatabase')
+			sinon.stub(DBDriver.prototype, 'dropDatabase')
 				.resolves();
 
 			stubGetSecret({
@@ -536,7 +536,7 @@ describe('Model Dispatch', () => {
 
 			await clientModel.dropDatabase();
 
-			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.dropDatabase, clientModel);
+			sinon.assert.calledOnceWithExactly(DBDriver.prototype.dropDatabase, clientModel);
 
 			await assertDbDriverConfig(clientModel, {
 				...client.databases.default.write,
@@ -546,15 +546,15 @@ describe('Model Dispatch', () => {
 
 		it('shouldn\'t fetch credentials when config has the skip config set', async () => {
 
-			sandbox.stub(DBDriver.prototype, 'save')
+			sinon.stub(DBDriver.prototype, 'save')
 				.resolves();
 
-			sandbox.spy(AwsSecretsManager, 'secret');
-			sandbox.spy(SecretHandler.prototype, 'getValue');
+			sinon.spy(AwsSecretsManager, 'secret');
+			sinon.spy(SecretHandler.prototype, 'getValue');
 
 			const clientModel = new ClientModel();
 
-			sandbox.stub(clientModel.session, 'client')
+			sinon.stub(clientModel.session, 'client')
 				.get(() => ({
 					databases: {
 						default: {
@@ -568,38 +568,38 @@ describe('Model Dispatch', () => {
 
 			await clientModel.save({ code: 'clientCode', foo: 'bar' });
 
-			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.save, clientModel, { code: 'clientCode', foo: 'bar' }, undefined);
+			sinon.assert.calledOnceWithExactly(DBDriver.prototype.save, clientModel, { code: 'clientCode', foo: 'bar' }, undefined);
 
-			sandbox.assert.notCalled(AwsSecretsManager.secret);
-			sandbox.assert.notCalled(SecretHandler.prototype.getValue);
+			sinon.assert.notCalled(AwsSecretsManager.secret);
+			sinon.assert.notCalled(SecretHandler.prototype.getValue);
 		});
 
 		it('shouldn\'t fetch credentials when the environment is local', async () => {
 
 			process.env.JANIS_ENV = 'local';
 
-			sandbox.stub(DBDriver.prototype, 'save')
+			sinon.stub(DBDriver.prototype, 'save')
 				.resolves();
 
-			sandbox.spy(AwsSecretsManager, 'secret');
-			sandbox.spy(SecretHandler.prototype, 'getValue');
+			sinon.spy(AwsSecretsManager, 'secret');
+			sinon.spy(SecretHandler.prototype, 'getValue');
 
 			const clientModel = new ClientModel();
 
 			await clientModel.save({ code: 'clientCode', foo: 'bar' });
 
-			sandbox.assert.calledOnceWithExactly(DBDriver.prototype.save, clientModel, { code: 'clientCode', foo: 'bar' }, undefined);
+			sinon.assert.calledOnceWithExactly(DBDriver.prototype.save, clientModel, { code: 'clientCode', foo: 'bar' }, undefined);
 
-			sandbox.assert.notCalled(AwsSecretsManager.secret);
-			sandbox.assert.notCalled(SecretHandler.prototype.getValue);
+			sinon.assert.notCalled(AwsSecretsManager.secret);
+			sinon.assert.notCalled(SecretHandler.prototype.getValue);
 		});
 
 		it('shouldn\'t reject when instance the secretHandler', async () => {
 
-			sandbox.stub(DBDriver.prototype, 'save')
+			sinon.stub(DBDriver.prototype, 'save')
 				.resolves();
 
-			sandbox.stub(AwsSecretsManager, 'secret')
+			sinon.stub(AwsSecretsManager, 'secret')
 				.throws(new Error('some secret handler error'));
 
 			const clientModel = new ClientModel();
@@ -611,13 +611,13 @@ describe('Model Dispatch', () => {
 
 		it('shouldn\'t reject when getting credentials rejects', async () => {
 
-			sandbox.stub(DBDriver.prototype, 'save')
+			sinon.stub(DBDriver.prototype, 'save')
 				.resolves();
 
-			sandbox.stub(AwsSecretsManager, 'secret')
+			sinon.stub(AwsSecretsManager, 'secret')
 				.returns(new SecretHandler());
 
-			sandbox.stub(SecretHandler.prototype, 'getValue')
+			sinon.stub(SecretHandler.prototype, 'getValue')
 				.rejects(new Error('some getting credentials error'));
 
 			const clientModel = new ClientModel();
