@@ -509,7 +509,7 @@ describe('Model Dispatch', () => {
 
 			await clientModel.save({ code: 'clientCode', foo: 'bar' });
 
-			sinon.assert.calledOnceWithExactly(DBDriver.prototype.save, clientModel, { code: 'clientCode', foo: 'bar' }, undefined);
+			sinon.assert.calledOnce(DBDriver.prototype.save);
 
 			await assertDbDriverConfig(clientModel, {
 				...client.databases.default.write,
@@ -568,7 +568,7 @@ describe('Model Dispatch', () => {
 
 			await clientModel.save({ code: 'clientCode', foo: 'bar' });
 
-			sinon.assert.calledOnceWithExactly(DBDriver.prototype.save, clientModel, { code: 'clientCode', foo: 'bar' }, undefined);
+			sinon.assert.calledOnce(DBDriver.prototype.save);
 
 			sinon.assert.notCalled(AwsSecretsManager.secret);
 			sinon.assert.notCalled(SecretHandler.prototype.getValue);
@@ -588,7 +588,7 @@ describe('Model Dispatch', () => {
 
 			await clientModel.save({ code: 'clientCode', foo: 'bar' });
 
-			sinon.assert.calledOnceWithExactly(DBDriver.prototype.save, clientModel, { code: 'clientCode', foo: 'bar' }, undefined);
+			sinon.assert.calledOnce(DBDriver.prototype.save);
 
 			sinon.assert.notCalled(AwsSecretsManager.secret);
 			sinon.assert.notCalled(SecretHandler.prototype.getValue);
