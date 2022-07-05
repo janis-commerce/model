@@ -993,13 +993,6 @@ describe('Model', () => {
 					message: 'removing record'
 				});
 			});
-
-			it('Should not log when not an Object received', async () => {
-
-				await myClientModel.remove('62c45c01812a0a142d320ebd');
-
-				sinon.assert.notCalled(Log.add);
-			});
 		});
 
 		describe('multiRemove()', () => {
@@ -1369,6 +1362,13 @@ describe('Model', () => {
 				await assert.rejects(myClientModel.update(8, { status: 'active' }), {
 					code: ModelError.codes.INVALID_VALUE,
 					message: 'Values to update must be an Object or an Array'
+				});
+			});
+
+			it('Should reject when calling remove() without an object', async () => {
+				await assert.rejects(myClientModel.remove(['field', 'value']), {
+					code: ModelError.codes.INVALID_VALUE,
+					message: 'Item to remove must be an Object'
 				});
 			});
 
