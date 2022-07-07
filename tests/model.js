@@ -1757,7 +1757,11 @@ describe('Model', () => {
 
 	describe('idStruct()', () => {
 
-		it('Should return an idStruct function', async () => {
+		it('Should return an idStruct function if environment is not local and database has idStruct', async () => {
+
+			const janisEnvToRestore = process.env.JANIS_ENV;
+
+			process.env.JANIS_ENV = 'beta';
 
 			const myClientModel = new ClientModel();
 			myClientModel.session = fakeSession;
@@ -1767,6 +1771,33 @@ describe('Model', () => {
 			} catch(error) {
 				assert.deepStrictEqual(error.message, 'Expected a value of type `objectId` but received `"123"`.');
 			}
+
+			process.env.JANIS_ENV = janisEnvToRestore;
+		});
+
+		it('Should return empty function if environment is not local and database has not idStruct', async () => {
+
+			const janisEnvToRestore = process.env.JANIS_ENV;
+
+			process.env.JANIS_ENV = 'beta';
+
+			assert.strictEqual(await otherModel.getIdStruct(), undefined);
+
+			process.env.JANIS_ENV = janisEnvToRestore;
+		});
+
+		it('Should return empty if environment is local', async () => {
+
+			const janisEnvToRestore = process.env.JANIS_ENV;
+
+			process.env.JANIS_ENV = 'local';
+
+			const myClientModel = new ClientModel();
+			myClientModel.session = fakeSession;
+
+			assert.strictEqual(await myClientModel.getIdStruct(), undefined);
+
+			process.env.JANIS_ENV = janisEnvToRestore;
 		});
 	});
 });
