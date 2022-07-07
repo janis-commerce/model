@@ -1764,11 +1764,13 @@ describe('Model', () => {
 
 	describe('idStruct()', () => {
 
-		it('Should return an idStruct function if environment is not local and database has idStruct', async () => {
+		it('Should return an idStruct function if environment is not testing and database has idStruct', async () => {
 
 			const janisEnvToRestore = process.env.JANIS_ENV;
+			const testEnvToRestore = process.env.TEST_ENV;
 
 			process.env.JANIS_ENV = 'beta';
+			process.env.TEST_ENV = null;
 
 			const myClientModel = new ClientModel();
 			myClientModel.session = fakeSession;
@@ -1780,24 +1782,36 @@ describe('Model', () => {
 			}
 
 			process.env.JANIS_ENV = janisEnvToRestore;
+			process.env.TEST_ENV = testEnvToRestore;
 		});
 
-		it('Should return empty function if environment is not local and database has not idStruct', async () => {
+		it('Should return empty function if environment is not testing and database has not idStruct', async () => {
 
 			const janisEnvToRestore = process.env.JANIS_ENV;
+			const testEnvToRestore = process.env.TEST_ENV;
 
 			process.env.JANIS_ENV = 'beta';
+			process.env.TEST_ENV = null;
 
 			assert.strictEqual(await otherModel.getIdStruct(), undefined);
 
 			process.env.JANIS_ENV = janisEnvToRestore;
+			process.env.TEST_ENV = testEnvToRestore;
 		});
 
-		it('Should return empty if environment is local', async () => {
+		it('Should return empty if environment is testing', async () => {
+
+			const myClientModel = new ClientModel();
+			myClientModel.session = fakeSession;
+
+			assert.strictEqual(await myClientModel.getIdStruct(), undefined);
+		});
+
+		it('Should return empty if environment is not set', async () => {
 
 			const janisEnvToRestore = process.env.JANIS_ENV;
 
-			process.env.JANIS_ENV = 'local';
+			process.env.JANIS_ENV = null;
 
 			const myClientModel = new ClientModel();
 			myClientModel.session = fakeSession;
