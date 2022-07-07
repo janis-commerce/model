@@ -120,11 +120,13 @@ describe('Model Dispatch', () => {
 			.returns(new SecretHandler());
 	};
 
+	const originalEnv = { ...process.env };
+
 	beforeEach(() => {
 
 		DatabaseDispatcher.databasesCache = null;
 
-		process.env.JANIS_ENV = 'test';
+		process.env.JANIS_ENV = 'beta';
 		process.env.JANIS_SERVICE_NAME = 'service-name';
 
 		mockRequire('@janiscommerce/mongodb', DBDriver);
@@ -135,6 +137,9 @@ describe('Model Dispatch', () => {
 	});
 
 	afterEach(async () => {
+
+		process.env = { ...originalEnv };
+
 		sinon.restore();
 		mockRequire.stopAll();
 	});

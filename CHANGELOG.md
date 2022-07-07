@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [6.5.1] - 2022-07-07
+### Changed
+- Updated dependency [@janiscommerce/log](https://www.npmjs.com/package/@janiscommerce/log) to add logs with `functionName` and `apiRequestLogId`.
+- Better `session` validation for creating logs or not.
+
 ## [6.5.0] - 2022-07-05
 ### Added
 - New validation for method `remove()`: must receive an Object
