@@ -1,6 +1,6 @@
 {
   "name": "@janiscommerce/model",
-  "version": "6.5.0",
+  "version": "6.5.1",
   "description": "A package for managing Janis Models",
   "main": "lib/model.js",
   "scripts": {
@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "@janiscommerce/aws-secrets-manager": "^0.2.0",
-    "@janiscommerce/log": "^3.4.1",
+    "@janiscommerce/log": "^3.5.0",
     "@janiscommerce/settings": "^1.0.1",
     "lodash.omit": "4.5.0",
     "md5": "^2.3.0"

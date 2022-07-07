@@ -89,7 +89,11 @@ describe('Model', () => {
 
 	let otherModel;
 
+	const originalEnv = { ...process.env };
+
 	beforeEach(() => {
+
+		process.env.JANIS_ENV = 'local';
 
 		sinon.stub(Settings, 'get')
 			.withArgs('database')
@@ -115,6 +119,9 @@ describe('Model', () => {
 	});
 
 	afterEach(() => {
+
+		process.env = { ...originalEnv };
+
 		sinon.restore();
 		mockRequire.stopAll();
 	});
