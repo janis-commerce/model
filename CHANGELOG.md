@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [6.6.0] - 2022-07-07
+### Added
+- New field `executionTime` for `log` on each **Log** saved by the package.
+- New field `itemsBatch` for `log` on **Logs** saved by the package for methods `multiInsert()` and `multiSave()`.
+- Before each `operation` the `executionTime` is calculated and available to be obtained with _getter_ `executionTime`.
+
+### Changed
+- On **Logs** the field `log` is now organized with `item` of `filter` field.
+
 ## [6.5.2] - 2022-07-07
 ### Fixed
 - `idStruct` not execute in testing mode

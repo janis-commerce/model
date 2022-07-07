@@ -156,6 +156,9 @@ Returns the fields that will be removed from the logs as an array of strings. Fo
 * **statuses** (*class getter*).
 Returns an `object` with the default statuses (`active` / `inactive`)
 
+* **executionTime** (*class getter*).
+Returns the time spent in _ms_ on the las query.
+
 ---
 
 ### :inbox_tray: Setters
@@ -583,7 +586,7 @@ await myModel.dropDatabase();
 ### async  `aggregate(stages)`
 <details>
 	<summary>Execute Aggregation operations to obtain computed results in Databases</summary>
-	
+
 > :warning: Not supported by all database connectors
 
 #### Parameters
@@ -691,14 +694,24 @@ const idStruct = await myModel.getIdStruct();
 
 ## :clipboard: Logging
 This package automatically logs any write operation such as:
-- insert
-- multiInsert
-- update
-- save
-- multiSave
-- increment
-- remove
-- multiRemove
+
+- **`insert()`**
+- **`multiInsert()`**
+- **`update()`**
+- **`save()`**
+- **`multiSave()`**
+- **`increment()`**
+- **`remove()`**
+- **`multiRemove()`**
+
+
+:information_source: The logs will be added using the package [@janiscommerce/log](https://www.npmjs.com/package/@janiscommerce/log).
+
+### Automatic data in `log`
+The package will add automatic fields in the `log` _Object_ field.
+
+- `executionTime`. Each log will have the time spent on the query. _Since 6.6.0_
+- `itemsBatch`. Exclusively for methods `multiInsert()` and `multiSave()`, will be added the quantity of items _inserted_ or _updated_ in the same query. _Since 6.6.0_
 
 ### :no_mouth: Disabling automatic logging
 <details>

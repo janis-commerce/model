@@ -755,11 +755,14 @@ describe('Model', () => {
 					entityId: '62c45c01812a0a142d320ebd',
 					userCreated,
 					log: {
-						some: 'data',
-						userCreated,
-						dateCreated: sinon.match.date,
-						userModified,
-						dateModified: sinon.match.date
+						item: {
+							some: 'data',
+							userCreated,
+							dateCreated: sinon.match.date,
+							userModified,
+							dateModified: sinon.match.date
+						},
+						executionTime: sinon.match.number
 					}
 				});
 			});
@@ -779,12 +782,15 @@ describe('Model', () => {
 					entityId: '62c45c01812a0a142d320ebd',
 					userCreated,
 					log: {
-						some: 'data',
-						userCreated,
-						dateCreated: sinon.match.date,
-						userModified,
-						dateModified: sinon.match.date,
-						isInternal: true
+						item: {
+							some: 'data',
+							userCreated,
+							dateCreated: sinon.match.date,
+							userModified,
+							dateModified: sinon.match.date
+						},
+						isInternal: true,
+						executionTime: sinon.match.number
 					}
 				});
 			});
@@ -830,11 +836,15 @@ describe('Model', () => {
 						entity: 'client',
 						userCreated,
 						log: {
-							some: 'data',
-							userCreated,
-							dateCreated: sinon.match.date,
-							userModified,
-							dateModified: sinon.match.date
+							item: {
+								some: 'data',
+								userCreated,
+								dateCreated: sinon.match.date,
+								userModified,
+								dateModified: sinon.match.date
+							},
+							itemsBatch: 1,
+							executionTime: sinon.match.number
 						}
 					}
 				]);
@@ -857,11 +867,15 @@ describe('Model', () => {
 						message: 'custom message',
 						isData: true,
 						log: {
-							item: 'A',
-							userCreated,
-							dateCreated: sinon.match.date,
-							userModified,
-							dateModified: sinon.match.date
+							item: {
+								item: 'A',
+								userCreated,
+								dateCreated: sinon.match.date,
+								userModified,
+								dateModified: sinon.match.date
+							},
+							itemsBatch: 2,
+							executionTime: sinon.match.number
 						}
 					}, {
 						type: 'inserted',
@@ -870,11 +884,15 @@ describe('Model', () => {
 						message: 'custom message',
 						isData: true,
 						log: {
-							item: 'B',
-							userCreated,
-							dateCreated: sinon.match.date,
-							userModified,
-							dateModified: sinon.match.date
+							item: {
+								item: 'B',
+								userCreated,
+								dateCreated: sinon.match.date,
+								userModified,
+								dateModified: sinon.match.date
+							},
+							itemsBatch: 2,
+							executionTime: sinon.match.number
 						}
 					}
 				]);
@@ -926,7 +944,8 @@ describe('Model', () => {
 					log: {
 						values: { some: 'data', userModified, dateModified: sinon.match.date },
 						filter: { id: '62c45c01812a0a142d320ebd' },
-						params: { some: 'param' }
+						params: { some: 'param' },
+						executionTime: sinon.match.number
 					}
 				});
 			});
@@ -959,10 +978,18 @@ describe('Model', () => {
 
 				sinon.assert.calledWithExactly(Log.add, 'some-client', [{
 					...logBase,
-					entityId: '62c45c01812a0a142d320ebd'
+					entityId: '62c45c01812a0a142d320ebd',
+					log: {
+						...logBase.log,
+						executionTime: sinon.match.number
+					}
 				}, {
 					...logBase,
-					entityId: '62c45c0a93d7e2b2e1b74b3d'
+					entityId: '62c45c0a93d7e2b2e1b74b3d',
+					log: {
+						...logBase.log,
+						executionTime: sinon.match.number
+					}
 				}]);
 			});
 		});
@@ -987,7 +1014,11 @@ describe('Model', () => {
 				await myClientModel.remove({ id: '62c45c01812a0a142d320ebd', some: 'data' });
 
 				sinon.assert.calledWithExactly(Log.add, 'some-client', {
-					...logBase
+					...logBase,
+					log: {
+						item: logBase.log,
+						executionTime: sinon.match.number
+					}
 				});
 			});
 
@@ -997,7 +1028,11 @@ describe('Model', () => {
 
 				sinon.assert.calledWithExactly(Log.add, 'some-client', {
 					...logBase,
-					message: 'removing record'
+					message: 'removing record',
+					log: {
+						item: logBase.log,
+						executionTime: sinon.match.number
+					}
 				});
 			});
 		});
@@ -1016,7 +1051,10 @@ describe('Model', () => {
 					entity: 'client',
 					entityId: '62c45c01812a0a142d320ebd',
 					userCreated,
-					log: { id: '62c45c01812a0a142d320ebd' }
+					log: {
+						filter: { id: '62c45c01812a0a142d320ebd' },
+						executionTime: sinon.match.number
+					}
 				});
 			});
 
@@ -1033,7 +1071,10 @@ describe('Model', () => {
 					entityId: '62c45c01812a0a142d320ebd',
 					userCreated,
 					message: 'removing!',
-					log: { id: '62c45c01812a0a142d320ebd' }
+					log: {
+						filter: { id: '62c45c01812a0a142d320ebd' },
+						executionTime: sinon.match.number
+					}
 				});
 			});
 		});
@@ -1112,10 +1153,13 @@ describe('Model', () => {
 					entityId: '62c45c01812a0a142d320ebd',
 					userCreated,
 					log: {
-						id: '62c45c01812a0a142d320ebd',
-						some: 'data',
-						userModified,
-						dateModified: sinon.match.date
+						item: {
+							id: '62c45c01812a0a142d320ebd',
+							some: 'data',
+							userModified,
+							dateModified: sinon.match.date
+						},
+						executionTime: sinon.match.number
 					}
 				});
 			});
@@ -1134,10 +1178,13 @@ describe('Model', () => {
 					userCreated,
 					message: 'saved',
 					log: {
-						id: '62c45c01812a0a142d320ebd',
-						some: 'data',
-						userModified,
-						dateModified: sinon.match.date
+						item: {
+							id: '62c45c01812a0a142d320ebd',
+							some: 'data',
+							userModified,
+							dateModified: sinon.match.date
+						},
+						executionTime: sinon.match.number
 					}
 				});
 			});
@@ -1194,7 +1241,8 @@ describe('Model', () => {
 					log: {
 						incrementData: { quantity: 1 },
 						updatedData: { userModified, dateModified: sinon.match.date },
-						result: { _id: '62c45c01812a0a142d320ebd', quantity: 2, userModified }
+						result: { _id: '62c45c01812a0a142d320ebd', quantity: 2, userModified },
+						executionTime: sinon.match.number
 					}
 				});
 			});
@@ -1215,7 +1263,8 @@ describe('Model', () => {
 					log: {
 						incrementData: { quantity: 1 },
 						updatedData: { userModified, dateModified: sinon.match.date },
-						result: { _id: '62c45c01812a0a142d320ebd', quantity: 2, userModified }
+						result: { _id: '62c45c01812a0a142d320ebd', quantity: 2, userModified },
+						executionTime: sinon.match.number
 					}
 				});
 			});
@@ -1231,8 +1280,16 @@ describe('Model', () => {
 				await myClientModel.multiSave([{ some: 'data' }, { other: 'data' }]);
 
 				sinon.assert.calledOnceWithExactly(DBDriver.prototype.multiSave, myClientModel, [
-					{ some: 'data', userModified, dateModified: sinon.match.date },
-					{ other: 'data', userModified, dateModified: sinon.match.date }
+					{
+						some: 'data',
+						userModified,
+						dateModified: sinon.match.date
+					},
+					{
+						other: 'data',
+						userModified,
+						dateModified: sinon.match.date
+					}
 				], {
 					userCreated,
 					dateCreated: sinon.match.date
@@ -1247,8 +1304,16 @@ describe('Model', () => {
 				await myClientModel.multiSave([{ some: 'data' }, { other: 'data' }], { quantity: 100 });
 
 				sinon.assert.calledOnceWithExactly(DBDriver.prototype.multiSave, myClientModel, [
-					{ some: 'data', userModified, dateModified: sinon.match.date },
-					{ other: 'data', userModified, dateModified: sinon.match.date }
+					{
+						some: 'data',
+						userModified,
+						dateModified: sinon.match.date
+					},
+					{
+						other: 'data',
+						userModified,
+						dateModified: sinon.match.date
+					}
 				], {
 					quantity: 100,
 					userCreated,
@@ -1272,8 +1337,18 @@ describe('Model', () => {
 					]);
 
 					sinon.assert.calledOnceWithExactly(DBDriver.prototype.multiSave, myClientModel, [
-						{ [idField]: '62c45c01812a0a142d320ebd', some: 'data', userModified, dateModified: sinon.match.date },
-						{ [idField]: '62c45ef7e2740bed8c858c5e', other: 'data', userModified, dateModified: sinon.match.date }
+						{
+							[idField]: '62c45c01812a0a142d320ebd',
+							some: 'data',
+							userModified,
+							dateModified: sinon.match.date
+						},
+						{
+							[idField]: '62c45ef7e2740bed8c858c5e',
+							other: 'data',
+							userModified,
+							dateModified: sinon.match.date
+						}
 					], {
 						userCreated,
 						dateCreated: sinon.match.date
@@ -1294,7 +1369,16 @@ describe('Model', () => {
 						entity: 'client',
 						entityId: '62c45c01812a0a142d320ebd',
 						userCreated,
-						log: { id: '62c45c01812a0a142d320ebd', some: 'data', userModified, dateModified: sinon.match.date }
+						log: {
+							item: {
+								id: '62c45c01812a0a142d320ebd',
+								some: 'data',
+								userModified,
+								dateModified: sinon.match.date
+							},
+							itemsBatch: 1,
+							executionTime: sinon.match.number
+						}
 					}
 				]);
 			});
@@ -1315,7 +1399,16 @@ describe('Model', () => {
 						entityId: '62c45c01812a0a142d320ebd',
 						userCreated,
 						message: 'multisave log message',
-						log: { id: '62c45c01812a0a142d320ebd', some: 'data', userModified, dateModified: sinon.match.date }
+						log: {
+							item: {
+								id: '62c45c01812a0a142d320ebd',
+								some: 'data',
+								userModified,
+								dateModified: sinon.match.date
+							},
+							itemsBatch: 1,
+							executionTime: sinon.match.number
+						}
 					}
 				]);
 			});
@@ -1421,14 +1514,17 @@ describe('Model', () => {
 				entityId: '62c45c01812a0a142d320ebd',
 				userCreated,
 				log: {
-					username: 'some-username',
-					location: {
-						country: 'some-country'
+					item: {
+						username: 'some-username',
+						location: {
+							country: 'some-country'
+						},
+						userCreated,
+						dateCreated: sinon.match.date,
+						userModified,
+						dateModified: sinon.match.date
 					},
-					userCreated,
-					dateCreated: sinon.match.date,
-					userModified,
-					dateModified: sinon.match.date
+					executionTime: sinon.match.number
 				}
 			});
 		});
@@ -1523,12 +1619,15 @@ describe('Model', () => {
 					entityId: '62c45c01812a0a142d320ebd',
 					userCreated,
 					log: {
-						some: 'data',
-						userCreated,
-						dateCreated: sinon.match.date,
-						userModified,
-						dateModified: sinon.match.date,
-						isInternal: true
+						item: {
+							some: 'data',
+							userCreated,
+							dateCreated: sinon.match.date,
+							userModified,
+							dateModified: sinon.match.date
+						},
+						isInternal: true,
+						executionTime: sinon.match.number
 					}
 				});
 
@@ -1538,11 +1637,14 @@ describe('Model', () => {
 					entityId: '62c45c01812a0a142d320ebd',
 					userCreated,
 					log: {
-						some: 'other data',
-						userCreated,
-						dateCreated: sinon.match.date,
-						userModified,
-						dateModified: sinon.match.date
+						item: {
+							some: 'other data',
+							userCreated,
+							dateCreated: sinon.match.date,
+							userModified,
+							dateModified: sinon.match.date
+						},
+						executionTime: sinon.match.number
 					}
 				});
 			});
