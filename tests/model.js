@@ -1801,10 +1801,15 @@ describe('Model', () => {
 
 		it('Should return empty if environment is testing', async () => {
 
+			const janisEnvToRestore = process.env.JANIS_ENV;
+			process.env.JANIS_ENV = 'beta';
+
 			const myClientModel = new ClientModel();
 			myClientModel.session = fakeSession;
 
 			assert.strictEqual(await myClientModel.getIdStruct(), undefined);
+
+			process.env.JANIS_ENV = janisEnvToRestore;
 		});
 
 		it('Should return empty if environment is not set', async () => {
