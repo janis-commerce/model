@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [6.6.2] - 2022-07-21
+### Fixed
+- Not caching date for fields `dateCreated` and `dateModified`
+
 ## [6.6.1] - 2022-07-21
 ### Fixed
 - Using original users and dates for Write methods
