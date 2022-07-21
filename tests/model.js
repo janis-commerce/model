@@ -1868,9 +1868,6 @@ describe('Model', () => {
 
 		it('Should return an idStruct function if environment is not testing and database has idStruct', async () => {
 
-			const janisEnvToRestore = process.env.JANIS_ENV;
-			const testEnvToRestore = process.env.TEST_ENV;
-
 			process.env.JANIS_ENV = 'beta';
 			process.env.TEST_ENV = null;
 
@@ -1882,41 +1879,27 @@ describe('Model', () => {
 			} catch(error) {
 				assert.deepStrictEqual(error.message, 'Expected a value of type `objectId` but received `"123"`.');
 			}
-
-			process.env.JANIS_ENV = janisEnvToRestore;
-			process.env.TEST_ENV = testEnvToRestore;
 		});
 
 		it('Should return empty function if environment is not testing and database has not idStruct', async () => {
-
-			const janisEnvToRestore = process.env.JANIS_ENV;
-			const testEnvToRestore = process.env.TEST_ENV;
 
 			process.env.JANIS_ENV = 'beta';
 			process.env.TEST_ENV = null;
 
 			assert.strictEqual(await otherModel.getIdStruct(), undefined);
-
-			process.env.JANIS_ENV = janisEnvToRestore;
-			process.env.TEST_ENV = testEnvToRestore;
 		});
 
 		it('Should return empty if environment is testing', async () => {
 
-			const janisEnvToRestore = process.env.JANIS_ENV;
 			process.env.JANIS_ENV = 'beta';
 
 			const myClientModel = new ClientModel();
 			myClientModel.session = fakeSession;
 
 			assert.strictEqual(await myClientModel.getIdStruct(), undefined);
-
-			process.env.JANIS_ENV = janisEnvToRestore;
 		});
 
 		it('Should return empty if environment is not set', async () => {
-
-			const janisEnvToRestore = process.env.JANIS_ENV;
 
 			process.env.JANIS_ENV = null;
 
@@ -1924,8 +1907,6 @@ describe('Model', () => {
 			myClientModel.session = fakeSession;
 
 			assert.strictEqual(await myClientModel.getIdStruct(), undefined);
-
-			process.env.JANIS_ENV = janisEnvToRestore;
 		});
 	});
 });
