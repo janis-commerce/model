@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [6.6.1] - 2022-07-21
+### Fixed
+- Using original users and dates for Write methods
+
 ## [6.6.0] - 2022-07-07
 ### Added
 - New field `executionTime` for `log` on each **Log** saved by the package.
