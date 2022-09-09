@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [6.6.3] - 2022-09-09
+### Fixed
+- Avoid empty values in `getBy` method
+
 ## [6.6.2] - 2022-07-21
 ### Fixed
 - Not caching date for fields `dateCreated` and `dateModified`
