@@ -550,7 +550,51 @@ describe('Model', () => {
 
 				await assert.rejects(() => model.getBy('orderId'), {
 					name: 'ModelError',
-					message: 'The value must be defined',
+					message: 'The value must be defined or not empty',
+					code: ModelError.codes.INVALID_VALUE
+				});
+			});
+
+			it('Should rejects when the value is null', async () => {
+
+				ClientModel.prototype.get.rejects([]);
+
+				await assert.rejects(() => model.getBy('orderId', null), {
+					name: 'ModelError',
+					message: 'The value must be defined or not empty',
+					code: ModelError.codes.INVALID_VALUE
+				});
+			});
+
+			it('Should rejects when the value is ""', async () => {
+
+				ClientModel.prototype.get.rejects([]);
+
+				await assert.rejects(() => model.getBy('orderId', ''), {
+					name: 'ModelError',
+					message: 'The value must be defined or not empty',
+					code: ModelError.codes.INVALID_VALUE
+				});
+			});
+
+			it('Should rejects when the value is NaN', async () => {
+
+				ClientModel.prototype.get.rejects([]);
+
+				await assert.rejects(() => model.getBy('orderId', NaN), {
+					name: 'ModelError',
+					message: 'The value must be defined or not empty',
+					code: ModelError.codes.INVALID_VALUE
+				});
+			});
+
+			it('Should rejects when the value is []', async () => {
+
+				ClientModel.prototype.get.rejects([]);
+
+				await assert.rejects(() => model.getBy('orderId', []), {
+					name: 'ModelError',
+					message: 'The value must be defined or not empty',
 					code: ModelError.codes.INVALID_VALUE
 				});
 			});
