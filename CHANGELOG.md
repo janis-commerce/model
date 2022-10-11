@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [6.7.0] - 2022-10-11
+### Added
+- Saving log related to item on `multiInsert()` method when `entityId` returned from Driver
+
+### Changed
+- Methods `multiInsert()` and `multiSave()` groups logs from 500 items when no `entityId` found
+
 ## [6.6.3] - 2022-09-09
 ### Fixed
 - Avoid empty values in `getBy` method

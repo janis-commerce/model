@@ -880,14 +880,20 @@ describe('Model', () => {
 						entity: 'client',
 						userCreated,
 						log: {
-							item: {
+							items: [{
 								some: 'data',
 								userCreated,
 								dateCreated: sinon.match.date,
 								userModified,
 								dateModified: sinon.match.date
+							}],
+							batchLength: 1,
+							batchToken: sinon.match.string,
+							chunkData: {
+								chunkLength: 1,
+								chunkIndex: 1,
+								totalParts: 1
 							},
-							itemsBatch: 1,
 							executionTime: sinon.match.number
 						}
 					}
@@ -911,31 +917,66 @@ describe('Model', () => {
 						message: 'custom message',
 						isData: true,
 						log: {
-							item: {
+							items: [{
 								item: 'A',
 								userCreated,
 								dateCreated: sinon.match.date,
 								userModified,
 								dateModified: sinon.match.date
-							},
-							itemsBatch: 2,
-							executionTime: sinon.match.number
-						}
-					}, {
-						type: 'inserted',
-						entity: 'client',
-						userCreated,
-						message: 'custom message',
-						isData: true,
-						log: {
-							item: {
+							}, {
 								item: 'B',
 								userCreated,
 								dateCreated: sinon.match.date,
 								userModified,
 								dateModified: sinon.match.date
+							}],
+							batchLength: 2,
+							batchToken: sinon.match.string,
+							chunkData: {
+								chunkLength: 2,
+								chunkIndex: 1,
+								totalParts: 1
 							},
-							itemsBatch: 2,
+							executionTime: sinon.match.number
+						}
+					}
+				]);
+			});
+
+			it('Should log on multiInsert operation for every item when driver resolves with id', async () => {
+
+				sinon.stub(DBDriver.prototype, 'multiInsert')
+					.resolves([{ id: 1, letter: 'A' }, { id: 2, letter: 'B' }]);
+
+				await myClientModel.multiInsert([{ letter: 'A' }, { letter: 'B' }]);
+
+				sinon.assert.calledOnceWithExactly(Log.add, 'some-client', [
+					{
+						type: 'inserted',
+						entity: 'client',
+						entityId: 1,
+						userCreated,
+						log: {
+							item: {
+								id: 1,
+								letter: 'A'
+							},
+							batchLength: 2,
+							batchToken: sinon.match.string,
+							executionTime: sinon.match.number
+						}
+					}, {
+						type: 'inserted',
+						entity: 'client',
+						entityId: 2,
+						userCreated,
+						log: {
+							item: {
+								id: 2,
+								letter: 'B'
+							},
+							batchLength: 2,
+							batchToken: sinon.match.string,
 							executionTime: sinon.match.number
 						}
 					}
@@ -1420,7 +1461,8 @@ describe('Model', () => {
 								userModified,
 								dateModified: sinon.match.date
 							},
-							itemsBatch: 1,
+							batchLength: 1,
+							batchToken: sinon.match.string,
 							executionTime: sinon.match.number
 						}
 					}
@@ -1450,7 +1492,8 @@ describe('Model', () => {
 								userModified,
 								dateModified: sinon.match.date
 							},
-							itemsBatch: 1,
+							batchLength: 1,
+							batchToken: sinon.match.string,
 							executionTime: sinon.match.number
 						}
 					}
