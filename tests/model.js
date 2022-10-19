@@ -1035,6 +1035,44 @@ describe('Model', () => {
 				});
 			});
 
+			it('Should add an additional log with the content and related with contentLogId field ', async () => {
+
+				sinon.stub(DBDriver.prototype, 'update')
+					.resolves(1);
+
+				await myClientModel
+					.update(
+						{ some: 'data' },
+						{ id: ['62c45c01812a0a142d320ebd', '62c45c0a93d7e2b2e1b74b3d'] },
+						{ some: 'param' }
+					);
+
+				const logBase = {
+					entity: 'client',
+					type: 'updated',
+					userCreated
+				};
+
+				sinon.assert.calledWithExactly(Log.add, 'some-client', [{
+					...logBase,
+					entityId: '62c45c01812a0a142d320ebd',
+					log: { contentLogId: sinon.match.string }
+				}, {
+					...logBase,
+					entityId: '62c45c0a93d7e2b2e1b74b3d',
+					log: { contentLogId: sinon.match.string }
+				}, {
+					...logBase,
+					id: sinon.match.string,
+					log: {
+						values: { some: 'data', userModified, dateModified: sinon.match.date },
+						filter: { id: ['62c45c01812a0a142d320ebd', '62c45c0a93d7e2b2e1b74b3d'] },
+						params: { some: 'param' },
+						executionTime: sinon.match.number
+					}
+				}]);
+			});
+
 			it('Should log the custom data for every item when pre-set before the update operation', async () => {
 
 				sinon.stub(DBDriver.prototype, 'update')
@@ -1049,30 +1087,28 @@ describe('Model', () => {
 					);
 
 				const logBase = {
-					type: 'updated',
 					entity: 'client',
+					type: 'updated',
 					userCreated,
 					message: 'update message log',
-					isUpdated: true,
-					log: {
-						values: { some: 'data', userModified, dateModified: sinon.match.date },
-						filter: { id: ['62c45c01812a0a142d320ebd', '62c45c0a93d7e2b2e1b74b3d'] },
-						params: { some: 'param' }
-					}
+					isUpdated: true
 				};
 
 				sinon.assert.calledWithExactly(Log.add, 'some-client', [{
 					...logBase,
 					entityId: '62c45c01812a0a142d320ebd',
-					log: {
-						...logBase.log,
-						executionTime: sinon.match.number
-					}
+					log: { contentLogId: sinon.match.string }
 				}, {
 					...logBase,
 					entityId: '62c45c0a93d7e2b2e1b74b3d',
+					log: { contentLogId: sinon.match.string }
+				}, {
+					...logBase,
+					id: sinon.match.string,
 					log: {
-						...logBase.log,
+						values: { some: 'data', userModified, dateModified: sinon.match.date },
+						filter: { id: ['62c45c01812a0a142d320ebd', '62c45c0a93d7e2b2e1b74b3d'] },
+						params: { some: 'param' },
 						executionTime: sinon.match.number
 					}
 				}]);

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [6.8.0] - 2022-10-19
+### Added
+- Logs with repeated content `log` are created with `contentLogId` to related a single log with full content
+- New **Log** with full content `log` related with `contentLogId` field
+
 ## [6.7.0] - 2022-10-11
 ### Added
 - Saving log related to item on `multiInsert()` method when `entityId` returned from Driver
