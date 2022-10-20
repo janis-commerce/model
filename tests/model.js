@@ -793,7 +793,8 @@ describe('Model', () => {
 
 				await myClientModel.insert({ some: 'data' });
 
-				sinon.assert.calledOnceWithExactly(Log.add, 'some-client', {
+				sinon.assert.calledOnceWithExactly(Log.add, 'some-client', [{
+					id: sinon.match.string,
 					type: 'inserted',
 					entity: 'client',
 					entityId: '62c45c01812a0a142d320ebd',
@@ -808,7 +809,7 @@ describe('Model', () => {
 						},
 						executionTime: sinon.match.number
 					}
-				});
+				}]);
 			});
 
 			it('Should log the custom data when pre-set before insertion', async () => {
@@ -820,7 +821,8 @@ describe('Model', () => {
 					.setLogData({ type: 'super inserted', log: { isInternal: true } })
 					.insert({ some: 'data' });
 
-				sinon.assert.calledWithExactly(Log.add.getCall(0), 'some-client', {
+				sinon.assert.calledWithExactly(Log.add.getCall(0), 'some-client', [{
+					id: sinon.match.string,
 					type: 'super inserted',
 					entity: 'client',
 					entityId: '62c45c01812a0a142d320ebd',
@@ -836,7 +838,7 @@ describe('Model', () => {
 						isInternal: true,
 						executionTime: sinon.match.number
 					}
-				});
+				}]);
 			});
 		});
 
@@ -1021,7 +1023,8 @@ describe('Model', () => {
 
 				await myClientModel.update({ some: 'data' }, { id: '62c45c01812a0a142d320ebd' }, { some: 'param' });
 
-				sinon.assert.calledWithExactly(Log.add, 'some-client', {
+				sinon.assert.calledWithExactly(Log.add, 'some-client', [{
+					id: sinon.match.string,
 					type: 'updated',
 					entity: 'client',
 					entityId: '62c45c01812a0a142d320ebd',
@@ -1032,92 +1035,102 @@ describe('Model', () => {
 						params: { some: 'param' },
 						executionTime: sinon.match.number
 					}
+				}]);
+			});
+
+			context('When update multiple items at once', () => {
+
+				it('Should call once to update() and create multiple logs: first with full log others with contentLogId to relate with first', async () => {
+
+					sinon.stub(DBDriver.prototype, 'update')
+						.resolves(2);
+
+					await myClientModel
+						.update(
+							{ some: 'data' },
+							{ id: ['62c45c01812a0a142d320ebd', '62c45c0a93d7e2b2e1b74b3d'] },
+							{ some: 'param' }
+						);
+
+					const logBase = {
+						entity: 'client',
+						type: 'updated',
+						userCreated
+					};
+
+					sinon.assert.calledWithExactly(Log.add, 'some-client', [{
+						...logBase,
+						entityId: '62c45c01812a0a142d320ebd',
+						id: sinon.match.string,
+						log: {
+							values: { some: 'data', userModified, dateModified: sinon.match.date },
+							filter: { id: ['62c45c01812a0a142d320ebd', '62c45c0a93d7e2b2e1b74b3d'] },
+							params: { some: 'param' },
+							executionTime: sinon.match.number
+						}
+					}, {
+						...logBase,
+						entityId: '62c45c0a93d7e2b2e1b74b3d',
+						log: { contentLogId: sinon.match.string }
+					}]);
+
+					sinon.assert.calledOnceWithExactly(DBDriver.prototype.update, myClientModel,
+						{ some: 'data', userModified, dateModified: sinon.match.date },
+						{ id: ['62c45c01812a0a142d320ebd', '62c45c0a93d7e2b2e1b74b3d'] },
+						{ some: 'param' }
+					);
 				});
-			});
 
-			it('Should add an additional log with the content and related with contentLogId field ', async () => {
+				it('Should log the custom data for every item when pre-set before the update operation', async () => {
 
-				sinon.stub(DBDriver.prototype, 'update')
-					.resolves(1);
+					sinon.stub(DBDriver.prototype, 'update')
+						.resolves(2);
 
-				await myClientModel
-					.update(
-						{ some: 'data' },
+					await myClientModel
+						.setLogData({ message: 'update message log', isUpdated: true })
+						.update(
+							{ some: 'data' },
+							{ id: ['62c45c01812a0a142d320ebd', '62c45c0a93d7e2b2e1b74b3d'] },
+							{ some: 'param' }
+						);
+
+					const logBase = {
+						entity: 'client',
+						type: 'updated',
+						userCreated,
+						message: 'update message log',
+						isUpdated: true
+					};
+
+					sinon.assert.calledWithExactly(Log.add, 'some-client', [{
+						...logBase,
+						entityId: '62c45c01812a0a142d320ebd',
+						id: sinon.match.string,
+						log: {
+							values: { some: 'data', userModified, dateModified: sinon.match.date },
+							filter: { id: ['62c45c01812a0a142d320ebd', '62c45c0a93d7e2b2e1b74b3d'] },
+							params: { some: 'param' },
+							executionTime: sinon.match.number
+						}
+					}, {
+						...logBase,
+						entityId: '62c45c0a93d7e2b2e1b74b3d',
+						log: { contentLogId: sinon.match.string }
+					}]);
+
+					sinon.assert.calledOnceWithExactly(DBDriver.prototype.update, myClientModel,
+						{ some: 'data', userModified, dateModified: sinon.match.date },
 						{ id: ['62c45c01812a0a142d320ebd', '62c45c0a93d7e2b2e1b74b3d'] },
 						{ some: 'param' }
 					);
-
-				const logBase = {
-					entity: 'client',
-					type: 'updated',
-					userCreated
-				};
-
-				sinon.assert.calledWithExactly(Log.add, 'some-client', [{
-					...logBase,
-					entityId: '62c45c01812a0a142d320ebd',
-					log: { contentLogId: sinon.match.string }
-				}, {
-					...logBase,
-					entityId: '62c45c0a93d7e2b2e1b74b3d',
-					log: { contentLogId: sinon.match.string }
-				}, {
-					...logBase,
-					id: sinon.match.string,
-					log: {
-						values: { some: 'data', userModified, dateModified: sinon.match.date },
-						filter: { id: ['62c45c01812a0a142d320ebd', '62c45c0a93d7e2b2e1b74b3d'] },
-						params: { some: 'param' },
-						executionTime: sinon.match.number
-					}
-				}]);
-			});
-
-			it('Should log the custom data for every item when pre-set before the update operation', async () => {
-
-				sinon.stub(DBDriver.prototype, 'update')
-					.resolves(1);
-
-				await myClientModel
-					.setLogData({ message: 'update message log', isUpdated: true })
-					.update(
-						{ some: 'data' },
-						{ id: ['62c45c01812a0a142d320ebd', '62c45c0a93d7e2b2e1b74b3d'] },
-						{ some: 'param' }
-					);
-
-				const logBase = {
-					entity: 'client',
-					type: 'updated',
-					userCreated,
-					message: 'update message log',
-					isUpdated: true
-				};
-
-				sinon.assert.calledWithExactly(Log.add, 'some-client', [{
-					...logBase,
-					entityId: '62c45c01812a0a142d320ebd',
-					log: { contentLogId: sinon.match.string }
-				}, {
-					...logBase,
-					entityId: '62c45c0a93d7e2b2e1b74b3d',
-					log: { contentLogId: sinon.match.string }
-				}, {
-					...logBase,
-					id: sinon.match.string,
-					log: {
-						values: { some: 'data', userModified, dateModified: sinon.match.date },
-						filter: { id: ['62c45c01812a0a142d320ebd', '62c45c0a93d7e2b2e1b74b3d'] },
-						params: { some: 'param' },
-						executionTime: sinon.match.number
-					}
-				}]);
+				});
 			});
 		});
 
 		describe('remove()', () => {
 
 			const logBase = {
+				id: sinon.match.string,
 				type: 'removed',
 				entity: 'client',
 				entityId: '62c45c01812a0a142d320ebd',
@@ -1134,27 +1147,27 @@ describe('Model', () => {
 
 				await myClientModel.remove({ id: '62c45c01812a0a142d320ebd', some: 'data' });
 
-				sinon.assert.calledWithExactly(Log.add, 'some-client', {
+				sinon.assert.calledWithExactly(Log.add, 'some-client', [{
 					...logBase,
 					log: {
 						item: logBase.log,
 						executionTime: sinon.match.number
 					}
-				});
+				}]);
 			});
 
 			it('Should log the custom data when pre-set before the remove operation', async () => {
 
 				await myClientModel.setLogData('removing record').remove({ id: '62c45c01812a0a142d320ebd', some: 'data' });
 
-				sinon.assert.calledWithExactly(Log.add, 'some-client', {
+				sinon.assert.calledWithExactly(Log.add, 'some-client', [{
 					...logBase,
 					message: 'removing record',
 					log: {
 						item: logBase.log,
 						executionTime: sinon.match.number
 					}
-				});
+				}]);
 			});
 		});
 
@@ -1167,7 +1180,8 @@ describe('Model', () => {
 
 				await myClientModel.multiRemove({ id: '62c45c01812a0a142d320ebd' });
 
-				sinon.assert.calledWithExactly(Log.add, 'some-client', {
+				sinon.assert.calledWithExactly(Log.add, 'some-client', [{
+					id: sinon.match.string,
 					type: 'removed',
 					entity: 'client',
 					entityId: '62c45c01812a0a142d320ebd',
@@ -1176,7 +1190,7 @@ describe('Model', () => {
 						filter: { id: '62c45c01812a0a142d320ebd' },
 						executionTime: sinon.match.number
 					}
-				});
+				}]);
 			});
 
 			it('Should log the custom data when pre-set before the multiRemove operation', async () => {
@@ -1186,7 +1200,8 @@ describe('Model', () => {
 
 				await myClientModel.setLogData({ message: 'removing!' }).multiRemove({ id: '62c45c01812a0a142d320ebd' });
 
-				sinon.assert.calledWithExactly(Log.add, 'some-client', {
+				sinon.assert.calledWithExactly(Log.add, 'some-client', [{
+					id: sinon.match.string,
 					type: 'removed',
 					entity: 'client',
 					entityId: '62c45c01812a0a142d320ebd',
@@ -1196,7 +1211,7 @@ describe('Model', () => {
 						filter: { id: '62c45c01812a0a142d320ebd' },
 						executionTime: sinon.match.number
 					}
-				});
+				}]);
 			});
 		});
 
@@ -1268,7 +1283,8 @@ describe('Model', () => {
 
 				await myClientModel.save({ id: '62c45c01812a0a142d320ebd', some: 'data' });
 
-				sinon.assert.calledWithExactly(Log.add, 'some-client', {
+				sinon.assert.calledWithExactly(Log.add, 'some-client', [{
+					id: sinon.match.string,
 					type: 'upserted',
 					entity: 'client',
 					entityId: '62c45c01812a0a142d320ebd',
@@ -1282,7 +1298,7 @@ describe('Model', () => {
 						},
 						executionTime: sinon.match.number
 					}
-				});
+				}]);
 			});
 
 			it('Should log the custom data when pre-set before the save operation', async () => {
@@ -1292,7 +1308,8 @@ describe('Model', () => {
 
 				await myClientModel.setLogData('saved').save({ id: '62c45c01812a0a142d320ebd', some: 'data' });
 
-				sinon.assert.calledWithExactly(Log.add, 'some-client', {
+				sinon.assert.calledWithExactly(Log.add, 'some-client', [{
+					id: sinon.match.string,
 					type: 'upserted',
 					entity: 'client',
 					entityId: '62c45c01812a0a142d320ebd',
@@ -1307,7 +1324,7 @@ describe('Model', () => {
 						},
 						executionTime: sinon.match.number
 					}
-				});
+				}]);
 			});
 		});
 
@@ -1354,7 +1371,8 @@ describe('Model', () => {
 
 				await myClientModel.increment({ id: '62c45c01812a0a142d320ebd' }, { quantity: 1 });
 
-				sinon.assert.calledWithExactly(Log.add, 'some-client', {
+				sinon.assert.calledWithExactly(Log.add, 'some-client', [{
+					id: sinon.match.string,
 					type: 'incremented',
 					entity: 'client',
 					entityId: '62c45c01812a0a142d320ebd',
@@ -1365,7 +1383,7 @@ describe('Model', () => {
 						result: { _id: '62c45c01812a0a142d320ebd', quantity: 2, userModified },
 						executionTime: sinon.match.number
 					}
-				});
+				}]);
 			});
 
 			it('Should log the custom data when pre-set before the increment operation', async () => {
@@ -1375,7 +1393,8 @@ describe('Model', () => {
 
 				await myClientModel.setLogData({ importCarriers: true }).increment({ id: '62c45c01812a0a142d320ebd' }, { quantity: 1 });
 
-				sinon.assert.calledWithExactly(Log.add, 'some-client', {
+				sinon.assert.calledWithExactly(Log.add, 'some-client', [{
+					id: sinon.match.string,
 					type: 'incremented',
 					entity: 'client',
 					entityId: '62c45c01812a0a142d320ebd',
@@ -1387,7 +1406,7 @@ describe('Model', () => {
 						result: { _id: '62c45c01812a0a142d320ebd', quantity: 2, userModified },
 						executionTime: sinon.match.number
 					}
-				});
+				}]);
 			});
 		});
 
@@ -1631,7 +1650,8 @@ describe('Model', () => {
 				}
 			});
 
-			sinon.assert.calledWithExactly(Log.add, 'some-client', {
+			sinon.assert.calledWithExactly(Log.add, 'some-client', [{
+				id: sinon.match.string,
 				type: 'inserted',
 				entity: 'client',
 				entityId: '62c45c01812a0a142d320ebd',
@@ -1649,7 +1669,7 @@ describe('Model', () => {
 					},
 					executionTime: sinon.match.number
 				}
-			});
+			}]);
 		});
 
 		context('When shouldCreateLog is set to false', () => {
@@ -1736,7 +1756,8 @@ describe('Model', () => {
 				await myClientModel
 					.insert({ some: 'other data' });
 
-				sinon.assert.calledWithExactly(Log.add.getCall(0), 'some-client', {
+				sinon.assert.calledWithExactly(Log.add.getCall(0), 'some-client', [{
+					id: sinon.match.string,
 					type: 'super inserted',
 					entity: 'client',
 					entityId: '62c45c01812a0a142d320ebd',
@@ -1752,9 +1773,10 @@ describe('Model', () => {
 						isInternal: true,
 						executionTime: sinon.match.number
 					}
-				});
+				}]);
 
-				sinon.assert.calledWithExactly(Log.add.getCall(1), 'some-client', {
+				sinon.assert.calledWithExactly(Log.add.getCall(1), 'some-client', [{
+					id: sinon.match.string,
 					type: 'inserted',
 					entity: 'client',
 					entityId: '62c45c01812a0a142d320ebd',
@@ -1769,7 +1791,7 @@ describe('Model', () => {
 						},
 						executionTime: sinon.match.number
 					}
-				});
+				}]);
 			});
 		});
 	});

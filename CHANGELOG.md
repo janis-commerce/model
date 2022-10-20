@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [6.8.1] - 2022-10-20
+### Changed
+- First log in a batch of "same content" logs has the full data, the rest has only `contentLogId`
+- No extra log needed when relating logs with `contentLogId`
+
 ## [6.8.0] - 2022-10-19
 ### Added
 - Logs with repeated content `log` are created with `contentLogId` to related a single log with full content
