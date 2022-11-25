@@ -1586,6 +1586,13 @@ describe('Model', () => {
 				});
 			});
 
+			it('Should reject when calling multiInsert() if items array is empty', async () => {
+				await assert.rejects(myClientModel.multiInsert([]), {
+					code: ModelError.codes.INVALID_VALUE,
+					message: 'Items must not be empty to be inserted'
+				});
+			});
+
 			it('Should reject when calling multiSave() without an array', async () => {
 				await assert.rejects(myClientModel.multiSave({ field: 'value' }), {
 					code: ModelError.codes.INVALID_VALUE,
@@ -1597,6 +1604,13 @@ describe('Model', () => {
 				await assert.rejects(myClientModel.multiSave([{ field: 'value' }, 'invalid item']), {
 					code: ModelError.codes.INVALID_VALUE,
 					message: 'Each item to be saved must be an Object'
+				});
+			});
+
+			it('Should reject when calling multiSave() if items array is empty', async () => {
+				await assert.rejects(myClientModel.multiSave([]), {
+					code: ModelError.codes.INVALID_VALUE,
+					message: 'Items must not be empty to be saved'
 				});
 			});
 
