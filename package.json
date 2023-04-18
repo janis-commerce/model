@@ -1,6 +1,6 @@
 {
   "name": "@janiscommerce/model",
-  "version": "6.8.2",
+  "version": "7.0.0",
   "description": "A package for managing Janis Models",
   "main": "lib/model.js",
   "scripts": {
