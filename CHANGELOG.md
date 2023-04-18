@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [7.0.0] - 2023-04-18
+### Changed
+- Update [@janiscommerce/api](https://www.npmjs.com/package/@janiscommerce/api) to version 7.0.0
+
+### Removed
+- Change package `uuid` with `crypto`
+
 ## [6.8.2] - 2022-12-12
 ### Added
 - `multiInsert()` and `multiSave()` empty items validation
