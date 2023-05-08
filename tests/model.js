@@ -723,7 +723,8 @@ describe('Model', () => {
 
 				sinon.assert.calledOnceWithExactly(myCoreModel.get, {
 					page: 1,
-					limit: Model.defaultPageLimit
+					limit: Model.defaultPageLimit,
+					order: { id: 'asc' }
 				});
 
 				sinon.assert.notCalled(getPagedCallback);
@@ -741,8 +742,8 @@ describe('Model', () => {
 				await myCoreModel.getPaged({ limit: 2 }, getPagedCallback);
 
 				sinon.assert.calledTwice(myCoreModel.get);
-				sinon.assert.calledWithExactly(myCoreModel.get.getCall(0), { page: 1, limit: 2 });
-				sinon.assert.calledWithExactly(myCoreModel.get.getCall(1), { page: 2, limit: 2 });
+				sinon.assert.calledWithExactly(myCoreModel.get.getCall(0), { page: 1, limit: 2, order: { id: 'asc' } });
+				sinon.assert.calledWithExactly(myCoreModel.get.getCall(1), { page: 2, limit: 2, order: { id: 'asc' } });
 
 				sinon.assert.calledTwice(getPagedCallback);
 				sinon.assert.calledWithExactly(getPagedCallback.getCall(0), [{ foo: 1 }, { bar: 2 }], 1, 2);

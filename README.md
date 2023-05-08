@@ -251,6 +251,9 @@ await myModel.getPaged({ filters: { status: 'active' } }, (items, page, limit) =
 ```
 </details>
 
+#### Default order
+The default order when no order was received is field `id` using `asc` as order direction. _Since 6.8.3_
+
 ### async  `getTotals()`
 <details>
 	<summary>After performing a <tt>get()</tt> sometimes you need data of totals. This method returns an object with that information.</summary>
