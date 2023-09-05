@@ -368,9 +368,9 @@ describe('Model', () => {
 				sinon.stub(DBDriver.prototype, 'getTotals')
 					.resolves();
 
-				await myCoreModel.getTotals({});
+				await myCoreModel.getTotals({ status: 'active' });
 
-				sinon.assert.calledOnceWithExactly(DBDriver.prototype.getTotals, myCoreModel, {});
+				sinon.assert.calledOnceWithExactly(DBDriver.prototype.getTotals, myCoreModel, { status: 'active' });
 			});
 		});
 
