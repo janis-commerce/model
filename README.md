@@ -260,7 +260,7 @@ The default order when no order was received is field `id` using `asc` as order 
 	<summary>This method returns an object with data of totals. If filters is not present it will default to last <tt>get()</tt>  filters. If no <tt>get()</tt>  was executed before and no filters param is present, it will use no filters</summary>
 
 #### Parameters
-- `filters` is an optional.  Object with filters or array of filters. _Since 8.0.0_
+- `filters` is an optional.  Object with filters or array of filters. _Since 7.1.0_
 
 #### Result object structure:
 - **pages**: The total pages for the filters applied
