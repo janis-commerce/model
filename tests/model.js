@@ -1003,7 +1003,7 @@ describe('Model', () => {
 				}, {}, undefined);
 			});
 
-			it('Should skip the automatically field `dateModified` if the flag `skipAutomaticSetModifiedData` is setted', async () => {
+			it('Should skip the automatically fields `dateModified` and `userModified` if the flag `skipAutomaticSetModifiedData` is setted', async () => {
 
 				sinon.stub(DBDriver.prototype, 'update')
 					.resolves();
