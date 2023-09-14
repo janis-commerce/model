@@ -403,6 +403,7 @@ const items = await myModel.get({ filters: { foo: 'bar' }});
 
 #### Parameters
 - `params` optional parameters to define some behavior of the query
+	- `skipAutomaticSetModifiedData`: _Boolean_. When receive as **true**, the fields `dateModified` and `userModified` are not updated automatically.
 
 #### Example
 ```js
