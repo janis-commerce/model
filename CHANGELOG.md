@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [8.0.0] - 2023-09-18
+### Changed
+- Updated `@janiscommerce/log` to version 5 **BREAKING CHANGE**
+
 ## [7.0.1] - 2023-05-08
 ### Changed
 - Default order by field `id` for method `getPaged()`
