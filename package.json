@@ -22,14 +22,14 @@
   "devDependencies": {
     "@janiscommerce/superstruct": "^1.2.1",
     "eslint": "^8.38.0",
-    "eslint-config-airbnb-base": "^13.2.0",
+    "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.27.5",
     "husky": "^8.0.3",
     "mocha": "^10.2.0",
     "mock-require": "^3.0.3",
     "nyc": "^15.1.0",
-    "sinon": "^15.0.3",
-    "typescript": "^4.9.5"
+    "sinon": "^16.0.0",
+    "typescript": "^5.2.2"
   },
   "files": [
     "lib/",
@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "@janiscommerce/aws-secrets-manager": "^1.0.2",
-    "@janiscommerce/log": "^4.0.0",
+    "@janiscommerce/log": "^5.0.3",
     "@janiscommerce/settings": "^1.0.1",
     "lodash.omit": "4.5.0",
     "md5": "^2.3.0"

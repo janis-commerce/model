@@ -1,3 +1,5 @@
+/* eslint-disable max-classes-per-file */
+
 'use strict';
 
 const assert = require('assert');
@@ -1075,7 +1077,9 @@ describe('Model', () => {
 						log: { contentLogId: sinon.match.string }
 					}]);
 
-					sinon.assert.calledOnceWithExactly(DBDriver.prototype.update, myClientModel,
+					sinon.assert.calledOnceWithExactly(
+						DBDriver.prototype.update,
+						myClientModel,
 						{ some: 'data', userModified, dateModified: sinon.match.date },
 						{ id: ['62c45c01812a0a142d320ebd', '62c45c0a93d7e2b2e1b74b3d'] },
 						{ some: 'param' }
@@ -1119,7 +1123,9 @@ describe('Model', () => {
 						log: { contentLogId: sinon.match.string }
 					}]);
 
-					sinon.assert.calledOnceWithExactly(DBDriver.prototype.update, myClientModel,
+					sinon.assert.calledOnceWithExactly(
+						DBDriver.prototype.update,
+						myClientModel,
 						{ some: 'data', userModified, dateModified: sinon.match.date },
 						{ id: ['62c45c01812a0a142d320ebd', '62c45c0a93d7e2b2e1b74b3d'] },
 						{ some: 'param' }
@@ -1338,7 +1344,9 @@ describe('Model', () => {
 
 				await myClientModel.increment({ id: '62c45c01812a0a142d320ebd' }, { quantity: 1 });
 
-				sinon.assert.calledOnceWithExactly(DBDriver.prototype.increment, myClientModel,
+				sinon.assert.calledOnceWithExactly(
+					DBDriver.prototype.increment,
+					myClientModel,
 					{ id: '62c45c01812a0a142d320ebd' },
 					{ quantity: 1 },
 					{
@@ -1355,7 +1363,9 @@ describe('Model', () => {
 
 				await myCoreModel.increment({ id: '62c45c01812a0a142d320ebd' }, { quantity: 1 });
 
-				sinon.assert.calledOnceWithExactly(DBDriver.prototype.increment, myCoreModel,
+				sinon.assert.calledOnceWithExactly(
+					DBDriver.prototype.increment,
+					myCoreModel,
 					{ id: '62c45c01812a0a142d320ebd' },
 					{ quantity: 1 },
 					{
