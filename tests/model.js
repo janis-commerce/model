@@ -1005,6 +1005,18 @@ describe('Model', () => {
 				}, {}, undefined);
 			});
 
+			it('Should skip the automatically fields `dateModified` and `userModified` if the flag `skipAutomaticSetModifiedData` is setted', async () => {
+
+				sinon.stub(DBDriver.prototype, 'update')
+					.resolves();
+
+				await myClientModel.update({ some: 'data' }, {}, { skipAutomaticSetModifiedData: true });
+
+				sinon.assert.calledOnceWithExactly(DBDriver.prototype.update, myClientModel, {
+					some: 'data'
+				}, {}, { skipAutomaticSetModifiedData: true });
+			});
+
 			it('Should add the userModified field when session exists (data is array)', async () => {
 
 				sinon.stub(DBDriver.prototype, 'update')
