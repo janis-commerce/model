@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [8.1.0] - 2023-09-21
+### Added
+- Update method now accepts the `skipAutomaticSetModifiedData` option to avoid updating the `userModified` and `dateModified` fields.
+
 ## [8.0.0] - 2023-09-18
 ### Changed
 - Updated `@janiscommerce/log` to version 5 **BREAKING CHANGE**
