@@ -254,9 +254,13 @@ await myModel.getPaged({ filters: { status: 'active' } }, (items, page, limit) =
 #### Default order
 The default order when no order was received is field `id` using `asc` as order direction. _Since 6.8.3_
 
-### async  `getTotals()`
+### async  `getTotals(filters)`
+
 <details>
-	<summary>After performing a <tt>get()</tt> sometimes you need data of totals. This method returns an object with that information.</summary>
+	<summary>This method returns an object with data of totals. If filters is not present it will default to last <tt>get()</tt>  filters. If no <tt>get()</tt>  was executed before and no filters param is present, it will use no filters</summary>
+
+#### Parameters
+- `filters` is an optional.  Object with filters or array of filters. _Since 7.1.0_
 
 #### Result object structure:
 - **pages**: The total pages for the filters applied
@@ -278,6 +282,19 @@ const totals = await myModel.getTotals();
 	}
 */
 ```
+```js
+const totals = await myModel.getTotals( { status: 'active' } );
+/**
+	totals content:
+	{
+		pages: 3,
+		page: 1,
+		limit: 500,
+		total: 1450
+	}
+*/
+```
+
 </details>
 
 ### async  `mapIdBy(field, fieldValues, [params])`
