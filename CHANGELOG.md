@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [8.3.0] - 2023-12-11
+### Added
+- Method `disableLogs()` to disable operation logs
+
 ## [8.2.0] - 2023-10-06
 ### Added
 - Add filters in getTotals methods to improve the response

@@ -736,7 +736,9 @@ The package will add automatic fields in the `log` _Object_ field.
 
 ### :no_mouth: Disabling automatic logging
 <details>
-	<summary>You can disable this functionality by setting the <tt>static getter shouldCreateLogs</tt> to <tt>false</tt>.</summary>
+	<summary>This functionality can be disabled in 2 ways</summary>
+
+1. For all Model operation: by setting the `static getter shouldCreateLogs` to `false`.
 
 #### Example
 ```js
@@ -748,6 +750,30 @@ class MyModel extends Model {
 }
 
 ```
+
+2. For the "next" operation: by using the method `disableLogs()`. _Since 8.3.0_
+
+:information_source: The logs are disabled **only for the following operation**
+
+### Example
+```js
+
+// will not save logs
+await myModel.disableLogs().insert({
+	pet: 'roger',
+	animal: 'dog',
+	age: 8
+});
+
+// will save logs normally
+await myModel.insert({
+	pet: 'ringo',
+	animal: 'dog',
+	age: 7
+});
+
+```
+
 </details>
 
 ### :no_entry_sign: Excluding fields from logs
@@ -774,7 +800,7 @@ By setting this when you do an operation with an item like:
 await myModel.insert({
 	user: 'johndoe',
 	password: 'some-password',
-	contry: 'AR',
+	country: 'AR',
 	address: 'Fake St 123'
 });
 
@@ -785,7 +811,7 @@ It will be logged as:
 {
 	id: '5ea30bcbe28c55870324d9f0',
 	user: 'johndoe',
-	contry: 'AR'
+	country: 'AR'
 }
 ```
 </details>

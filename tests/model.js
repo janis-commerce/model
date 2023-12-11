@@ -767,6 +767,14 @@ describe('Model', () => {
 			userId: 'some-user-id'
 		};
 
+		const dataToInsert = {
+			some: 'data',
+			userCreated,
+			dateCreated: sinon.match.date,
+			userModified,
+			dateModified: sinon.match.date
+		};
+
 		afterEach(() => {
 			delete ClientModel.excludeFieldsInLog;
 		});
@@ -780,13 +788,7 @@ describe('Model', () => {
 
 				await myClientModel.insert({ some: 'data' });
 
-				sinon.assert.calledOnceWithExactly(DBDriver.prototype.insert, myClientModel, {
-					some: 'data',
-					userCreated,
-					dateCreated: sinon.match.date,
-					userModified,
-					dateModified: sinon.match.date
-				});
+				sinon.assert.calledOnceWithExactly(DBDriver.prototype.insert, myClientModel, dataToInsert);
 			});
 
 			it('Should log the insert operation when session exists', async () => {
@@ -803,13 +805,7 @@ describe('Model', () => {
 					entityId: '62c45c01812a0a142d320ebd',
 					userCreated,
 					log: {
-						item: {
-							some: 'data',
-							userCreated,
-							dateCreated: sinon.match.date,
-							userModified,
-							dateModified: sinon.match.date
-						},
+						item: dataToInsert,
 						executionTime: sinon.match.number
 					}
 				}]);
@@ -831,17 +827,51 @@ describe('Model', () => {
 					entityId: '62c45c01812a0a142d320ebd',
 					userCreated,
 					log: {
-						item: {
-							some: 'data',
-							userCreated,
-							dateCreated: sinon.match.date,
-							userModified,
-							dateModified: sinon.match.date
-						},
+						item: dataToInsert,
 						isInternal: true,
 						executionTime: sinon.match.number
 					}
 				}]);
+			});
+
+			context('When using disableLog()', () => {
+
+				it('Should disable the automatic logs', async () => {
+
+					sinon.stub(DBDriver.prototype, 'insert')
+						.resolves('62c45c01812a0a142d320ebd');
+
+					await myClientModel.disableLogs().insert({ some: 'data' });
+
+					sinon.assert.calledOnceWithExactly(DBDriver.prototype.insert, myClientModel, dataToInsert);
+
+					sinon.assert.notCalled(Log.add);
+				});
+
+				it('Should disable the automatic logs for the first operation', async () => {
+
+					sinon.stub(DBDriver.prototype, 'insert')
+						.resolves('62c45c01812a0a142d320ebd');
+
+					await myClientModel.disableLogs().insert({ some: 'data' });
+					await myClientModel.insert({ some: 'data' });
+
+					sinon.assert.calledTwice(DBDriver.prototype.insert);
+					sinon.assert.alwaysCalledWithExactly(DBDriver.prototype.insert, myClientModel, dataToInsert);
+
+					// "called once" is the real test here
+					sinon.assert.calledOnceWithExactly(Log.add, 'some-client', [{
+						id: sinon.match.string,
+						type: 'inserted',
+						entity: 'client',
+						entityId: '62c45c01812a0a142d320ebd',
+						userCreated,
+						log: {
+							item: dataToInsert,
+							executionTime: sinon.match.number
+						}
+					}]);
+				});
 			});
 		});
 
@@ -986,6 +1016,71 @@ describe('Model', () => {
 						}
 					}
 				]);
+			});
+
+			context('When using disableLog()', () => {
+
+				it('Should disable the automatic logs', async () => {
+
+					sinon.stub(DBDriver.prototype, 'multiInsert')
+						.resolves([{ id: 1, letter: 'A' }, { id: 2, letter: 'B' }]);
+
+					await myClientModel.disableLogs().multiInsert([{ letter: 'A' }, { letter: 'B' }]);
+
+					sinon.assert.calledOnce(DBDriver.prototype.multiInsert);
+
+					sinon.assert.notCalled(Log.add);
+				});
+
+				it('Should disable the automatic logs for the first operation', async () => {
+
+					sinon.stub(DBDriver.prototype, 'multiInsert')
+						.onFirstCall()
+						.resolves([{ id: 1, letter: 'A' }, { id: 2, letter: 'B' }])
+						.onSecondCall()
+						.resolves([{ id: 3, letter: 'C' }, { id: 4, letter: 'D' }, { id: 5, letter: 'E' }]);
+
+					await myClientModel.disableLogs().multiInsert([{ letter: 'A' }, { letter: 'B' }]);
+					await myClientModel.multiInsert([{ letter: 'C' }, { letter: 'D' }, { letter: 'E' }]);
+
+					sinon.assert.calledTwice(DBDriver.prototype.multiInsert);
+
+					// "called once" is the real test here
+					sinon.assert.calledOnceWithExactly(Log.add, 'some-client', [{
+						type: 'inserted',
+						entity: 'client',
+						entityId: 3,
+						userCreated,
+						log: {
+							item: { id: 3, letter: 'C' },
+							batchLength: 3,
+							batchToken: sinon.match.string,
+							executionTime: sinon.match.number
+						}
+					}, {
+						type: 'inserted',
+						entity: 'client',
+						entityId: 4,
+						userCreated,
+						log: {
+							item: { id: 4, letter: 'D' },
+							batchLength: 3,
+							batchToken: sinon.match.string,
+							executionTime: sinon.match.number
+						}
+					}, {
+						type: 'inserted',
+						entity: 'client',
+						entityId: 5,
+						userCreated,
+						log: {
+							item: { id: 5, letter: 'E' },
+							batchLength: 3,
+							batchToken: sinon.match.string,
+							executionTime: sinon.match.number
+						}
+					}]);
+				});
 			});
 		});
 
