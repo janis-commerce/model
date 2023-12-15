@@ -834,6 +834,43 @@ describe('Model', () => {
 				}]);
 			});
 
+			it('Should log the insert operation adding session serviceName', async () => {
+
+				const model = new ClientModel();
+
+				const serviceName = 'my-service-name';
+
+				model.session = {
+					...fakeSession,
+					clientCode: 'some-client',
+					serviceName
+				};
+
+				sinon.stub(DBDriver.prototype, 'insert')
+					.resolves('62c45c01812a0a142d320ebd');
+
+				await model.insert({ some: 'data' });
+
+				sinon.assert.calledOnceWithExactly(Log.add, 'some-client', [{
+					id: sinon.match.string,
+					type: 'inserted',
+					entity: 'client',
+					entityId: '62c45c01812a0a142d320ebd',
+					userCreated: undefined,
+					log: {
+						item: {
+							some: 'data',
+							userCreated: null,
+							dateCreated: sinon.match.date,
+							userModified: null,
+							dateModified: sinon.match.date
+						},
+						executionTime: sinon.match.number,
+						serviceName
+					}
+				}]);
+			});
+
 			context('When using disableLog()', () => {
 
 				it('Should disable the automatic logs', async () => {
