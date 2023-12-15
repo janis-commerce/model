@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [8.4.0] - 2023-12-15
+### Added
+- Added field `serviceName` in logs read from session
+
 ## [8.3.0] - 2023-12-11
 ### Added
 - Method `disableLogs()` to disable operation logs
