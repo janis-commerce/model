@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [8.4.1] - 2024-02-09
+### Changed
+- From now on `executionTime` for **Log** are saved in `ms`
+
 ## [8.4.0] - 2023-12-15
 ### Added
 - Added field `serviceName` in logs read from session
