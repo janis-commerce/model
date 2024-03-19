@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [8.5.0] - 2024-03-19
+### Added
+- The method `getPaged()` can be implemented by the DBDriver
+
 ## [8.4.1] - 2024-02-09
 ### Changed
 - From now on `executionTime` for **Log** are saved in `ms`

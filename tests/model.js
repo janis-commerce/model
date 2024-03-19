@@ -16,6 +16,7 @@ const Model = require('../lib/model');
 const ModelError = require('../lib/model-error');
 
 const DBDriver = require('./db-driver');
+const DBDriverGetPaged = require('./db-driver-get-paged');
 
 describe('Model', () => {
 
@@ -41,6 +42,18 @@ describe('Model', () => {
 			write: {
 				skipFetchCredentials: true,
 				type: 'mongodb',
+				host: 'the-host',
+				database: 'the-database-name',
+				username: 'the-username',
+				password: 'the-password',
+				protocol: 'my-protocol',
+				port: 1
+			}
+		},
+		getPaged: {
+			write: {
+				skipFetchCredentials: true,
+				type: 'mongodb-get-paged',
 				host: 'the-host',
 				database: 'the-database-name',
 				username: 'the-username',
@@ -85,11 +98,17 @@ describe('Model', () => {
 		get databaseKey() { return 'other'; }
 	}
 
+	class GetPagedModel extends Model {
+		get databaseKey() { return 'getPaged'; }
+	}
+
 	let getPagedCallback;
 
 	let myCoreModel;
 
 	let otherModel;
+
+	let getPagedModel;
 
 	const originalEnv = { ...process.env };
 
@@ -103,6 +122,8 @@ describe('Model', () => {
 
 		mockRequire('@janiscommerce/mongodb', DBDriver);
 
+		mockRequire('@janiscommerce/mongodb-get-paged', DBDriverGetPaged);
+
 		mockRequire('@janiscommerce/other', class OtherDBDriver {});
 
 		sinon.stub(Log, 'add')
@@ -111,6 +132,8 @@ describe('Model', () => {
 		myCoreModel = new CoreModel();
 
 		otherModel = new OtherModel();
+
+		getPagedModel = new GetPagedModel();
 
 		sinon.spy(Model, 'changeKeys');
 
@@ -750,6 +773,16 @@ describe('Model', () => {
 				sinon.assert.calledTwice(getPagedCallback);
 				sinon.assert.calledWithExactly(getPagedCallback.getCall(0), [{ foo: 1 }, { bar: 2 }], 1, 2);
 				sinon.assert.calledWithExactly(getPagedCallback.getCall(1), [{ foo: 5 }], 2, 2);
+			});
+
+			it('Should call the getPaged() method from the Driver when it is implemented', async () => {
+
+				sinon.stub(DBDriverGetPaged.prototype, 'getPaged')
+					.resolves();
+
+				await getPagedModel.getPaged({ some: 'data' }, getPagedCallback);
+
+				sinon.assert.calledOnceWithExactly(DBDriverGetPaged.prototype.getPaged, getPagedModel, { some: 'data' }, getPagedCallback);
 			});
 		});
 	});
