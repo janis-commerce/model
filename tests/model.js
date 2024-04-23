@@ -84,7 +84,7 @@ describe('Model', () => {
 		client: Promise.resolve(client)
 	};
 
-	class ClientModel extends Model {}
+	class ClientModel extends Model { }
 
 	class CoreModel extends Model {
 		get databaseKey() { return 'core'; }
@@ -124,7 +124,7 @@ describe('Model', () => {
 
 		mockRequire('@janiscommerce/mongodb-get-paged', DBDriverGetPaged);
 
-		mockRequire('@janiscommerce/other', class OtherDBDriver {});
+		mockRequire('@janiscommerce/other', class OtherDBDriver { });
 
 		sinon.stub(Log, 'add')
 			.resolves();
@@ -140,7 +140,7 @@ describe('Model', () => {
 		getPagedCallback = sinon.stub();
 
 		sinon.stub(AwsSecretsManager, 'secret')
-			.returns({ getValue() {} });
+			.returns({ getValue() { } });
 	});
 
 	afterEach(() => {
@@ -2208,6 +2208,53 @@ describe('Model', () => {
 			await assert.rejects(myClientModel.aggregate(stages));
 
 			sinon.assert.calledOnceWithExactly(DBDriver.prototype.aggregate, myClientModel, stages);
+		});
+	});
+
+	describe('multiUpdate()', () => {
+
+		const operations = [
+			{
+				filter: { name: 'itemName' },
+				data: {
+					otherId: '5df0151dbc1d570011949d87',
+					name: 'Some name',
+					status: 'active',
+					quantity: 100
+				}
+			},
+			{
+				filter: {
+					customField: ['sampleValue', 'sampleValue2']
+				},
+				data: {
+					otherId: '5df0151dbc1d570011949d88',
+					name: 'Some name',
+					dateModified: new Date()
+				}
+			}
+		];
+
+		it('Should fail if Driver does not support aggregate function', async () => {
+
+			const myClientModel = new ClientModel();
+			myClientModel.session = fakeSession;
+
+			await assert.rejects(myClientModel.multiUpdate(operations));
+		});
+
+		it('Should fail if database driver multiUpdate function rejects', async () => {
+
+			const myClientModel = new ClientModel();
+			myClientModel.session = fakeSession;
+
+			const multiUpdate = sinon.stub().rejects();
+
+			DBDriver.prototype.multiUpdate = multiUpdate;
+
+			await assert.rejects(myClientModel.multiUpdate(operations));
+
+			sinon.assert.calledOnceWithExactly(DBDriver.prototype.multiUpdate, myClientModel, operations);
 		});
 	});
 

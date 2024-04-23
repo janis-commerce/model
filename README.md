@@ -633,6 +633,30 @@ const results = await myModel.aggregate([
 ```
 </details>
 
+### async  `multiUpdate(operations)`
+<details>
+	<summary>Perform a bulk save of update operations in DB. This action will update elements according to received filters.</summary>
+
+#### Example
+```js
+await myModel.multiUpdate([
+   { filter: { id: [1,2] }, data: { name: 'test 1' } },
+   { filter: { otherId: 3 }, data: { name: 'test 2' } }
+]);
+
+const items = await myModel.get();
+
+/**
+	items content:
+	[
+		{ id: 1, name: 'test 1' },
+		{ id: 4, otherId: 3, name: 'test 2' }
+	]
+*/
+```
+</details>
+
+
 ---
 
 ### :bookmark_tabs: Indexes Manipulation
