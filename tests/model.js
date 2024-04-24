@@ -2235,12 +2235,16 @@ describe('Model', () => {
 			}
 		];
 
-		it('Should fail if Driver does not support aggregate function', async () => {
+		it('Should fail if Driver does not support multiUpdate function', async () => {
 
 			const myClientModel = new ClientModel();
 			myClientModel.session = fakeSession;
+			const originalMultiUpdate = DBDriver.prototype.multiUpdate;
+			DBDriver.prototype.multiUpdate = undefined;
 
 			await assert.rejects(myClientModel.multiUpdate(operations));
+
+			DBDriver.prototype.multiUpdate = originalMultiUpdate;
 		});
 
 		it('Should fail if database driver multiUpdate function rejects', async () => {
@@ -2248,13 +2252,77 @@ describe('Model', () => {
 			const myClientModel = new ClientModel();
 			myClientModel.session = fakeSession;
 
-			const multiUpdate = sinon.stub().rejects();
-
-			DBDriver.prototype.multiUpdate = multiUpdate;
+			sinon.stub(DBDriver.prototype, 'multiUpdate').rejects();
 
 			await assert.rejects(myClientModel.multiUpdate(operations));
 
 			sinon.assert.calledOnceWithExactly(DBDriver.prototype.multiUpdate, myClientModel, operations);
+		});
+
+		it('Should fail if operations is not an array', async () => {
+
+			const myClientModel = new ClientModel();
+			myClientModel.session = fakeSession;
+
+			const multiUpdate = sinon.stub();
+
+			DBDriver.prototype.multiUpdate = multiUpdate;
+
+			await assert.rejects(myClientModel.multiUpdate(operations[0]),
+				{ message: 'Operations must be an Object Array to be saved' });
+
+			sinon.assert.notCalled(DBDriver.prototype.multiUpdate);
+		});
+
+		it('Should fail if operations is an empty array', async () => {
+
+			const myClientModel = new ClientModel();
+			myClientModel.session = fakeSession;
+
+			const multiUpdate = sinon.stub();
+
+			DBDriver.prototype.multiUpdate = multiUpdate;
+
+			await assert.rejects(myClientModel.multiUpdate([]),
+				{ message: 'Operations must not be empty to be saved' });
+
+			sinon.assert.notCalled(DBDriver.prototype.multiUpdate);
+		});
+
+		it('Should fail if any operation is not and object', async () => {
+
+			const myClientModel = new ClientModel();
+			myClientModel.session = fakeSession;
+
+			const multiUpdate = sinon.stub();
+
+			DBDriver.prototype.multiUpdate = multiUpdate;
+
+			await assert.rejects(myClientModel.multiUpdate([operations]),
+				{ message: 'Each operation to perform must be an Object' });
+
+			sinon.assert.notCalled(DBDriver.prototype.multiUpdate);
+		});
+
+		it('Should call multiUpdate method from db driver', async () => {
+
+			const myClientModel = new ClientModel();
+			myClientModel.session = fakeSession;
+
+			const multiUpdate = sinon.stub();
+
+			DBDriver.prototype.multiUpdate = multiUpdate;
+
+			await myClientModel.multiUpdate(operations);
+
+			sinon.assert.calledOnceWithExactly(DBDriver.prototype.multiUpdate, myClientModel, operations.map(operation => ({
+				...operation,
+				data: {
+					...operation.data,
+					userModified: null,
+					dateModified: sinon.match.date
+				}
+			})));
 		});
 	});
 

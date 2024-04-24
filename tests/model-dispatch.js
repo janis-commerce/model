@@ -236,14 +236,14 @@ describe('Model Dispatch', () => {
 			await assertDbDriverConfig(myClientModel, client.databases.default.read);
 		});
 
+		const bulkMethods = ['multiInsert', 'multiSave', 'multiRemove', 'multiUpdate'];
+
 		[
 			'insert',
 			'update',
 			'save',
 			'remove',
-			'multiInsert',
-			'multiSave',
-			'multiRemove'
+			...bulkMethods
 		].forEach(method => {
 
 			it(`should call DBDriver using write DB when ${method} is executed after a readonly get`, async () => {
@@ -259,7 +259,7 @@ describe('Model Dispatch', () => {
 
 				await assertDbDriverConfig(myClientModel, client.databases.default.read);
 
-				if(['multiInsert', 'multiSave', 'multiRemove'].includes(method))
+				if(bulkMethods.includes(method))
 					await myClientModel[method]([{ foo: 'bar' }]);
 				else
 					await myClientModel[method]({ foo: 'bar' });
