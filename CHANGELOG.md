@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [8.6.0] - 2024-05-09
+### Added
+- Add *multiUpdate* method to update multiple documents with different filters and values.
+
 ## [8.5.0] - 2024-03-19
 ### Added
 - The method `getPaged()` can be implemented by the DBDriver
