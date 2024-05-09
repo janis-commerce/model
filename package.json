@@ -22,15 +22,15 @@
   "homepage": "https://github.com/janis-commerce/model.git#readme",
   "devDependencies": {
     "@janiscommerce/superstruct": "^1.2.1",
-    "eslint": "^8.38.0",
+    "eslint": "^8.57.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.27.5",
     "husky": "^8.0.3",
-    "mocha": "^10.2.0",
+    "mocha": "^10.4.0",
     "mock-require": "^3.0.3",
     "nyc": "^15.1.0",
-    "sinon": "^16.0.0",
-    "typescript": "^5.2.2"
+    "sinon": "^17.0.2",
+    "typescript": "^5.4.5"
   },
   "files": [
     "lib/",
@@ -41,8 +41,8 @@
     "test": "tests"
   },
   "dependencies": {
-    "@janiscommerce/aws-secrets-manager": "^1.0.2",
-    "@janiscommerce/log": "^5.0.3",
+    "@janiscommerce/aws-secrets-manager": "^1.1.0",
+    "@janiscommerce/log": "^5.0.5",
     "@janiscommerce/settings": "^1.0.1",
     "lodash.omit": "4.5.0",
     "md5": "^2.3.0"
