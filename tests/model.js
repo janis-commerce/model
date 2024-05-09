@@ -84,7 +84,7 @@ describe('Model', () => {
 		client: Promise.resolve(client)
 	};
 
-	class ClientModel extends Model {}
+	class ClientModel extends Model { }
 
 	class CoreModel extends Model {
 		get databaseKey() { return 'core'; }
@@ -124,7 +124,7 @@ describe('Model', () => {
 
 		mockRequire('@janiscommerce/mongodb-get-paged', DBDriverGetPaged);
 
-		mockRequire('@janiscommerce/other', class OtherDBDriver {});
+		mockRequire('@janiscommerce/other', class OtherDBDriver { });
 
 		sinon.stub(Log, 'add')
 			.resolves();
@@ -140,7 +140,7 @@ describe('Model', () => {
 		getPagedCallback = sinon.stub();
 
 		sinon.stub(AwsSecretsManager, 'secret')
-			.returns({ getValue() {} });
+			.returns({ getValue() { } });
 	});
 
 	afterEach(() => {
@@ -2208,6 +2208,121 @@ describe('Model', () => {
 			await assert.rejects(myClientModel.aggregate(stages));
 
 			sinon.assert.calledOnceWithExactly(DBDriver.prototype.aggregate, myClientModel, stages);
+		});
+	});
+
+	describe('multiUpdate()', () => {
+
+		const operations = [
+			{
+				filter: { name: 'itemName' },
+				data: {
+					otherId: '5df0151dbc1d570011949d87',
+					name: 'Some name',
+					status: 'active',
+					quantity: 100
+				}
+			},
+			{
+				filter: {
+					customField: ['sampleValue', 'sampleValue2']
+				},
+				data: {
+					otherId: '5df0151dbc1d570011949d88',
+					name: 'Some name',
+					dateModified: new Date()
+				}
+			}
+		];
+
+		it('Should fail if Driver does not support multiUpdate function', async () => {
+
+			const myClientModel = new ClientModel();
+			myClientModel.session = fakeSession;
+			const originalMultiUpdate = DBDriver.prototype.multiUpdate;
+			DBDriver.prototype.multiUpdate = undefined;
+
+			await assert.rejects(myClientModel.multiUpdate(operations));
+
+			DBDriver.prototype.multiUpdate = originalMultiUpdate;
+		});
+
+		it('Should fail if database driver multiUpdate function rejects', async () => {
+
+			const myClientModel = new ClientModel();
+			myClientModel.session = fakeSession;
+
+			sinon.stub(DBDriver.prototype, 'multiUpdate').rejects();
+
+			await assert.rejects(myClientModel.multiUpdate(operations));
+
+			sinon.assert.calledOnceWithExactly(DBDriver.prototype.multiUpdate, myClientModel, operations);
+		});
+
+		it('Should fail if operations is not an array', async () => {
+
+			const myClientModel = new ClientModel();
+			myClientModel.session = fakeSession;
+
+			const multiUpdate = sinon.stub();
+
+			DBDriver.prototype.multiUpdate = multiUpdate;
+
+			await assert.rejects(myClientModel.multiUpdate(operations[0]),
+				{ message: 'Operations must be an Object Array to be saved' });
+
+			sinon.assert.notCalled(DBDriver.prototype.multiUpdate);
+		});
+
+		it('Should fail if operations is an empty array', async () => {
+
+			const myClientModel = new ClientModel();
+			myClientModel.session = fakeSession;
+
+			const multiUpdate = sinon.stub();
+
+			DBDriver.prototype.multiUpdate = multiUpdate;
+
+			await assert.rejects(myClientModel.multiUpdate([]),
+				{ message: 'Operations must not be empty to be saved' });
+
+			sinon.assert.notCalled(DBDriver.prototype.multiUpdate);
+		});
+
+		it('Should fail if any operation is not and object', async () => {
+
+			const myClientModel = new ClientModel();
+			myClientModel.session = fakeSession;
+
+			const multiUpdate = sinon.stub();
+
+			DBDriver.prototype.multiUpdate = multiUpdate;
+
+			await assert.rejects(myClientModel.multiUpdate([operations]),
+				{ message: 'Each operation to perform must be an Object' });
+
+			sinon.assert.notCalled(DBDriver.prototype.multiUpdate);
+		});
+
+		it('Should call multiUpdate method from db driver', async () => {
+
+			const myClientModel = new ClientModel();
+			myClientModel.session = fakeSession;
+
+			const multiUpdate = sinon.stub();
+
+			DBDriver.prototype.multiUpdate = multiUpdate;
+
+			await myClientModel.multiUpdate(operations);
+
+			sinon.assert.calledOnceWithExactly(DBDriver.prototype.multiUpdate, myClientModel, operations.map(operation => ({
+				...operation,
+				data: {
+					...operation.data,
+					userModified: null,
+					dateModified: sinon.match.date
+				}
+			})));
 		});
 	});
 

@@ -30,6 +30,8 @@ module.exports = class DBDriver {
 
 	multiRemove() {}
 
+	multiUpdate() {}
+
 	increment() {}
 
 	distinct() {}
