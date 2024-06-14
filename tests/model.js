@@ -2299,7 +2299,7 @@ describe('Model', () => {
 			DBDriver.prototype.multiUpdate = multiUpdate;
 
 			await assert.rejects(myClientModel.multiUpdate([operations]),
-				{ message: 'Each operation to perform must be an Object' });
+				{ message: 'Values to update must be an Object or an Array' });
 
 			sinon.assert.notCalled(DBDriver.prototype.multiUpdate);
 		});
@@ -2322,6 +2322,38 @@ describe('Model', () => {
 					userModified: null,
 					dateModified: sinon.match.date
 				}
+			})));
+		});
+
+		it('Should successfully format multiple operations before calling multiUpdate method from db driver', async () => {
+
+			const pipelineOperations = operations.map(operation => ({
+				...operation,
+				data: [
+					operation.data,
+					{
+						...operation.data,
+						name: 'new operation'
+					}
+				]
+			}));
+
+			const myClientModel = new ClientModel();
+			myClientModel.session = fakeSession;
+
+			const multiUpdate = sinon.stub();
+
+			DBDriver.prototype.multiUpdate = multiUpdate;
+
+			await myClientModel.multiUpdate(pipelineOperations);
+
+			sinon.assert.calledOnceWithExactly(DBDriver.prototype.multiUpdate, myClientModel, pipelineOperations.map(operation => ({
+				...operation,
+				data: operation.data.map(operationDetail => ({
+					...operationDetail,
+					userModified: null,
+					dateModified: sinon.match.date
+				}))
 			})));
 		});
 	});
