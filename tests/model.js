@@ -2356,6 +2356,23 @@ describe('Model', () => {
 				}))
 			})));
 		});
+
+		it('Should fail if any operation if not object nor array', async () => {
+
+			const pipelineOperations = [operations[0], null];
+
+			const myClientModel = new ClientModel();
+			myClientModel.session = fakeSession;
+
+			const multiUpdate = sinon.stub();
+
+			DBDriver.prototype.multiUpdate = multiUpdate;
+
+			await assert.rejects(myClientModel.multiUpdate(pipelineOperations),
+				{ message: 'Values to update must be an Object or an Array' });
+
+			sinon.assert.notCalled(DBDriver.prototype.multiUpdate);
+		});
 	});
 
 	describe('idStruct()', () => {
