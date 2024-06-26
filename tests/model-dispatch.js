@@ -236,7 +236,7 @@ describe('Model Dispatch', () => {
 			await assertDbDriverConfig(myClientModel, client.databases.default.read);
 		});
 
-		const bulkMethods = ['multiInsert', 'multiSave', 'multiRemove', 'multiUpdate'];
+		const bulkMethods = ['multiInsert', 'multiSave', 'multiRemove'];
 
 		[
 			'insert',
@@ -266,6 +266,24 @@ describe('Model Dispatch', () => {
 
 				await assertDbDriverConfig(myClientModel, client.databases.default.write);
 			});
+		});
+
+		it('should call DBDriver using write DB when multiUpdate is executed after a readonly get', async () => {
+
+			stubGetSecret();
+
+			sinon.stub(DBDriver.prototype, 'multiUpdate')
+				.resolves();
+
+			const myClientModel = new ClientModel();
+
+			await myClientModel.get({ readonly: true });
+
+			await assertDbDriverConfig(myClientModel, client.databases.default.read);
+
+			await myClientModel.multiUpdate([{ data: { foo: 'bar' } }]);
+
+			await assertDbDriverConfig(myClientModel, client.databases.default.write);
 		});
 
 		it('should call DBDriver using write config DB when dropDatabase is executed', async () => {
