@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [8.7.0] - 2024-06-26
+## Changed
+- `MultiUpdate` method now accepts operations with pipeline aggregations
+
 ## [8.6.0] - 2024-05-09
 ### Added
 - Add *multiUpdate* method to update multiple documents with different filters and values.
