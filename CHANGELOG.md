@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## Removed
+- `hasReadDB()` method
+
 ## [8.7.0] - 2024-06-26
 ## Changed
 - `MultiUpdate` method now accepts operations with pipeline aggregations

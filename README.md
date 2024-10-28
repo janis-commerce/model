@@ -182,16 +182,6 @@ await myModel.dbDriver.specialMethod(myModel);
 ```
 </details>
 
-### async `hasReadDB()`
-<details>
-	<summary>Returns <tt>true</tt> if the model databaseKey has a read DB available in settings, <tt>false</tt> otherwise.</summary>
-
-#### Example:
-```js
-const hasReadDB = await myModel.hasReadDB();
-```
-</details>
-
 ### async  `get(params)`
 <details>
 	<summary>Returns items from database.</summary>

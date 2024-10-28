@@ -394,7 +394,7 @@ describe('Model Dispatch', () => {
 			sinon.stub(model.session, 'client')
 				.get(() => ({ databases: 'not an object' }));
 
-			await rejects(ModelError.codes.INVALID_CLIENT);
+			await rejects(ModelError.codes.DB_CONFIG_NOT_FOUND);
 		});
 
 		it('Should throw when \'clients\' database config is an array', async () => {
@@ -402,7 +402,7 @@ describe('Model Dispatch', () => {
 			sinon.stub(model.session, 'client')
 				.get(() => ({ databases: ['not an object'] }));
 
-			await rejects(ModelError.codes.INVALID_CLIENT);
+			await rejects(ModelError.codes.DB_CONFIG_NOT_FOUND);
 		});
 
 		it('Should throw when the specific database key do not exist ', async () => {
