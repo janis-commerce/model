@@ -3,14 +3,9 @@
 'use strict';
 
 const assert = require('assert');
-const mockRequire = require('mock-require');
 const sinon = require('sinon');
 
 const Log = require('@janiscommerce/log');
-
-const Settings = require('@janiscommerce/settings');
-
-const { AwsSecretsManager } = require('@janiscommerce/aws-secrets-manager');
 
 const Model = require('../lib/model');
 const ModelError = require('../lib/model-error');
@@ -18,61 +13,11 @@ const ModelError = require('../lib/model-error');
 const DBDriver = require('./db-driver');
 const DBDriverGetPaged = require('./db-driver-get-paged');
 
+const DatabaseDispatcher = require('../lib/helpers/database-dispatcher');
+
 describe('Model', () => {
 
-	const client = {
-		databases: {
-			default: {
-				write: {
-					skipFetchCredentials: true,
-					type: 'mongodb',
-					host: 'the-host',
-					database: 'the-database-name',
-					username: 'the-username',
-					password: 'the-password',
-					protocol: 'my-protocol',
-					port: 1
-				}
-			}
-		}
-	};
-
-	const settings = {
-		core: {
-			write: {
-				skipFetchCredentials: true,
-				type: 'mongodb',
-				host: 'the-host',
-				database: 'the-database-name',
-				username: 'the-username',
-				password: 'the-password',
-				protocol: 'my-protocol',
-				port: 1
-			}
-		},
-		getPaged: {
-			write: {
-				skipFetchCredentials: true,
-				type: 'mongodb-get-paged',
-				host: 'the-host',
-				database: 'the-database-name',
-				username: 'the-username',
-				password: 'the-password',
-				protocol: 'my-protocol',
-				port: 1
-			}
-		},
-		other: {
-			write: {
-				skipFetchCredentials: true,
-				type: 'other'
-			},
-			admin: {
-				skipFetchCredentials: true,
-				type: 'mongodb'
-			}
-		}
-	};
+	const client = {};
 
 	const fakeSession = {
 
@@ -102,13 +47,11 @@ describe('Model', () => {
 		get databaseKey() { return 'getPaged'; }
 	}
 
-	let getPagedCallback;
-
 	let myCoreModel;
-
 	let otherModel;
-
 	let getPagedModel;
+
+	let getPagedCallback;
 
 	const originalEnv = { ...process.env };
 
@@ -116,31 +59,36 @@ describe('Model', () => {
 
 		process.env.JANIS_ENV = 'local';
 
-		sinon.stub(Settings, 'get')
-			.withArgs('database')
-			.returns(settings);
-
-		mockRequire('@janiscommerce/mongodb', DBDriver);
-
-		mockRequire('@janiscommerce/mongodb-get-paged', DBDriverGetPaged);
-
-		mockRequire('@janiscommerce/other', class OtherDBDriver { });
+		const OtherDBDriver = class { };
 
 		sinon.stub(Log, 'add')
 			.resolves();
 
 		myCoreModel = new CoreModel();
-
 		otherModel = new OtherModel();
-
 		getPagedModel = new GetPagedModel();
 
 		sinon.spy(Model, 'changeKeys');
 
 		getPagedCallback = sinon.stub();
 
-		sinon.stub(AwsSecretsManager, 'secret')
-			.returns({ getValue() { } });
+		sinon.stub(DatabaseDispatcher.prototype, 'getDb')
+			.withArgs('core', true)
+			.resolves(new DBDriver())
+			.withArgs('core', false)
+			.resolves(new DBDriver())
+			.withArgs('default', true)
+			.resolves(new DBDriver())
+			.withArgs('default', false)
+			.resolves(new DBDriver())
+			.withArgs('getPaged', true)
+			.resolves(new DBDriverGetPaged())
+			.withArgs('getPaged', false)
+			.resolves(new DBDriverGetPaged())
+			.withArgs('other', true)
+			.resolves(new OtherDBDriver())
+			.withArgs('other', false)
+			.resolves(new OtherDBDriver());
 	});
 
 	afterEach(() => {
@@ -148,7 +96,6 @@ describe('Model', () => {
 		process.env = { ...originalEnv };
 
 		sinon.restore();
-		mockRequire.stopAll();
 	});
 
 	describe('Getters', () => {
@@ -2103,59 +2050,19 @@ describe('Model', () => {
 					code: ModelError.codes.DRIVER_METHOD_NOT_IMPLEMENTED
 				});
 			});
-
 		});
 	});
 
-	describe('Admin privileges model methods', () => {
+	describe('dropDatabase()', () => {
 
-		describe('dropDatabase()', () => {
+		it('Should call DBDriver method when Model has admin config', async () => {
 
-			beforeEach(() => {
-				sinon.restore(); // para poder cambiar lo que resuelven las settings
-			});
+			sinon.stub(DBDriver.prototype, 'dropDatabase')
+				.resolves();
 
-			it('Should reject when Model hasn\'t admin config', async () => {
+			await myCoreModel.dropDatabase();
 
-				const noAdminConfigSettings = {
-					...settings,
-					core: {}
-				};
-
-				sinon.stub(Settings, 'get')
-					.withArgs('database')
-					.returns(noAdminConfigSettings);
-
-				await assert.rejects(myCoreModel.dropDatabase(), {
-					code: ModelError.codes.INVALID_DB_CONFIG
-				});
-			});
-
-			it('Should call DBDriver method when Model has admin config', async () => {
-
-				sinon.stub(DBDriver.prototype, 'dropDatabase')
-					.resolves();
-
-				const adminConfigSettings = {
-					core: {
-						write: {
-							type: 'mongodb',
-							skipFetchCredentials: true,
-							user: 'admin-user',
-							password: 'admin-password',
-							host: 'some-secure-host'
-						}
-					}
-				};
-
-				sinon.stub(Settings, 'get')
-					.withArgs('database')
-					.returns(adminConfigSettings);
-
-				await myCoreModel.dropDatabase();
-
-				sinon.assert.calledOnceWithExactly(DBDriver.prototype.dropDatabase, myCoreModel);
-			});
+			sinon.assert.calledOnceWithExactly(DBDriver.prototype.dropDatabase, myCoreModel);
 		});
 	});
 

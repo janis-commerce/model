@@ -31,25 +31,34 @@ describe('Database Dispatcher', () => {
 		databases: {
 			default: {
 				write: {
-					type: 'mongodb',
+					type: 'driver-type',
 					host: 'write-host',
 					database: 'write-database-name',
 					username: 'write-username',
 					password: 'write-password'
 				},
 				read: {
-					type: 'mongodb',
+					type: 'driver-type',
 					host: 'read-host',
 					database: 'read-database-name',
 					username: 'read-username',
 					password: 'read-password'
 				},
 				admin: {
-					type: 'mongodb',
+					type: 'driver-type',
 					host: 'write-host',
 					database: 'write-database-name',
 					username: 'write-secure-username',
 					password: 'write-secure-password'
+				}
+			},
+			readOnly: {
+				read: {
+					type: 'driver-type',
+					host: 'read-host',
+					database: 'read-database-name',
+					username: 'read-username',
+					password: 'read-password'
 				}
 			}
 		},
@@ -58,7 +67,7 @@ describe('Database Dispatcher', () => {
 				id: databaseId,
 				database: 'database-name'
 			},
-			nonDefault: {
+			other: {
 				id: otherDatabaseId,
 				database: 'other.database-name'
 			}
@@ -68,14 +77,14 @@ describe('Database Dispatcher', () => {
 	const settings = {
 		core: {
 			write: {
-				type: 'mongodb',
+				type: 'driver-type',
 				host: 'write-host',
 				database: 'write-database-name',
 				username: 'write-username',
 				password: 'write-password'
 			},
 			read: {
-				type: 'mongodb',
+				type: 'driver-type',
 				host: 'read-host',
 				database: 'read-database-name',
 				username: 'read-username',
@@ -84,7 +93,7 @@ describe('Database Dispatcher', () => {
 		},
 		other: {
 			write: {
-				type: 'mongodb',
+				type: 'driver-type',
 				host: 'write-host',
 				database: 'write-database-name',
 				username: 'write-username',
@@ -113,14 +122,26 @@ describe('Database Dispatcher', () => {
 		}
 	}
 
-	class NonDefaultClientModel extends ClientModel {
+	class OtherClientModel extends ClientModel {
 		get databaseKey() {
-			return 'non-default';
+			return 'other';
+		}
+	}
+
+	class ReadonlyClientModel extends ClientModel {
+		get databaseKey() {
+			return 'readOnly';
 		}
 	}
 
 	class CoreModel extends Model {
 		get databaseKey() { return 'core'; }
+	}
+
+	class UnknownClientModel extends ClientModel {
+		get databaseKey() {
+			return 'unknown';
+		}
 	}
 
 	const assertDbDriverConfig = async (model, config) => {
@@ -156,7 +177,8 @@ describe('Database Dispatcher', () => {
 
 		ssmClientMock = mockClient(SSMClient);
 
-		mockRequire('@janiscommerce/mongodb', DBDriver);
+		mockRequire('@janiscommerce/driver-type', DBDriver);
+		mockRequire('@janiscommerce/other-driver-type', DBDriver);
 
 		sinon.stub(Settings, 'get')
 			.withArgs('database')
@@ -187,13 +209,15 @@ describe('Database Dispatcher', () => {
 
 	describe('DBDriver dispatching', () => {
 
+		beforeEach(() => {
+			stubParameterNotFound();
+		});
+
 		context('When client is not injected (core model)', () => {
 
 			it('Should reject when default databaseKey not found in Settings nor ParameterStore', async () => {
 
 				const myEmptyModel = new EmptyModel();
-
-				stubParameterNotFound();
 
 				await assert.rejects(() => myEmptyModel.get(), {
 					name: 'ModelError',
@@ -204,8 +228,6 @@ describe('Database Dispatcher', () => {
 			it('Should reject when config does not have the required type field', async () => {
 
 				stubGetSecret();
-
-				stubParameterNotFound();
 
 				const { type, ...writeSettingsWithoutType } = settings.core.write;
 
@@ -224,8 +246,6 @@ describe('Database Dispatcher', () => {
 
 				stubGetSecret();
 
-				stubParameterNotFound();
-
 				Settings.get.withArgs('database')
 					.returns({ core: { write: { ...settings.core.write, type: 'unknown-driver' } } });
 
@@ -241,8 +261,6 @@ describe('Database Dispatcher', () => {
 
 				stubGetSecret();
 
-				stubParameterNotFound();
-
 				Settings.get.withArgs('database')
 					.returns({ core: { write: { ...settings.core.write, fail: true } } });
 
@@ -257,8 +275,6 @@ describe('Database Dispatcher', () => {
 			it('Should call DBDriver get using local settings when it exists', async () => {
 
 				stubGetSecret();
-
-				stubParameterNotFound();
 
 				sinon.stub(DBDriver.prototype, 'get')
 					.resolves();
@@ -279,8 +295,6 @@ describe('Database Dispatcher', () => {
 
 				stubGetSecret();
 
-				stubParameterNotFound();
-
 				sinon.stub(DBDriver.prototype, 'get')
 					.resolves();
 
@@ -296,8 +310,6 @@ describe('Database Dispatcher', () => {
 			it('Should call DBDriver get using read DB when readonly param is true', async () => {
 
 				stubGetSecret();
-
-				stubParameterNotFound();
 
 				sinon.stub(DBDriver.prototype, 'get')
 					.resolves();
@@ -324,8 +336,6 @@ describe('Database Dispatcher', () => {
 				it(`Should call DBDriver using write DB when ${method} is executed after a readonly get`, async () => {
 
 					stubGetSecret();
-
-					stubParameterNotFound();
 
 					sinon.stub(DBDriver.prototype, method)
 						.resolves();
@@ -356,6 +366,20 @@ describe('Database Dispatcher', () => {
 				await myClientModel.dropDatabase();
 
 				await assertDbDriverConfig(myClientModel, client.databases.default.write);
+			});
+
+			it('Should reject when using a write method but only has read config', async () => {
+
+				stubParameterNotFound();
+
+				stubGetSecret();
+
+				const model = new ReadonlyClientModel();
+
+				await assert.rejects(model.insert({ myItem: 123 }), {
+					name: 'ModelError',
+					code: ModelError.codes.INVALID_DB_CONFIG
+				});
 			});
 		});
 	});
@@ -638,8 +662,8 @@ describe('Database Dispatcher', () => {
 
 		const databases = {
 			[databaseId]: {
-				type: 'mongodb',
-				connectionString: 'mongodb//the-host.mongodb.net/?retryWrites=true&w=majority&authSource=%24external&authMechanism=MONGODB-AWS'
+				type: 'driver-type',
+				connectionString: 'the-host.driver-type.net'
 			}
 		};
 
@@ -721,9 +745,9 @@ describe('Database Dispatcher', () => {
 					databases
 				});
 
-				const nonDefaultClientModel = new NonDefaultClientModel();
+				const model = new UnknownClientModel();
 
-				await assert.rejects(() => nonDefaultClientModel.get(), {
+				await assert.rejects(() => model.get(), {
 					name: 'ModelError',
 					code: ModelError.codes.DB_CONFIG_NOT_FOUND
 				});
@@ -732,16 +756,11 @@ describe('Database Dispatcher', () => {
 			it('Should reject when databaseKey found in client db field but Database not found in ParameterStore', async () => {
 
 				stubParameterResolves({
-					coreDatabases: { core: { id: otherDatabaseId, database: 'my-service-core' } },
-					databases: {
-						[otherDatabaseId]: {
-							type: 'mongodb',
-							connectionString: 'mongodb//the-host.mongodb.net/?retryWrites=true&w=majority&authSource=%24external&authMechanism=MONGODB-AWS'
-						}
-					}
+					coreDatabases: { core: { id: databaseId, database: 'my-service-core' } },
+					databases
 				});
 
-				const model = new NonDefaultClientModel();
+				const model = new OtherClientModel();
 
 				await assert.rejects(() => model.get(), {
 					name: 'ModelError',
@@ -761,6 +780,33 @@ describe('Database Dispatcher', () => {
 				await assertDbDriverConfig(model, {
 					...databases[databaseId],
 					database: client.db.default.database
+				});
+
+				await assert.doesNotReject(model.get());
+			});
+
+			it('Should call DBDriver when databaseKey found in client db field and Database found in ParameterStore (diff from core model)', async () => {
+
+				stubParameterResolves({
+					coreDatabases: { core: { id: databaseId, database: 'my-service-core' } },
+					databases: {
+						[databaseId]: {
+							type: 'driver-type',
+							connectionString: 'the-host.driver-type.net'
+						},
+						[otherDatabaseId]: {
+							type: 'other-driver-type',
+							connectionString: 'other-host.driver-type.net'
+						}
+					}
+				});
+
+				const model = new OtherClientModel();
+
+				await assertDbDriverConfig(model, {
+					type: 'other-driver-type',
+					connectionString: 'other-host.driver-type.net',
+					database: client.db.other.database
 				});
 
 				await assert.doesNotReject(model.get());
