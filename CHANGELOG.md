@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [8.8.0-beta.1] - 2024-10-31
+### Changed
+- _Internal_ Using `node@18`
+
+## [8.8.0-beta.0] - 2024-10-29
+### Added
+- Using **AWS ParameterStore** to find databases configuration
+
+### Deprecated
+- Set as @deprecated the usage of **AWS SecretsManager**
+
 ## Removed
 - `hasReadDB()` method
 
