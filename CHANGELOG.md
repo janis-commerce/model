@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [8.8.0-beta.2] - 2024-11-08
+### Fixed
+- Internal Database cache
+
 ## [8.8.0-beta.1] - 2024-10-31
 ### Changed
 - _Internal_ Using `node@18`
