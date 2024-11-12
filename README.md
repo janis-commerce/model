@@ -10,11 +10,19 @@
 npm install @janiscommerce/model
 ```
 
-## Breaking changes _Since 6.0.0_ :warning:
-When use `changeKeys` param and cannot get any items, it will return an empty object (before returns an empty array)
+## Breaking changes ⚠️
+
+### 6.0.0
+- When use `changeKeys` param and cannot get any items, it will return an empty object (before returns an empty array)
+
+## Future versions 🔜
+
+### 9.0.0
+- ⚠️ Deprecated: Settings with `@janiscommerce/settings` will no longer be supported. (Replaced with **AWS Parameter Store** _Since 8.8.0_)
+- ⚠️ Deprecated: Usage of **AWS Secrets Manager** for credentials will no longer be supported. (Replaced with **AWS Parameter Store** _Since 8.8.0_)
 
 ## 🔧 Database connection settings
-In order to use this package with a DB, you must to add the database connection settings, it can be setted in service settings *`janiscommercerc.json`* **(Core model)** or in session **(Client Model)**.
+In order to use this package with a DB, you must to add the database connection settings, it can be set in service settings *`janiscommercerc.json`* **(Core model)** or in session **(Client Model)**.
 
 #### Configure database connection with `databaseKey`
 Regardless if you use a *Core* or *Client* model you may set the `databaseKey` that your model will use to get the database connection settings. Default: `'default'`.
@@ -186,6 +194,8 @@ await myModel.dbDriver.specialMethod(myModel);
 <details>
 	<summary>Returns true when the model is core or false otherwise.</summary>
 
+*Since 8.8.0*
+
 #### Core Example:
 ```js
 const myCoreModel = new MyCoreModel();
@@ -257,10 +267,11 @@ await myModel.getPaged({ filters: { status: 'active' } }, (items, page, limit) =
 	// items is an array with the result from DB
 });
 ```
-</details>
 
 #### Default order
 The default order when no order was received is field `id` using `asc` as order direction. _Since 6.8.3_
+
+</details>
 
 ### async  `getTotals(filters)`
 
@@ -743,7 +754,6 @@ const idStruct = await myModel.getIdStruct();
 ```
 
 </details>
----
 
 ## :clipboard: Logging
 This package automatically logs any write operation such as:
@@ -903,8 +913,10 @@ await myModel
 
 </details>
 
-
 ## 🔑 Secrets
+
+> ⚠️ Deprecated: This configuration will no longer be supported starting from version 9.0.0. ⚠️
+
 The package will get the **secret** using the `JANIS_SERVICE_NAME` environment variable.
 If the **secret** is found, the result will be merged with the settings found in the *`janiscommercerc.json`* file or in the Client databases configuration. See [Database connection settings](#Database-connection-settings).
 
