@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [8.8.0-beta.4] - 2024-11-12
+### Changed
+- `isCore()` method. non-`core` models are client models (avoid reject when no session)
+
 ## [8.8.0-beta.3] - 2024-11-12
 ### Added
 - `isCore()` method
