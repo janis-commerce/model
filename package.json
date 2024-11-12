@@ -8,6 +8,7 @@
     "test-ci": "export TEST_ENV=true; nyc --reporter=lcov --reporter=text-summary mocha --exit --recursive tests/",
     "watch-test": "export TEST_ENV=true; mocha --exit -R nyan -w --recursive tests/",
     "coverage": "nyc npm test",
+    "coverage-ci": "export TEST_ENV=true; nyc --reporter=lcov --reporter=text-summary mocha --exit --recursive tests/",
     "lint": "eslint lib/ tests/",
     "build-types": "tsc lib/model.js --declaration --allowJs --emitDeclarationOnly --outDir types",
     "prepare": "husky install",
