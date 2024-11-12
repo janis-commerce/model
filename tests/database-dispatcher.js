@@ -286,6 +286,8 @@ describe('Database Dispatcher', () => {
 				sinon.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, {});
 
 				await assertDbDriverConfig(myCoreModel, settings.core.write);
+
+				assert.deepStrictEqual(await myCoreModel.isCore(), true);
 			});
 		});
 
@@ -305,6 +307,8 @@ describe('Database Dispatcher', () => {
 				sinon.assert.calledOnceWithExactly(DBDriver.prototype.get, myClientModel, {});
 
 				await assertDbDriverConfig(myClientModel, client.databases.default.write);
+
+				assert.deepStrictEqual(await myClientModel.isCore(), false);
 			});
 
 			it('Should call DBDriver get using read DB when readonly param is true', async () => {
@@ -321,6 +325,8 @@ describe('Database Dispatcher', () => {
 				sinon.assert.calledOnceWithExactly(DBDriver.prototype.get, myClientModel, { readonly: true });
 
 				await assertDbDriverConfig(myClientModel, client.databases.default.read);
+
+				assert.deepStrictEqual(await myClientModel.isCore(), false);
 			});
 
 			Object.entries({
@@ -545,6 +551,8 @@ describe('Database Dispatcher', () => {
 			});
 
 			sinon.assert.calledOnceWithExactly(AwsSecretsManager.secret, 'service-name');
+
+			assert.deepStrictEqual(await clientModel.isCore(), false);
 		});
 
 		it('Should fetch credentials for write config database', async () => {
@@ -719,6 +727,25 @@ describe('Database Dispatcher', () => {
 
 				await assert.doesNotReject(coreModel.get());
 			});
+
+			it('Should return true when isCore() method is called', async () => {
+
+				stubParameterResolves({
+					coreDatabases: { core: { id: databaseId, database: 'my-service-core' } },
+					databases
+				});
+
+				const coreModel = new CoreModel();
+
+				await assertDbDriverConfig(coreModel, {
+					...databases[databaseId],
+					database: 'my-service-core'
+				});
+
+				const isCore = await coreModel.isCore();
+
+				assert.deepStrictEqual(isCore, true);
+			});
 		});
 
 		context('When client is injected (client model)', () => {
@@ -810,6 +837,25 @@ describe('Database Dispatcher', () => {
 				});
 
 				await assert.doesNotReject(model.get());
+			});
+
+			it('Should return false when isCore() method is called', async () => {
+
+				stubParameterResolves({
+					coreDatabases: { core: { id: databaseId, database: 'my-service-core' } },
+					databases
+				});
+
+				const model = new ClientModel();
+
+				await assertDbDriverConfig(model, {
+					...databases[databaseId],
+					database: client.db.default.database
+				});
+
+				const isCore = await model.isCore();
+
+				assert.deepStrictEqual(isCore, false);
 			});
 		});
 	});

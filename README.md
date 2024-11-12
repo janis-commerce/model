@@ -182,6 +182,24 @@ await myModel.dbDriver.specialMethod(myModel);
 ```
 </details>
 
+### async `isCore()`
+<details>
+	<summary>Returns true when the model is core or false otherwise.</summary>
+
+#### Core Example:
+```js
+const myCoreModel = new MyCoreModel();
+
+const isCore = await myCoreModel.isCore(); // true expected
+```
+#### Non-Core Example:
+```js
+const myClientModel = new MyClientModel();
+
+const isCore = await myClientModel.isCore(); // false expected
+```
+</details>
+
 ### async  `get(params)`
 <details>
 	<summary>Returns items from database.</summary>
