@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [8.8.0] - 2024-11-15
+### Added
+- Using **AWS ParameterStore** to find databases configuration
+- `isCore()` method
+
+### Changed
+- _Internal_ Using `node@18`
+
+### Deprecated
+- Set as @deprecated the usage of **AWS SecretsManager**
+
+## Removed
+- `hasReadDB()` method
+
 ## [8.8.0-beta.4] - 2024-11-12
 ### Changed
 - `isCore()` method. non-`core` models are client models (avoid reject when no session)
