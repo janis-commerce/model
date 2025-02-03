@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [8.8.1] - 2025-02-03
+### Fixed
+- Resolved an issue where using multiple models simultaneously caused conflicts due to internal caching of ParameterStore.
+
 ## [8.8.0] - 2024-11-15
 ### Added
 - Using **AWS ParameterStore** to find databases configuration
