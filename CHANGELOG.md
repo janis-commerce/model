@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [8.8.2] - 2025-02-21
+### Fixed
+- **Log:** `executionTime` is now compatible with multiple parallel operations.
+- **Log:** `multiSave()` now correctly associates items to the Log if at least one has an `id`, improving traceability.
+- **Log:** `update()`, `remove()`, and `increment()` with multiple `id` filters now adds the Log content for all affected items.
+
 ## [8.8.1] - 2025-02-03
 ### Fixed
 - Resolved an issue where using multiple models simultaneously caused conflicts due to internal caching of ParameterStore.

@@ -46,7 +46,7 @@
   "dependencies": {
     "@aws-sdk/client-ssm": "^3.682.0",
     "@janiscommerce/aws-secrets-manager": "^1.1.1",
-    "@janiscommerce/log": "^5.0.14",
+    "@janiscommerce/log": "^5.1.0",
     "@janiscommerce/settings": "^1.0.1",
     "lllog": "^1.1.2",
     "lodash.omit": "4.5.0",
