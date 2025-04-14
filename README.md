@@ -631,8 +631,9 @@ await myModel.dropDatabase();
 
 #### Parameters
 - `stages` An array with the aggregation stages
+- `options` An object with additional options
 
-#### Example
+#### Examples
 ```js
 
 const results = await myModel.aggregate([
@@ -650,6 +651,22 @@ const results = await myModel.aggregate([
 	]
 */
 ```
+```js
+
+await myModel.aggregate([
+	{ $group: { _id: '$status', count: { $sum: 1 } } },
+], {
+	allowDiskUse: true,
+	hint: { status: 1 }
+});
+/* >
+	{
+		active: 2342,
+		inactive: 992
+	}
+*/
+```
+
 </details>
 
 ### async  `multiUpdate(operations)`

@@ -2077,9 +2077,9 @@ describe('Model', () => {
 
 			DBDriver.prototype.aggregate = aggregate;
 
-			assert.deepStrictEqual(await myClientModel.aggregate(stages), results);
+			assert.deepStrictEqual(await myClientModel.aggregate(stages, { allowDiskUse: true }), results);
 
-			sinon.assert.calledOnceWithExactly(DBDriver.prototype.aggregate, myClientModel, stages);
+			sinon.assert.calledOnceWithExactly(DBDriver.prototype.aggregate, myClientModel, stages, { allowDiskUse: true });
 		});
 
 		it('Should fail if database driver aggregate function rejects', async () => {
@@ -2093,7 +2093,7 @@ describe('Model', () => {
 
 			await assert.rejects(myClientModel.aggregate(stages));
 
-			sinon.assert.calledOnceWithExactly(DBDriver.prototype.aggregate, myClientModel, stages);
+			sinon.assert.calledOnceWithExactly(DBDriver.prototype.aggregate, myClientModel, stages, {});
 		});
 	});
 

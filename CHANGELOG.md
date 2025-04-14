@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [8.8.3] - 2025-04-14
+### Added
+- `aggregate()` now aggregate operation can receive options
+
 ## [8.8.2] - 2025-02-21
 ### Fixed
 - **Log:** `executionTime` is now compatible with multiple parallel operations.
