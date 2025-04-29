@@ -1759,7 +1759,7 @@ describe('Model', () => {
 			userId: 'some-user-id'
 		};
 
-		it('Should exclude the fields from the log when excludeFieldsInLog static getter exists', async () => {
+		it('Should exclude the fields from the log when excludeFieldsInLog static getter exists (when the field is a string)', async () => {
 
 			const myClientModel = new ClientModel();
 
@@ -1796,6 +1796,89 @@ describe('Model', () => {
 						dateCreated: sinon.match.date,
 						userModified,
 						dateModified: sinon.match.date
+					},
+					executionTime: sinon.match.number
+				}
+			}]);
+		});
+
+		it('Should exclude the fields from the log when excludeFieldsInLog static getter exists (when the field is an array)', async () => {
+
+			const myClientModel = new ClientModel();
+
+			myClientModel.session = logSession;
+
+			ClientModel.excludeFieldsInLog = ['secondFactor'];
+
+			sinon.stub(DBDriver.prototype, 'insert')
+				.resolves('62c45c01812a0a142d320ebd');
+
+			await myClientModel.insert({
+				username: 'some-username',
+				location: {
+					country: 'some-country',
+					address: 'some-address'
+				},
+				shipping: [
+					{
+						addressCommerceId: 'some-address-commerce-id',
+						isPickup: false,
+						type: 'delivery',
+						deliveryEstimateDate: '2025-04-24T22:35:56.742Z',
+						deliveryWindow: {
+							initialDate: '2025-04-24T22:25:56.742Z',
+							finalDate: '2025-04-24T22:35:56.742Z'
+						},
+						price: 10,
+						items: [
+							{
+								index: 0,
+								quantity: 1
+							}
+						],
+						secondFactor: {
+							method: 'numericPin',
+							value: '1234'
+						}
+					}
+				]
+			});
+
+			sinon.assert.calledWithExactly(Log.add, 'some-client', [{
+				type: 'inserted',
+				entity: 'client',
+				entityId: '62c45c01812a0a142d320ebd',
+				userCreated,
+				log: {
+					item: {
+						username: 'some-username',
+						location: {
+							country: 'some-country',
+							address: 'some-address'
+						},
+						userCreated,
+						dateCreated: sinon.match.date,
+						userModified,
+						dateModified: sinon.match.date,
+						shipping: [
+							{
+								addressCommerceId: 'some-address-commerce-id',
+								isPickup: false,
+								type: 'delivery',
+								deliveryEstimateDate: '2025-04-24T22:35:56.742Z',
+								deliveryWindow: {
+									initialDate: '2025-04-24T22:25:56.742Z',
+									finalDate: '2025-04-24T22:35:56.742Z'
+								},
+								price: 10,
+								items: [
+									{
+										index: 0,
+										quantity: 1
+									}
+								]
+							}
+						]
 					},
 					executionTime: sinon.match.number
 				}
