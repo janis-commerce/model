@@ -1759,14 +1759,14 @@ describe('Model', () => {
 			userId: 'some-user-id'
 		};
 
-		it('Should exclude the fields from the log when excludeFieldsInLog static getter exists (when the field is a string)', async () => {
+		it('Should exclude the fields from the log when excludeFieldsInLog static getter exists (when the field in path is a string)', async () => {
 
 			const myClientModel = new ClientModel();
 
 			myClientModel.session = logSession;
 
 			ClientModel.excludeFieldsInLog = [
-				'password', 'address'
+				'item.password', 'item.location.address'
 			];
 
 			sinon.stub(DBDriver.prototype, 'insert')
@@ -1802,13 +1802,13 @@ describe('Model', () => {
 			}]);
 		});
 
-		it('Should exclude the fields from the log when excludeFieldsInLog static getter exists (when the field is an array)', async () => {
+		it('Should exclude the fields from the log when excludeFieldsInLog static getter exists (when the field path is an array)', async () => {
 
 			const myClientModel = new ClientModel();
 
 			myClientModel.session = logSession;
 
-			ClientModel.excludeFieldsInLog = ['secondFactor'];
+			ClientModel.excludeFieldsInLog = ['item.shipping.*.secondFactor'];
 
 			sinon.stub(DBDriver.prototype, 'insert')
 				.resolves('62c45c01812a0a142d320ebd');
@@ -1818,6 +1818,10 @@ describe('Model', () => {
 				location: {
 					country: 'some-country',
 					address: 'some-address'
+				},
+				secondFactor: {
+					method: 'numericPin',
+					value: '1234'
 				},
 				shipping: [
 					{
@@ -1855,6 +1859,10 @@ describe('Model', () => {
 						location: {
 							country: 'some-country',
 							address: 'some-address'
+						},
+						secondFactor: {
+							method: 'numericPin',
+							value: '1234'
 						},
 						userCreated,
 						dateCreated: sinon.match.date,
