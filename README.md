@@ -845,9 +845,9 @@ class MyModel extends Model {
 
 	static get excludeFieldsInLog() {
 		return [
-			'password',
-			'address',
-			'secret'
+			'password', // Exclude the password field
+			'**.address', // Exclude the address field in any nested object	
+			'*.shipping.*.secondFactor' // Exclude the secondFactor field in any object in the shipping array without specifying the root object
 		]
 	}
 }
@@ -859,8 +859,33 @@ By setting this when you do an operation with an item like:
 await myModel.insert({
 	user: 'johndoe',
 	password: 'some-password',
-	country: 'AR',
-	address: 'Fake St 123'
+	location: {
+		country: 'some-country',
+		address: 'some-address'
+	},
+	shipping: [
+		{
+			addressCommerceId: 'some-address-commerce-id',
+			isPickup: false,
+			type: 'delivery',
+			deliveryEstimateDate: '2025-04-24T22:35:56.742Z',
+			deliveryWindow: {
+				initialDate: '2025-04-24T22:25:56.742Z',
+				finalDate: '2025-04-24T22:35:56.742Z'
+			},
+			price: 10,
+			items: [
+				{
+					index: 0,
+					quantity: 1
+				}
+			],
+			secondFactor: {
+				method: 'numericPin',
+				value: '1234'
+			}
+		}
+	]
 });
 
 ```
@@ -868,9 +893,29 @@ await myModel.insert({
 It will be logged as:
 ```js
 {
-	id: '5ea30bcbe28c55870324d9f0',
 	user: 'johndoe',
-	country: 'AR'
+	location: {
+		country: 'some-country'
+	},
+	shipping: [
+		{
+			addressCommerceId: 'some-address-commerce-id',
+			isPickup: false,
+			type: 'delivery',
+			deliveryEstimateDate: '2025-04-24T22:35:56.742Z',
+			deliveryWindow: {
+				initialDate: '2025-04-24T22:25:56.742Z',
+				finalDate: '2025-04-24T22:35:56.742Z'
+			},
+			price: 10,
+			items: [
+				{
+					index: 0,
+					quantity: 1
+				}
+			]
+		}
+	]
 }
 ```
 </details>
