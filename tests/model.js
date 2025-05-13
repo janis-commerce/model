@@ -1766,7 +1766,7 @@ describe('Model', () => {
 			myClientModel.session = logSession;
 
 			ClientModel.excludeFieldsInLog = [
-				'item.password', 'item.location.address'
+				'password', '**.address'
 			];
 
 			sinon.stub(DBDriver.prototype, 'insert')
@@ -1808,7 +1808,7 @@ describe('Model', () => {
 
 			myClientModel.session = logSession;
 
-			ClientModel.excludeFieldsInLog = ['item.shipping.*.secondFactor'];
+			ClientModel.excludeFieldsInLog = ['*.shipping.*.secondFactor'];
 
 			sinon.stub(DBDriver.prototype, 'insert')
 				.resolves('62c45c01812a0a142d320ebd');
