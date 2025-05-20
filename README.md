@@ -919,8 +919,13 @@ It will be logged as:
 }
 ```
 
-⚠️ **WARNING**:  
-- When using the wildcard `*` in the field path of the `excludeFieldsInLog` static getter, it will exclude all the fields in the path.
+ℹ️ **Note**:  
+- The wildcard `*` in the field path of the `excludeFieldsInLog` static getter, is used to access properties inside arrays.
+- The wildcard `**` in the field path of the `excludeFieldsInLog` static getter, is used to access the field in any level of the object.
+- The `excludeFieldsInLog` static getter can have both field names and field paths.
+
+⚠️ **Warning**:  
+- When using the wildcard `*` in the field path of the `excludeFieldsInLog` static getter, it will exclude all the fields in the log.
 - In case the field path is incorrect, it will not exclude any field.
 
 </details>
