@@ -1760,7 +1760,7 @@ describe('Model', () => {
 		};
 
 		// eslint-disable-next-line max-len
-		it('Should exclude the fields from the log when excludeFieldsInLog static getter exists (where one is a field and the other one is a field path as string)', async () => {
+		it('Should exclude the fields from the log when excludeFieldsInLog static getter exists (when one is a field and the other one is a field path as string)', async () => {
 
 			const myClientModel = new ClientModel();
 
@@ -1803,7 +1803,7 @@ describe('Model', () => {
 			}]);
 		});
 
-		it('Should exclude one field from the log when excludeFieldsInLog static getter exists (where the field path is an array)', async () => {
+		it('Should exclude one field from the log when excludeFieldsInLog static getter exists (when the field path is an array)', async () => {
 
 			const myClientModel = new ClientModel();
 
@@ -1891,7 +1891,7 @@ describe('Model', () => {
 			}]);
 		});
 
-		it('Should exclude two or more fields from the log when excludeFieldsInLog static getter exists (where the field path is an array)', async () => {
+		it('Should exclude two or more fields from the log when excludeFieldsInLog static getter exists (when the field path is an array)', async () => {
 
 			const myClientModel = new ClientModel();
 
@@ -1981,7 +1981,7 @@ describe('Model', () => {
 			}]);
 		});
 
-		it('Should exclude the fields from the log when excludeFieldsInLog static getter exists (where the field path is a nested array)', async () => {
+		it('Should exclude the fields from the log when excludeFieldsInLog static getter exists (when the field path is a nested array)', async () => {
 
 			const myClientModel = new ClientModel();
 
@@ -2072,7 +2072,98 @@ describe('Model', () => {
 		});
 
 		// eslint-disable-next-line max-len
-		it('Should exclude the fields from the log when excludeFieldsInLog static getter exists (where one field path exists and the other one does not)', async () => {
+		it('Should exclude the fields from the log when excludeFieldsInLog static getter exists (when the intermediate field path is unknown)', async () => {
+
+			const myClientModel = new ClientModel();
+
+			myClientModel.session = logSession;
+
+			ClientModel.excludeFieldsInLog = ['item.**.quantity'];
+
+			sinon.stub(DBDriver.prototype, 'insert')
+				.resolves('62c45c01812a0a142d320ebd');
+
+			await myClientModel.insert({
+				username: 'some-username',
+				location: {
+					country: 'some-country',
+					address: 'some-address'
+				},
+				secondFactor: {
+					value: '1234'
+				},
+				shipping: [
+					{
+						addressCommerceId: 'some-address-commerce-id',
+						isPickup: false,
+						type: 'delivery',
+						deliveryEstimateDate: '2025-04-24T22:35:56.742Z',
+						deliveryWindow: {
+							initialDate: '2025-04-24T22:25:56.742Z',
+							finalDate: '2025-04-24T22:35:56.742Z'
+						},
+						price: 10,
+						items: [
+							{
+								index: 0,
+								quantity: 1
+							}
+						],
+						secondFactor: {
+							value: '1234'
+						}
+					}
+				]
+			});
+
+			sinon.assert.calledWithExactly(Log.add, 'some-client', [{
+				type: 'inserted',
+				entity: 'client',
+				entityId: '62c45c01812a0a142d320ebd',
+				userCreated,
+				log: {
+					item: {
+						username: 'some-username',
+						location: {
+							country: 'some-country',
+							address: 'some-address'
+						},
+						secondFactor: {
+							value: '1234'
+						},
+						userCreated,
+						dateCreated: sinon.match.date,
+						userModified,
+						dateModified: sinon.match.date,
+						shipping: [
+							{
+								addressCommerceId: 'some-address-commerce-id',
+								isPickup: false,
+								type: 'delivery',
+								deliveryEstimateDate: '2025-04-24T22:35:56.742Z',
+								deliveryWindow: {
+									initialDate: '2025-04-24T22:25:56.742Z',
+									finalDate: '2025-04-24T22:35:56.742Z'
+								},
+								price: 10,
+								items: [
+									{
+										index: 0
+									}
+								],
+								secondFactor: {
+									value: '1234'
+								}
+							}
+						]
+					},
+					executionTime: sinon.match.number
+				}
+			}]);
+		});
+
+		// eslint-disable-next-line max-len
+		it('Should exclude the fields from the log when excludeFieldsInLog static getter exists (when one field path exists and the other one does not)', async () => {
 
 			const myClientModel = new ClientModel();
 
@@ -2163,7 +2254,7 @@ describe('Model', () => {
 			}]);
 		});
 
-		it('Should exclude all the fields from the log when excludeFieldsInLog static getter exists (where the field path is a wildcard)', async () => {
+		it('Should exclude all the fields from the log when excludeFieldsInLog static getter exists (when the field path is a wildcard)', async () => {
 
 			const myClientModel = new ClientModel();
 

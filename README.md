@@ -920,8 +920,8 @@ It will be logged as:
 ```
 
 ℹ️ **Note**:  
-- The wildcard `*` in the field path of the `excludeFieldsInLog` static getter, is used to access properties inside arrays.
-- The wildcard `**` in the field path of the `excludeFieldsInLog` static getter, is used to access the field in any level of the object.
+- The wildcard `*` in the field path of the `excludeFieldsInLog` static getter, is used to access properties inside arrays or when the root field path is unknown.
+- The wildcard `**` in the field path of the `excludeFieldsInLog` static getter, is used to access the field in any level of the object or when the intermediate field path is unknown between the root and the field to exclude.
 - The `excludeFieldsInLog` static getter can have both field names and field paths.
 
 ⚠️ **Warning**:  
