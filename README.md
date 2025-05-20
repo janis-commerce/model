@@ -848,7 +848,7 @@ class MyModel extends Model {
 			'password', // Exclude the password field
 			'**.address', // Exclude the address field in any nested object	of the log
 			'*.shipping.*.secondFactor', // Exclude the secondFactor field in any object in the shipping array without specifying the root object
-			'*.shipping.*.items.*.quantity' // Exclude the quantity field in any object in the items array of the shipping array without specifying the root object
+			'*.shipping.*.items.*.quantity' // Exclude the quantity field in any object in the items array of any object in the shipping array without specifying the root object
 		]
 	}
 }
@@ -919,7 +919,7 @@ It will be logged as:
 }
 ```
 
-IMPORTANT: 
+⚠️ **WARNING**:  
 - When using the wildcard `*` in the field path of the `excludeFieldsInLog` static getter, it will exclude all the fields in the path.
 - In case the field path is incorrect, it will not exclude any field.
 
