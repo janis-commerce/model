@@ -839,15 +839,16 @@ await myModel.insert({
 <details>
 	<summary>You can exclude fields for logs in case you have sensitive information in your entries such as passwords, addresses, etc.</summary>
 
-#### Specify the fields to exclude by setting them in the `static getter` `excludeFieldsInLog`:
+#### Specify the fields (as field name or field path) to exclude by setting them in the `static getter` `excludeFieldsInLog`:
 ```js
 class MyModel extends Model {
 
 	static get excludeFieldsInLog() {
 		return [
 			'password', // Exclude the password field
-			'**.address', // Exclude the address field in any nested object	
-			'*.shipping.*.secondFactor' // Exclude the secondFactor field in any object in the shipping array without specifying the root object
+			'**.address', // Exclude the address field in any nested object	of the log
+			'*.shipping.*.secondFactor', // Exclude the secondFactor field in any object in the shipping array without specifying the root object
+			'*.shipping.*.items.*.quantity' // Exclude the quantity field in any object in the items array of the shipping array without specifying the root object
 		]
 	}
 }
@@ -910,14 +911,18 @@ It will be logged as:
 			price: 10,
 			items: [
 				{
-					index: 0,
-					quantity: 1
+					index: 0
 				}
 			]
 		}
 	]
 }
 ```
+
+IMPORTANT: 
+- When using the wildcard `*` in the field path of the `excludeFieldsInLog` static getter, it will exclude all the fields in the path.
+- In case the field path is incorrect, it will not exclude any field.
+
 </details>
 
 ### :memo: Set custom log data
