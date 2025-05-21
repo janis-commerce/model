@@ -15,6 +15,8 @@ const DBDriverGetPaged = require('./db-driver-get-paged');
 
 const DatabaseDispatcher = require('../lib/helpers/database-dispatcher');
 
+const { deleteProp, deleteManyProps } = require('./resources/props');
+
 describe('Model', () => {
 
 	const client = {};
@@ -1753,10 +1755,105 @@ describe('Model', () => {
 		const userCreated = 'some-user-id';
 		const userModified = userCreated;
 
+		const userClientCode = 'some-client';
+
 		const logSession = {
 			...fakeSession,
-			clientCode: 'some-client',
-			userId: 'some-user-id'
+			clientCode: userClientCode,
+			userId: userCreated
+		};
+
+		const dbDriverInsertId = '62c45c01812a0a142d320ebd';
+
+		const insertData = {
+			username: 'some-username',
+			location: {
+				country: 'some-country',
+				address: 'some-address'
+			},
+			secondFactor: {
+				value: '1234'
+			},
+			shipping: [
+				{
+					addressCommerceId: 'some-address-commerce-id',
+					isPickup: false,
+					type: 'delivery',
+					deliveryEstimateDate: '2025-04-24T22:35:56.742Z',
+					deliveryWindow: {
+						initialDate: '2025-04-24T22:25:56.742Z',
+						finalDate: '2025-04-24T22:35:56.742Z'
+					},
+					price: 10,
+					items: [
+						{
+							index: 0,
+							quantity: 1
+						}
+					],
+					secondFactor: {
+						value: '1234'
+					}
+				}
+			]
+		};
+
+		const logData = {
+			username: 'some-username',
+			location: {
+				country: 'some-country',
+				address: 'some-address'
+			},
+			secondFactor: {
+				value: '1234'
+			},
+			userCreated,
+			dateCreated: sinon.match.date,
+			userModified,
+			dateModified: sinon.match.date,
+			shipping: [
+				{
+					addressCommerceId: 'some-address-commerce-id',
+					isPickup: false,
+					type: 'delivery',
+					deliveryEstimateDate: '2025-04-24T22:35:56.742Z',
+					deliveryWindow: {
+						initialDate: '2025-04-24T22:25:56.742Z',
+						finalDate: '2025-04-24T22:35:56.742Z'
+					},
+					price: 10,
+					items: [
+						{
+							index: 0,
+							quantity: 1
+						}
+					],
+					secondFactor: {
+						value: '1234'
+					}
+				}
+			]
+		};
+
+		const stubDBDriverInsert = () => {
+			sinon.stub(DBDriver.prototype, 'insert').resolves(dbDriverInsertId);
+		};
+
+		const clientModelInsertWithShipping = async (myClientModel, dataToInsert = insertData) => {
+			await myClientModel.insert(dataToInsert);
+		};
+
+		const assertLog = (log = logData) => {
+			sinon.assert.calledWithExactly(Log.add, userClientCode, [{
+				type: 'inserted',
+				entity: 'client',
+				entityId: dbDriverInsertId,
+				userCreated,
+				log: {
+					item: log,
+					executionTime: sinon.match.number
+				}
+			}]);
 		};
 
 		// eslint-disable-next-line max-len
@@ -1770,10 +1867,9 @@ describe('Model', () => {
 				'password', '**.address'
 			];
 
-			sinon.stub(DBDriver.prototype, 'insert')
-				.resolves('62c45c01812a0a142d320ebd');
+			stubDBDriverInsert();
 
-			await myClientModel.insert({
+			await clientModelInsertWithShipping(myClientModel, {
 				username: 'some-username',
 				password: 'some-password',
 				location: {
@@ -1782,25 +1878,16 @@ describe('Model', () => {
 				}
 			});
 
-			sinon.assert.calledWithExactly(Log.add, 'some-client', [{
-				type: 'inserted',
-				entity: 'client',
-				entityId: '62c45c01812a0a142d320ebd',
+			assertLog({
+				username: 'some-username',
+				location: {
+					country: 'some-country'
+				},
 				userCreated,
-				log: {
-					item: {
-						username: 'some-username',
-						location: {
-							country: 'some-country'
-						},
-						userCreated,
-						dateCreated: sinon.match.date,
-						userModified,
-						dateModified: sinon.match.date
-					},
-					executionTime: sinon.match.number
-				}
-			}]);
+				dateCreated: sinon.match.date,
+				userModified,
+				dateModified: sinon.match.date
+			});
 		});
 
 		it('Should exclude one field from the log when excludeFieldsInLog static getter exists (when the field path is an array)', async () => {
@@ -1811,84 +1898,13 @@ describe('Model', () => {
 
 			ClientModel.excludeFieldsInLog = ['*.shipping.*.secondFactor'];
 
-			sinon.stub(DBDriver.prototype, 'insert')
-				.resolves('62c45c01812a0a142d320ebd');
+			stubDBDriverInsert();
 
-			await myClientModel.insert({
-				username: 'some-username',
-				location: {
-					country: 'some-country',
-					address: 'some-address'
-				},
-				secondFactor: {
-					value: '1234'
-				},
-				shipping: [
-					{
-						addressCommerceId: 'some-address-commerce-id',
-						isPickup: false,
-						type: 'delivery',
-						deliveryEstimateDate: '2025-04-24T22:35:56.742Z',
-						deliveryWindow: {
-							initialDate: '2025-04-24T22:25:56.742Z',
-							finalDate: '2025-04-24T22:35:56.742Z'
-						},
-						price: 10,
-						items: [
-							{
-								index: 0,
-								quantity: 1
-							}
-						],
-						secondFactor: {
-							value: '1234'
-						}
-					}
-				]
-			});
+			await clientModelInsertWithShipping(myClientModel);
 
-			sinon.assert.calledWithExactly(Log.add, 'some-client', [{
-				type: 'inserted',
-				entity: 'client',
-				entityId: '62c45c01812a0a142d320ebd',
-				userCreated,
-				log: {
-					item: {
-						username: 'some-username',
-						location: {
-							country: 'some-country',
-							address: 'some-address'
-						},
-						secondFactor: {
-							value: '1234'
-						},
-						userCreated,
-						dateCreated: sinon.match.date,
-						userModified,
-						dateModified: sinon.match.date,
-						shipping: [
-							{
-								addressCommerceId: 'some-address-commerce-id',
-								isPickup: false,
-								type: 'delivery',
-								deliveryEstimateDate: '2025-04-24T22:35:56.742Z',
-								deliveryWindow: {
-									initialDate: '2025-04-24T22:25:56.742Z',
-									finalDate: '2025-04-24T22:35:56.742Z'
-								},
-								price: 10,
-								items: [
-									{
-										index: 0,
-										quantity: 1
-									}
-								]
-							}
-						]
-					},
-					executionTime: sinon.match.number
-				}
-			}]);
+			const shippingWithoutSecondFactor = deleteProp(logData.shipping[0], 'secondFactor');
+
+			assertLog({ ...logData, shipping: [shippingWithoutSecondFactor] });
 		});
 
 		it('Should exclude two or more fields from the log when excludeFieldsInLog static getter exists (when the field path is an array)', async () => {
@@ -1902,83 +1918,13 @@ describe('Model', () => {
 				'*.shipping.*.addressCommerceId'
 			];
 
-			sinon.stub(DBDriver.prototype, 'insert')
-				.resolves('62c45c01812a0a142d320ebd');
+			stubDBDriverInsert();
 
-			await myClientModel.insert({
-				username: 'some-username',
-				location: {
-					country: 'some-country',
-					address: 'some-address'
-				},
-				secondFactor: {
-					value: '1234'
-				},
-				shipping: [
-					{
-						addressCommerceId: 'some-address-commerce-id',
-						isPickup: false,
-						type: 'delivery',
-						deliveryEstimateDate: '2025-04-24T22:35:56.742Z',
-						deliveryWindow: {
-							initialDate: '2025-04-24T22:25:56.742Z',
-							finalDate: '2025-04-24T22:35:56.742Z'
-						},
-						price: 10,
-						items: [
-							{
-								index: 0,
-								quantity: 1
-							}
-						],
-						secondFactor: {
-							value: '1234'
-						}
-					}
-				]
-			});
+			await clientModelInsertWithShipping(myClientModel);
 
-			sinon.assert.calledWithExactly(Log.add, 'some-client', [{
-				type: 'inserted',
-				entity: 'client',
-				entityId: '62c45c01812a0a142d320ebd',
-				userCreated,
-				log: {
-					item: {
-						username: 'some-username',
-						location: {
-							country: 'some-country',
-							address: 'some-address'
-						},
-						secondFactor: {
-							value: '1234'
-						},
-						userCreated,
-						dateCreated: sinon.match.date,
-						userModified,
-						dateModified: sinon.match.date,
-						shipping: [
-							{
-								isPickup: false,
-								type: 'delivery',
-								deliveryEstimateDate: '2025-04-24T22:35:56.742Z',
-								deliveryWindow: {
-									initialDate: '2025-04-24T22:25:56.742Z',
-									finalDate: '2025-04-24T22:35:56.742Z'
-								},
-								price: 10,
-								items: [
-									{
-										index: 0,
-										quantity: 1
-									}
-								]
-							}
-						]
-					},
-					executionTime: sinon.match.number
-				}
-			}]);
+			const shippingWithoutSecondFactorAndAddressCommerceId = deleteManyProps(logData.shipping[0], ['secondFactor', 'addressCommerceId']);
+
+			assertLog({ ...logData, shipping: [shippingWithoutSecondFactorAndAddressCommerceId] });
 		});
 
 		it('Should exclude the fields from the log when excludeFieldsInLog static getter exists (when the field path is a nested array)', async () => {
@@ -1989,86 +1935,13 @@ describe('Model', () => {
 
 			ClientModel.excludeFieldsInLog = ['*.shipping.*.items.*.quantity'];
 
-			sinon.stub(DBDriver.prototype, 'insert')
-				.resolves('62c45c01812a0a142d320ebd');
+			stubDBDriverInsert();
 
-			await myClientModel.insert({
-				username: 'some-username',
-				location: {
-					country: 'some-country',
-					address: 'some-address'
-				},
-				secondFactor: {
-					value: '1234'
-				},
-				shipping: [
-					{
-						addressCommerceId: 'some-address-commerce-id',
-						isPickup: false,
-						type: 'delivery',
-						deliveryEstimateDate: '2025-04-24T22:35:56.742Z',
-						deliveryWindow: {
-							initialDate: '2025-04-24T22:25:56.742Z',
-							finalDate: '2025-04-24T22:35:56.742Z'
-						},
-						price: 10,
-						items: [
-							{
-								index: 0,
-								quantity: 1
-							}
-						],
-						secondFactor: {
-							value: '1234'
-						}
-					}
-				]
-			});
+			await clientModelInsertWithShipping(myClientModel);
 
-			sinon.assert.calledWithExactly(Log.add, 'some-client', [{
-				type: 'inserted',
-				entity: 'client',
-				entityId: '62c45c01812a0a142d320ebd',
-				userCreated,
-				log: {
-					item: {
-						username: 'some-username',
-						location: {
-							country: 'some-country',
-							address: 'some-address'
-						},
-						secondFactor: {
-							value: '1234'
-						},
-						userCreated,
-						dateCreated: sinon.match.date,
-						userModified,
-						dateModified: sinon.match.date,
-						shipping: [
-							{
-								addressCommerceId: 'some-address-commerce-id',
-								isPickup: false,
-								type: 'delivery',
-								deliveryEstimateDate: '2025-04-24T22:35:56.742Z',
-								deliveryWindow: {
-									initialDate: '2025-04-24T22:25:56.742Z',
-									finalDate: '2025-04-24T22:35:56.742Z'
-								},
-								price: 10,
-								items: [
-									{
-										index: 0
-									}
-								],
-								secondFactor: {
-									value: '1234'
-								}
-							}
-						]
-					},
-					executionTime: sinon.match.number
-				}
-			}]);
+			const shippingItemsWithoutQuantity = deleteProp(logData.shipping[0].items[0], 'quantity');
+
+			assertLog({ ...logData, shipping: [{ ...logData.shipping[0], items: [shippingItemsWithoutQuantity] }] });
 		});
 
 		// eslint-disable-next-line max-len
@@ -2080,86 +1953,13 @@ describe('Model', () => {
 
 			ClientModel.excludeFieldsInLog = ['item.**.quantity'];
 
-			sinon.stub(DBDriver.prototype, 'insert')
-				.resolves('62c45c01812a0a142d320ebd');
+			stubDBDriverInsert();
 
-			await myClientModel.insert({
-				username: 'some-username',
-				location: {
-					country: 'some-country',
-					address: 'some-address'
-				},
-				secondFactor: {
-					value: '1234'
-				},
-				shipping: [
-					{
-						addressCommerceId: 'some-address-commerce-id',
-						isPickup: false,
-						type: 'delivery',
-						deliveryEstimateDate: '2025-04-24T22:35:56.742Z',
-						deliveryWindow: {
-							initialDate: '2025-04-24T22:25:56.742Z',
-							finalDate: '2025-04-24T22:35:56.742Z'
-						},
-						price: 10,
-						items: [
-							{
-								index: 0,
-								quantity: 1
-							}
-						],
-						secondFactor: {
-							value: '1234'
-						}
-					}
-				]
-			});
+			await clientModelInsertWithShipping(myClientModel);
 
-			sinon.assert.calledWithExactly(Log.add, 'some-client', [{
-				type: 'inserted',
-				entity: 'client',
-				entityId: '62c45c01812a0a142d320ebd',
-				userCreated,
-				log: {
-					item: {
-						username: 'some-username',
-						location: {
-							country: 'some-country',
-							address: 'some-address'
-						},
-						secondFactor: {
-							value: '1234'
-						},
-						userCreated,
-						dateCreated: sinon.match.date,
-						userModified,
-						dateModified: sinon.match.date,
-						shipping: [
-							{
-								addressCommerceId: 'some-address-commerce-id',
-								isPickup: false,
-								type: 'delivery',
-								deliveryEstimateDate: '2025-04-24T22:35:56.742Z',
-								deliveryWindow: {
-									initialDate: '2025-04-24T22:25:56.742Z',
-									finalDate: '2025-04-24T22:35:56.742Z'
-								},
-								price: 10,
-								items: [
-									{
-										index: 0
-									}
-								],
-								secondFactor: {
-									value: '1234'
-								}
-							}
-						]
-					},
-					executionTime: sinon.match.number
-				}
-			}]);
+			const shippingItemsWithoutQuantity = deleteProp(logData.shipping[0].items[0], 'quantity');
+
+			assertLog({ ...logData, shipping: [{ ...logData.shipping[0], items: [shippingItemsWithoutQuantity] }] });
 		});
 
 		// eslint-disable-next-line max-len
@@ -2174,84 +1974,13 @@ describe('Model', () => {
 				'*.shipping.*.deliveryWindows.initialDate'
 			];
 
-			sinon.stub(DBDriver.prototype, 'insert')
-				.resolves('62c45c01812a0a142d320ebd');
+			stubDBDriverInsert();
 
-			await myClientModel.insert({
-				username: 'some-username',
-				location: {
-					country: 'some-country',
-					address: 'some-address'
-				},
-				secondFactor: {
-					value: '1234'
-				},
-				shipping: [
-					{
-						addressCommerceId: 'some-address-commerce-id',
-						isPickup: false,
-						type: 'delivery',
-						deliveryEstimateDate: '2025-04-24T22:35:56.742Z',
-						deliveryWindow: {
-							initialDate: '2025-04-24T22:25:56.742Z',
-							finalDate: '2025-04-24T22:35:56.742Z'
-						},
-						price: 10,
-						items: [
-							{
-								index: 0,
-								quantity: 1
-							}
-						],
-						secondFactor: {
-							value: '1234'
-						}
-					}
-				]
-			});
+			await clientModelInsertWithShipping(myClientModel);
 
-			sinon.assert.calledWithExactly(Log.add, 'some-client', [{
-				type: 'inserted',
-				entity: 'client',
-				entityId: '62c45c01812a0a142d320ebd',
-				userCreated,
-				log: {
-					item: {
-						username: 'some-username',
-						location: {
-							country: 'some-country',
-							address: 'some-address'
-						},
-						secondFactor: {
-							value: '1234'
-						},
-						userCreated,
-						dateCreated: sinon.match.date,
-						userModified,
-						dateModified: sinon.match.date,
-						shipping: [
-							{
-								addressCommerceId: 'some-address-commerce-id',
-								isPickup: false,
-								type: 'delivery',
-								deliveryEstimateDate: '2025-04-24T22:35:56.742Z',
-								deliveryWindow: {
-									initialDate: '2025-04-24T22:25:56.742Z',
-									finalDate: '2025-04-24T22:35:56.742Z'
-								},
-								price: 10,
-								items: [
-									{
-										index: 0,
-										quantity: 1
-									}
-								]
-							}
-						]
-					},
-					executionTime: sinon.match.number
-				}
-			}]);
+			const shippingWithoutSecondFactor = deleteProp(logData.shipping[0], 'secondFactor');
+
+			assertLog({ ...logData, shipping: [shippingWithoutSecondFactor] });
 		});
 
 		it('Should exclude all the fields from the log when excludeFieldsInLog static getter exists (when the field path is a wildcard)', async () => {
@@ -2262,236 +1991,56 @@ describe('Model', () => {
 
 			ClientModel.excludeFieldsInLog = ['*'];
 
-			sinon.stub(DBDriver.prototype, 'insert')
-				.resolves('62c45c01812a0a142d320ebd');
+			stubDBDriverInsert();
 
-			await myClientModel.insert({
-				username: 'some-username',
-				location: {
-					country: 'some-country',
-					address: 'some-address'
-				},
-				secondFactor: {
-					value: '1234'
-				},
-				shipping: [
-					{
-						addressCommerceId: 'some-address-commerce-id',
-						isPickup: false,
-						type: 'delivery',
-						deliveryEstimateDate: '2025-04-24T22:35:56.742Z',
-						deliveryWindow: {
-							initialDate: '2025-04-24T22:25:56.742Z',
-							finalDate: '2025-04-24T22:35:56.742Z'
-						},
-						price: 10,
-						items: [
-							{
-								index: 0,
-								quantity: 1
-							}
-						],
-						secondFactor: {
-							value: '1234'
-						}
-					}
-				]
-			});
+			await clientModelInsertWithShipping(myClientModel);
 
-			sinon.assert.calledWithExactly(Log.add, 'some-client', [{
+			sinon.assert.calledWithExactly(Log.add, userClientCode, [{
 				type: 'inserted',
 				entity: 'client',
-				entityId: '62c45c01812a0a142d320ebd',
+				entityId: dbDriverInsertId,
 				userCreated,
 				log: {}
 			}]);
 		});
 
-		it('Should not exclude the fields from the log when excludeFieldsInLog static getter exists but the field path does not exist', async () => {
+		context('When fields from excludeFieldsInLog static getter should not be excluded from the log', () => {
 
-			const myClientModel = new ClientModel();
+			it('Should not exclude the fields from the log when excludeFieldsInLog static getter exists but the field path does not exist', async () => {
 
-			myClientModel.session = logSession;
+				const myClientModel = new ClientModel();
 
-			ClientModel.excludeFieldsInLog = [
-				'',
-				'*.shipping.*.deliveryWindows.initialDate',
-				'.secondFactor.value',
-				'location.address.'
-			];
+				myClientModel.session = logSession;
 
-			sinon.stub(DBDriver.prototype, 'insert')
-				.resolves('62c45c01812a0a142d320ebd');
+				ClientModel.excludeFieldsInLog = [
+					'',
+					'*.shipping.*.deliveryWindows.initialDate',
+					'.secondFactor.value',
+					'location.address.'
+				];
 
-			await myClientModel.insert({
-				username: 'some-username',
-				location: {
-					country: 'some-country',
-					address: 'some-address'
-				},
-				secondFactor: {
-					value: '1234'
-				},
-				shipping: [
-					{
-						addressCommerceId: 'some-address-commerce-id',
-						isPickup: false,
-						type: 'delivery',
-						deliveryEstimateDate: '2025-04-24T22:35:56.742Z',
-						deliveryWindow: {
-							initialDate: '2025-04-24T22:25:56.742Z',
-							finalDate: '2025-04-24T22:35:56.742Z'
-						},
-						price: 10,
-						items: [
-							{
-								index: 0,
-								quantity: 1
-							}
-						],
-						secondFactor: {
-							value: '1234'
-						}
-					}
-				]
+				sinon.stub(DBDriver.prototype, 'insert')
+					.resolves('62c45c01812a0a142d320ebd');
+
+				await clientModelInsertWithShipping(myClientModel);
+
+				assertLog();
 			});
 
-			sinon.assert.calledWithExactly(Log.add, 'some-client', [{
-				type: 'inserted',
-				entity: 'client',
-				entityId: '62c45c01812a0a142d320ebd',
-				userCreated,
-				log: {
-					item: {
-						username: 'some-username',
-						location: {
-							country: 'some-country',
-							address: 'some-address'
-						},
-						secondFactor: {
-							value: '1234'
-						},
-						userCreated,
-						dateCreated: sinon.match.date,
-						userModified,
-						dateModified: sinon.match.date,
-						shipping: [
-							{
-								addressCommerceId: 'some-address-commerce-id',
-								isPickup: false,
-								type: 'delivery',
-								deliveryEstimateDate: '2025-04-24T22:35:56.742Z',
-								deliveryWindow: {
-									initialDate: '2025-04-24T22:25:56.742Z',
-									finalDate: '2025-04-24T22:35:56.742Z'
-								},
-								price: 10,
-								items: [
-									{
-										index: 0,
-										quantity: 1
-									}
-								],
-								secondFactor: {
-									value: '1234'
-								}
-							}
-						]
-					},
-					executionTime: sinon.match.number
-				}
-			}]);
-		});
+			it('Should not exclude the fields from the log when excludeFieldsInLog static getter is an empty array', async () => {
 
-		it('Should not exclude the fields from the log when excludeFieldsInLog static getter is an empty array', async () => {
+				const myClientModel = new ClientModel();
 
-			const myClientModel = new ClientModel();
+				myClientModel.session = logSession;
 
-			myClientModel.session = logSession;
+				ClientModel.excludeFieldsInLog = [];
 
-			ClientModel.excludeFieldsInLog = [];
+				stubDBDriverInsert();
 
-			sinon.stub(DBDriver.prototype, 'insert')
-				.resolves('62c45c01812a0a142d320ebd');
+				await clientModelInsertWithShipping(myClientModel);
 
-			await myClientModel.insert({
-				username: 'some-username',
-				location: {
-					country: 'some-country',
-					address: 'some-address'
-				},
-				secondFactor: {
-					value: '1234'
-				},
-				shipping: [
-					{
-						addressCommerceId: 'some-address-commerce-id',
-						isPickup: false,
-						type: 'delivery',
-						deliveryEstimateDate: '2025-04-24T22:35:56.742Z',
-						deliveryWindow: {
-							initialDate: '2025-04-24T22:25:56.742Z',
-							finalDate: '2025-04-24T22:35:56.742Z'
-						},
-						price: 10,
-						items: [
-							{
-								index: 0,
-								quantity: 1
-							}
-						],
-						secondFactor: {
-							value: '1234'
-						}
-					}
-				]
+				assertLog();
 			});
-
-			sinon.assert.calledWithExactly(Log.add, 'some-client', [{
-				type: 'inserted',
-				entity: 'client',
-				entityId: '62c45c01812a0a142d320ebd',
-				userCreated,
-				log: {
-					item: {
-						username: 'some-username',
-						location: {
-							country: 'some-country',
-							address: 'some-address'
-						},
-						secondFactor: {
-							value: '1234'
-						},
-						userCreated,
-						dateCreated: sinon.match.date,
-						userModified,
-						dateModified: sinon.match.date,
-						shipping: [
-							{
-								addressCommerceId: 'some-address-commerce-id',
-								isPickup: false,
-								type: 'delivery',
-								deliveryEstimateDate: '2025-04-24T22:35:56.742Z',
-								deliveryWindow: {
-									initialDate: '2025-04-24T22:25:56.742Z',
-									finalDate: '2025-04-24T22:35:56.742Z'
-								},
-								price: 10,
-								items: [
-									{
-										index: 0,
-										quantity: 1
-									}
-								],
-								secondFactor: {
-									value: '1234'
-								}
-							}
-						]
-					},
-					executionTime: sinon.match.number
-				}
-			}]);
 		});
 
 		context('When shouldCreateLog is set to false', () => {
@@ -2515,8 +2064,7 @@ describe('Model', () => {
 					userId: 'some-user-id'
 				};
 
-				sinon.stub(DBDriver.prototype, 'insert')
-					.resolves('62c45c01812a0a142d320ebd');
+				stubDBDriverInsert();
 
 				await myClientModel.insert({
 					username: 'some-username',
@@ -2568,8 +2116,7 @@ describe('Model', () => {
 
 			it('Should log only the default log data when the second insert operation does not set custom data', async () => {
 
-				sinon.stub(DBDriver.prototype, 'insert')
-					.resolves('62c45c01812a0a142d320ebd');
+				stubDBDriverInsert();
 
 				await myClientModel
 					.setLogData({ type: 'super inserted', log: { isInternal: true } })
