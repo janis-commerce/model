@@ -842,15 +842,16 @@ await myModel.insert({
 <details>
 	<summary>You can exclude fields for logs in case you have sensitive information in your entries such as passwords, addresses, etc.</summary>
 
-#### Specify the fields to exclude by setting them in the `static getter` `excludeFieldsInLog`:
+#### Specify the fields (as field name or field path) to exclude by setting them in the `static getter` `excludeFieldsInLog`:
 ```js
 class MyModel extends Model {
 
 	static get excludeFieldsInLog() {
 		return [
-			'password',
-			'address',
-			'secret'
+			'password', // Exclude the password field
+			'**.address', // Exclude the address field in any nested object	of the log
+			'*.shipping.*.secondFactor', // Exclude the secondFactor field in any object in the shipping array without specifying the root object
+			'*.shipping.*.items.*.quantity' // Exclude the quantity field in any object in the items array of any object in the shipping array without specifying the root object
 		]
 	}
 }
@@ -862,8 +863,33 @@ By setting this when you do an operation with an item like:
 await myModel.insert({
 	user: 'johndoe',
 	password: 'some-password',
-	country: 'AR',
-	address: 'Fake St 123'
+	location: {
+		country: 'some-country',
+		address: 'some-address'
+	},
+	shipping: [
+		{
+			addressCommerceId: 'some-address-commerce-id',
+			isPickup: false,
+			type: 'delivery',
+			deliveryEstimateDate: '2025-04-24T22:35:56.742Z',
+			deliveryWindow: {
+				initialDate: '2025-04-24T22:25:56.742Z',
+				finalDate: '2025-04-24T22:35:56.742Z'
+			},
+			price: 10,
+			items: [
+				{
+					index: 0,
+					quantity: 1
+				}
+			],
+			secondFactor: {
+				method: 'numericPin',
+				value: '1234'
+			}
+		}
+	]
 });
 
 ```
@@ -871,11 +897,40 @@ await myModel.insert({
 It will be logged as:
 ```js
 {
-	id: '5ea30bcbe28c55870324d9f0',
 	user: 'johndoe',
-	country: 'AR'
+	location: {
+		country: 'some-country'
+	},
+	shipping: [
+		{
+			addressCommerceId: 'some-address-commerce-id',
+			isPickup: false,
+			type: 'delivery',
+			deliveryEstimateDate: '2025-04-24T22:35:56.742Z',
+			deliveryWindow: {
+				initialDate: '2025-04-24T22:25:56.742Z',
+				finalDate: '2025-04-24T22:35:56.742Z'
+			},
+			price: 10,
+			items: [
+				{
+					index: 0
+				}
+			]
+		}
+	]
 }
 ```
+
+ℹ️ **Note**:  
+- The wildcard `*` in the field path of the `excludeFieldsInLog` static getter, is used to access properties inside arrays or when the root field path is unknown.
+- The wildcard `**` in the field path of the `excludeFieldsInLog` static getter, is used to access the field in any level of the object or when the intermediate field path is unknown between the root and the field to exclude.
+- The `excludeFieldsInLog` static getter can have both field names and field paths.
+
+⚠️ **Warning**:  
+- When using the wildcard `*` alone in the field path of the `excludeFieldsInLog` static getter, it will exclude all the fields in the log.
+- In case the field path is incorrect, it will not exclude any field.
+
 </details>
 
 ### :memo: Set custom log data

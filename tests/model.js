@@ -15,6 +15,8 @@ const DBDriverGetPaged = require('./db-driver-get-paged');
 
 const DatabaseDispatcher = require('../lib/helpers/database-dispatcher');
 
+const { deleteProp, deleteManyProps } = require('./resources/props');
+
 describe('Model', () => {
 
 	const client = {};
@@ -1753,26 +1755,121 @@ describe('Model', () => {
 		const userCreated = 'some-user-id';
 		const userModified = userCreated;
 
+		const userClientCode = 'some-client';
+
 		const logSession = {
 			...fakeSession,
-			clientCode: 'some-client',
-			userId: 'some-user-id'
+			clientCode: userClientCode,
+			userId: userCreated
 		};
 
-		it('Should exclude the fields from the log when excludeFieldsInLog static getter exists', async () => {
+		const dbDriverInsertId = '62c45c01812a0a142d320ebd';
+
+		const insertData = {
+			username: 'some-username',
+			location: {
+				country: 'some-country',
+				address: 'some-address'
+			},
+			secondFactor: {
+				value: '1234'
+			},
+			shipping: [
+				{
+					addressCommerceId: 'some-address-commerce-id',
+					isPickup: false,
+					type: 'delivery',
+					deliveryEstimateDate: '2025-04-24T22:35:56.742Z',
+					deliveryWindow: {
+						initialDate: '2025-04-24T22:25:56.742Z',
+						finalDate: '2025-04-24T22:35:56.742Z'
+					},
+					price: 10,
+					items: [
+						{
+							index: 0,
+							quantity: 1
+						}
+					],
+					secondFactor: {
+						value: '1234'
+					}
+				}
+			]
+		};
+
+		const logData = {
+			username: 'some-username',
+			location: {
+				country: 'some-country',
+				address: 'some-address'
+			},
+			secondFactor: {
+				value: '1234'
+			},
+			userCreated,
+			dateCreated: sinon.match.date,
+			userModified,
+			dateModified: sinon.match.date,
+			shipping: [
+				{
+					addressCommerceId: 'some-address-commerce-id',
+					isPickup: false,
+					type: 'delivery',
+					deliveryEstimateDate: '2025-04-24T22:35:56.742Z',
+					deliveryWindow: {
+						initialDate: '2025-04-24T22:25:56.742Z',
+						finalDate: '2025-04-24T22:35:56.742Z'
+					},
+					price: 10,
+					items: [
+						{
+							index: 0,
+							quantity: 1
+						}
+					],
+					secondFactor: {
+						value: '1234'
+					}
+				}
+			]
+		};
+
+		const stubDBDriverInsert = () => {
+			sinon.stub(DBDriver.prototype, 'insert').resolves(dbDriverInsertId);
+		};
+
+		const clientModelInsertWithShipping = async (myClientModel, dataToInsert = insertData) => {
+			await myClientModel.insert(dataToInsert);
+		};
+
+		const assertLog = (log = logData) => {
+			sinon.assert.calledWithExactly(Log.add, userClientCode, [{
+				type: 'inserted',
+				entity: 'client',
+				entityId: dbDriverInsertId,
+				userCreated,
+				log: {
+					item: log,
+					executionTime: sinon.match.number
+				}
+			}]);
+		};
+
+		// eslint-disable-next-line max-len
+		it('Should exclude the fields from the log when excludeFieldsInLog static getter exists (when one is a field and the other one is a field path as string)', async () => {
 
 			const myClientModel = new ClientModel();
 
 			myClientModel.session = logSession;
 
 			ClientModel.excludeFieldsInLog = [
-				'password', 'address'
+				'password', '**.address'
 			];
 
-			sinon.stub(DBDriver.prototype, 'insert')
-				.resolves('62c45c01812a0a142d320ebd');
+			stubDBDriverInsert();
 
-			await myClientModel.insert({
+			await clientModelInsertWithShipping(myClientModel, {
 				username: 'some-username',
 				password: 'some-password',
 				location: {
@@ -1781,25 +1878,169 @@ describe('Model', () => {
 				}
 			});
 
-			sinon.assert.calledWithExactly(Log.add, 'some-client', [{
+			assertLog({
+				username: 'some-username',
+				location: {
+					country: 'some-country'
+				},
+				userCreated,
+				dateCreated: sinon.match.date,
+				userModified,
+				dateModified: sinon.match.date
+			});
+		});
+
+		it('Should exclude one field from the log when excludeFieldsInLog static getter exists (when the field path is an array)', async () => {
+
+			const myClientModel = new ClientModel();
+
+			myClientModel.session = logSession;
+
+			ClientModel.excludeFieldsInLog = ['*.shipping.*.secondFactor'];
+
+			stubDBDriverInsert();
+
+			await clientModelInsertWithShipping(myClientModel);
+
+			const shippingWithoutSecondFactor = deleteProp(logData.shipping[0], 'secondFactor');
+
+			assertLog({ ...logData, shipping: [shippingWithoutSecondFactor] });
+		});
+
+		it('Should exclude two or more fields from the log when excludeFieldsInLog static getter exists (when the field path is an array)', async () => {
+
+			const myClientModel = new ClientModel();
+
+			myClientModel.session = logSession;
+
+			ClientModel.excludeFieldsInLog = [
+				'*.shipping.*.secondFactor',
+				'*.shipping.*.addressCommerceId'
+			];
+
+			stubDBDriverInsert();
+
+			await clientModelInsertWithShipping(myClientModel);
+
+			const shippingWithoutSecondFactorAndAddressCommerceId = deleteManyProps(logData.shipping[0], ['secondFactor', 'addressCommerceId']);
+
+			assertLog({ ...logData, shipping: [shippingWithoutSecondFactorAndAddressCommerceId] });
+		});
+
+		it('Should exclude the fields from the log when excludeFieldsInLog static getter exists (when the field path is a nested array)', async () => {
+
+			const myClientModel = new ClientModel();
+
+			myClientModel.session = logSession;
+
+			ClientModel.excludeFieldsInLog = ['*.shipping.*.items.*.quantity'];
+
+			stubDBDriverInsert();
+
+			await clientModelInsertWithShipping(myClientModel);
+
+			const shippingItemsWithoutQuantity = deleteProp(logData.shipping[0].items[0], 'quantity');
+
+			assertLog({ ...logData, shipping: [{ ...logData.shipping[0], items: [shippingItemsWithoutQuantity] }] });
+		});
+
+		// eslint-disable-next-line max-len
+		it('Should exclude the fields from the log when excludeFieldsInLog static getter exists (when the intermediate field path is unknown)', async () => {
+
+			const myClientModel = new ClientModel();
+
+			myClientModel.session = logSession;
+
+			ClientModel.excludeFieldsInLog = ['item.**.quantity'];
+
+			stubDBDriverInsert();
+
+			await clientModelInsertWithShipping(myClientModel);
+
+			const shippingItemsWithoutQuantity = deleteProp(logData.shipping[0].items[0], 'quantity');
+
+			assertLog({ ...logData, shipping: [{ ...logData.shipping[0], items: [shippingItemsWithoutQuantity] }] });
+		});
+
+		// eslint-disable-next-line max-len
+		it('Should exclude the fields from the log when excludeFieldsInLog static getter exists (when one field path exists and the other one does not)', async () => {
+
+			const myClientModel = new ClientModel();
+
+			myClientModel.session = logSession;
+
+			ClientModel.excludeFieldsInLog = [
+				'*.shipping.*.secondFactor',
+				'*.shipping.*.deliveryWindows.initialDate'
+			];
+
+			stubDBDriverInsert();
+
+			await clientModelInsertWithShipping(myClientModel);
+
+			const shippingWithoutSecondFactor = deleteProp(logData.shipping[0], 'secondFactor');
+
+			assertLog({ ...logData, shipping: [shippingWithoutSecondFactor] });
+		});
+
+		it('Should exclude all the fields from the log when excludeFieldsInLog static getter exists (when the field path is a wildcard)', async () => {
+
+			const myClientModel = new ClientModel();
+
+			myClientModel.session = logSession;
+
+			ClientModel.excludeFieldsInLog = ['*'];
+
+			stubDBDriverInsert();
+
+			await clientModelInsertWithShipping(myClientModel);
+
+			sinon.assert.calledWithExactly(Log.add, userClientCode, [{
 				type: 'inserted',
 				entity: 'client',
-				entityId: '62c45c01812a0a142d320ebd',
+				entityId: dbDriverInsertId,
 				userCreated,
-				log: {
-					item: {
-						username: 'some-username',
-						location: {
-							country: 'some-country'
-						},
-						userCreated,
-						dateCreated: sinon.match.date,
-						userModified,
-						dateModified: sinon.match.date
-					},
-					executionTime: sinon.match.number
-				}
+				log: {}
 			}]);
+		});
+
+		context('When fields from excludeFieldsInLog static getter should not be excluded from the log', () => {
+
+			it('Should not exclude the fields from the log when excludeFieldsInLog static getter exists but the field path does not exist', async () => {
+
+				const myClientModel = new ClientModel();
+
+				myClientModel.session = logSession;
+
+				ClientModel.excludeFieldsInLog = [
+					'',
+					'*.shipping.*.deliveryWindows.initialDate',
+					'.secondFactor.value',
+					'location.address.'
+				];
+
+				sinon.stub(DBDriver.prototype, 'insert')
+					.resolves('62c45c01812a0a142d320ebd');
+
+				await clientModelInsertWithShipping(myClientModel);
+
+				assertLog();
+			});
+
+			it('Should not exclude the fields from the log when excludeFieldsInLog static getter is an empty array', async () => {
+
+				const myClientModel = new ClientModel();
+
+				myClientModel.session = logSession;
+
+				ClientModel.excludeFieldsInLog = [];
+
+				stubDBDriverInsert();
+
+				await clientModelInsertWithShipping(myClientModel);
+
+				assertLog();
+			});
 		});
 
 		context('When shouldCreateLog is set to false', () => {
@@ -1823,8 +2064,7 @@ describe('Model', () => {
 					userId: 'some-user-id'
 				};
 
-				sinon.stub(DBDriver.prototype, 'insert')
-					.resolves('62c45c01812a0a142d320ebd');
+				stubDBDriverInsert();
 
 				await myClientModel.insert({
 					username: 'some-username',
@@ -1876,8 +2116,7 @@ describe('Model', () => {
 
 			it('Should log only the default log data when the second insert operation does not set custom data', async () => {
 
-				sinon.stub(DBDriver.prototype, 'insert')
-					.resolves('62c45c01812a0a142d320ebd');
+				stubDBDriverInsert();
 
 				await myClientModel
 					.setLogData({ type: 'super inserted', log: { isInternal: true } })
