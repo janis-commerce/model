@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- `multiUpdate()` method now accepts an `options` parameter to pass additional options to the database driver
+
 ## [8.8.3] - 2025-04-14
 ### Added
 - `aggregate()` now aggregate operation can receive options

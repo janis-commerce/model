@@ -1,4 +1,3 @@
-
 # model
 
 ![Build Status](https://github.com/janis-commerce/model/workflows/Build%20Status/badge.svg)
@@ -669,7 +668,7 @@ await myModel.aggregate([
 
 </details>
 
-### async  `multiUpdate(operations)`
+### async  `multiUpdate(operations, options)`
 <details>
 	<summary>Perform a bulk save of update operations in DB. This action will update elements according to received filters.</summary>
 
@@ -690,6 +689,10 @@ const items = await myModel.get();
 	]
 */
 ```
+
+#### Parameters
+- `operations`: `Array<UpdateOperation>` - A list of db operations to be executed
+- `options`: `Object` (optional) - Additional options for the multiUpdate operation
 </details>
 
 

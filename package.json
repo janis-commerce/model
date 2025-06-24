@@ -22,7 +22,7 @@
   "license": "ISC",
   "homepage": "https://github.com/janis-commerce/model.git#readme",
   "devDependencies": {
-    "@janiscommerce/superstruct": "^1.2.1",
+    "@janiscommerce/superstruct": "^1.2.2",
     "@types/node": "22.8.4",
     "aws-sdk-client-mock": "^4.1.0",
     "eslint": "^8.57.0",
@@ -44,9 +44,9 @@
     "test": "tests"
   },
   "dependencies": {
-    "@aws-sdk/client-ssm": "^3.682.0",
+    "@aws-sdk/client-ssm": "^3.835.0",
     "@janiscommerce/aws-secrets-manager": "^1.1.1",
-    "@janiscommerce/log": "^5.1.0",
+    "@janiscommerce/log": "^5.1.1",
     "@janiscommerce/settings": "^1.0.1",
     "lllog": "^1.1.2",
     "lodash.omit": "4.5.0",
