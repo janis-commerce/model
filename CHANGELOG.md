@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [8.10.0] - 2025-06-24
+- `excludeFieldsInLog` now allows excluding properties from logs for both objects and arrays, and can also remove a property from a specific path
+
 ## [8.9.0] - 2025-06-24
 ### Added
 - `multiUpdate()` method now accepts an `options` parameter to pass additional options to the database driver
