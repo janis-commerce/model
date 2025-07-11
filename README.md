@@ -158,7 +158,7 @@ Your client should have the config for read (optional) and/or write (required) d
 Returns if the model should log the write operations. Default: `true`. For more details about logging, read the [logging](#Logging) section.
 
 * **excludeFieldsInLog** (*static getter*).
-Returns the fields that will be removed from the logs as an array of strings. For example: `['password', 'super-secret']`. For more details about logging, read the [logging](#Logging) section.
+Returns the fields that will be removed from the logs as an array of strings. For example: `['password', 'super-secret']`. For more details about logging, read the [logging](#no_entry_sign-excluding-fields-from-logs) section.
 
 * **statuses** (*class getter*).
 Returns an `object` with the default statuses (`active` / `inactive`)
@@ -840,7 +840,7 @@ await myModel.insert({
 
 ### :no_entry_sign: Excluding fields from logs
 <details>
-	<summary>You can exclude fields for logs in case you have sensitive information in your entries such as passwords, addresses, etc.</summary>
+	<summary>You can exclude fields for logs in case you have sensitive information in your entries such as passwords, secondFactor, etc.</summary>
 
 #### Specify the fields (as field name or field path) to exclude by setting them in the `static getter` `excludeFieldsInLog`:
 ```js
@@ -849,7 +849,7 @@ class MyModel extends Model {
 	static get excludeFieldsInLog() {
 		return [
 			'password', // Exclude the password field
-			'**.address', // Exclude the address field in any nested object	of the log
+			'preferences.**.specialNotes', // Exclude the specialNotes field without knowing the intermediate field path between such field and the root path
 			'*.shipping.*.secondFactor', // Exclude the secondFactor field in any object in the shipping array without specifying the root object
 			'*.shipping.*.items.*.quantity' // Exclude the quantity field in any object in the items array of any object in the shipping array without specifying the root object
 		]
@@ -863,6 +863,11 @@ By setting this when you do an operation with an item like:
 await myModel.insert({
 	user: 'johndoe',
 	password: 'some-password',
+	preferences: {
+		shippingDetails: {
+			specialNotes: 'some shipping notes'
+		}
+	}
 	location: {
 		country: 'some-country',
 		address: 'some-address'
@@ -898,8 +903,12 @@ It will be logged as:
 ```js
 {
 	user: 'johndoe',
+	preferences: {
+		shippingDetails: {}
+	}
 	location: {
-		country: 'some-country'
+		country: 'some-country',
+		address: 'some-address'
 	},
 	shipping: [
 		{
@@ -924,7 +933,7 @@ It will be logged as:
 
 ℹ️ **Note**:  
 - The wildcard `*` in the field path of the `excludeFieldsInLog` static getter, is used to access properties inside arrays or when the root field path is unknown.
-- The wildcard `**` in the field path of the `excludeFieldsInLog` static getter, is used to access the field in any level of the object or when the intermediate field path is unknown between the root and the field to exclude.
+- The wildcard `**` in the field path of the `excludeFieldsInLog` static getter, can be used when the intermediate field path is unknown between the root and the field to exclude.
 - The `excludeFieldsInLog` static getter can have both field names and field paths.
 
 ⚠️ **Warning**:  

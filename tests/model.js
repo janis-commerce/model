@@ -1864,7 +1864,7 @@ describe('Model', () => {
 			myClientModel.session = logSession;
 
 			ClientModel.excludeFieldsInLog = [
-				'password', '**.address'
+				'password', '*.preferences.**.specialNotes'
 			];
 
 			stubDBDriverInsert();
@@ -1872,6 +1872,11 @@ describe('Model', () => {
 			await clientModelInsertWithShipping(myClientModel, {
 				username: 'some-username',
 				password: 'some-password',
+				preferences: {
+					shippingDetails: {
+						specialNotes: 'some shipping notes'
+					}
+				},
 				location: {
 					country: 'some-country',
 					address: 'some-address'
@@ -1880,8 +1885,12 @@ describe('Model', () => {
 
 			assertLog({
 				username: 'some-username',
+				preferences: {
+					shippingDetails: {}
+				},
 				location: {
-					country: 'some-country'
+					country: 'some-country',
+					address: 'some-address'
 				},
 				userCreated,
 				dateCreated: sinon.match.date,
