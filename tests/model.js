@@ -337,14 +337,14 @@ describe('Model', () => {
 		});
 
 		describe('getTotals()', () => {
-			it('Should call DBDriver getTotals method passing the model and filters', async () => {
+			it('Should call DBDriver getTotals method passing the model, filters and params', async () => {
 
 				sinon.stub(DBDriver.prototype, 'getTotals')
 					.resolves();
 
-				await myCoreModel.getTotals({ status: 'active' });
+				await myCoreModel.getTotals({ status: 'active' }, { limit: 6000 });
 
-				sinon.assert.calledOnceWithExactly(DBDriver.prototype.getTotals, myCoreModel, { status: 'active' });
+				sinon.assert.calledOnceWithExactly(DBDriver.prototype.getTotals, myCoreModel, { status: 'active' }, { limit: 6000 });
 			});
 		});
 

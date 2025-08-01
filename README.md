@@ -272,13 +272,15 @@ The default order when no order was received is field `id` using `asc` as order 
 
 </details>
 
-### async  `getTotals(filters)`
+### async  `getTotals(filters, params)`
 
 <details>
 	<summary>This method returns an object with data of totals. If filters is not present it will default to last <tt>get()</tt>  filters. If no <tt>get()</tt>  was executed before and no filters param is present, it will use no filters</summary>
 
 #### Parameters
-- `filters` is an optional.  Object with filters or array of filters. _Since 7.1.0_
+- `filters` is an optional Object with filters or array of filters. _Since 7.1.0_
+- `params` is an optional Object with params. _Since 8.9.0_
+	- `limit` The max amount of items to count as total. This can be ignored by the DB Driver if it's not supported or a full count is not a performance issue (for example, full collection count in MongoDB).
 
 #### Result object structure:
 - **pages**: The total pages for the filters applied
@@ -293,22 +295,22 @@ const totals = await myModel.getTotals();
 /**
 	totals content:
 	{
-		pages: 3,
+		pages: 15,
 		page: 1,
 		limit: 500,
-		total: 1450
+		total: 7450
 	}
 */
 ```
 ```js
-const totals = await myModel.getTotals( { status: 'active' } );
+const totals = await myModel.getTotals( { status: 'active' }, { limit: 6000 } );
 /**
 	totals content:
 	{
-		pages: 3,
+		pages: 12,
 		page: 1,
 		limit: 500,
-		total: 1450
+		total: 6000
 	}
 */
 ```
@@ -931,12 +933,12 @@ It will be logged as:
 }
 ```
 
-ℹ️ **Note**:  
+ℹ️ **Note**:
 - The wildcard `*` in the field path of the `excludeFieldsInLog` static getter, is used to access properties inside arrays or when the root field path is unknown.
 - The wildcard `**` in the field path of the `excludeFieldsInLog` static getter, can be used when the intermediate field path is unknown between the root and the field to exclude.
 - The `excludeFieldsInLog` static getter can have both field names and field paths.
 
-⚠️ **Warning**:  
+⚠️ **Warning**:
 - When using the wildcard `*` alone in the field path of the `excludeFieldsInLog` static getter, it will exclude all the fields in the log.
 - In case the field path is incorrect, it will not exclude any field.
 
