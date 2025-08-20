@@ -44,12 +44,11 @@
     "test": "tests"
   },
   "dependencies": {
-    "@aws-sdk/client-ssm": "^3.835.0",
+    "@aws-sdk/client-ssm": "^3.859.0",
     "@janiscommerce/aws-secrets-manager": "^1.1.1",
     "@janiscommerce/log": "^5.1.1",
     "@janiscommerce/settings": "^1.0.1",
     "lllog": "^1.1.2",
-    "lodash.clonedeep": "^4.5.0",
     "md5": "^2.3.0"
   }
 }
