@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [8.12.0] - 2025-08-20
+### Changed
+- Refactored omitRecursive method in utils helper to improve performance when excluding fields from logs. The implementation now uses more efficient algorithms: replaced array spread operations with push/pop operations on existing arrays. (https://janiscommerce.atlassian.net/browse/ATR-1786)
+
 ## [8.11.0] - 2025-08-04
 ### Added
 - `getTotals()` method now accepts a `params` parameter to pass additional options to the database driver
