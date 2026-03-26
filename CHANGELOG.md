@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [8.12.1] - 2026-03-26
+### Changed
+- `get()` method now returns the raw response from the database driver instead of the results array when `returnType` parameter is passed
+
 ## [8.12.0] - 2025-08-20
 ### Changed
 - Refactored omitRecursive method in utils helper to improve performance when excluding fields from logs. The implementation now uses more efficient algorithms: replaced array spread operations with push/pop operations on existing arrays. (https://janiscommerce.atlassian.net/browse/ATR-1786)

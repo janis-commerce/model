@@ -334,6 +334,30 @@ describe('Model', () => {
 				});
 			});
 
+			context('When param returnType is passed', () => {
+
+				it('Should return response from driver and not call formatGet() and afterGet()', async () => {
+
+					const cursor = {
+						toArray: sinon.stub().resolves([{ foo: 1 }, { bar: 2 }])
+					};
+
+					sinon.stub(DBDriver.prototype, 'get')
+						.resolves(cursor);
+
+					sinon.spy(myCoreModel, 'formatGet');
+					sinon.spy(myCoreModel, 'afterGet');
+
+					const result = await myCoreModel.get({ returnType: 'cursor' });
+
+					sinon.assert.calledOnceWithExactly(DBDriver.prototype.get, myCoreModel, { returnType: 'cursor' });
+
+					sinon.assert.notCalled(myCoreModel.formatGet);
+					sinon.assert.notCalled(myCoreModel.afterGet);
+
+					assert.deepStrictEqual(result, cursor);
+				});
+			});
 		});
 
 		describe('getTotals()', () => {
