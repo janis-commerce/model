@@ -408,16 +408,20 @@ const items = await myModel.get({ filters: { foo: 'bar' }});
 ```
 </details>
 
-### async  `save(item, setOnInsert)`
+### async  `save(item, setOnInsert, options)`
 <details>
 	<summary>Inserts/updates an item in DB. This method will perfrom an upsert.</summary>
 
 #### Parameters
 - `setOnInsert` to add default values on Insert, optional
+- `options` optional object forwarded to the database driver (e.g. MongoDB `save`). _Since **8.14.0**_. Supported flags depend on the driver; commonly:
+	- `skipAutomaticSetModifiedData`: _Boolean_. When **true**, the fields `dateModified` and `userModified` are not set automatically on `item` before the driver runs (aligned with `update()`).
 
 #### Example
 ```js
 await myModel.save({ foo: 'bar' }, { status: 'active' });
+
+await myModel.save({ foo: 'bar' }, {}, { skipAutomaticSetModifiedData: true });
 
 const items = await myModel.get({ filters: { foo: 'bar' }});
 
@@ -466,14 +470,20 @@ const items = await myModel.get({ filters: { foo: 'bar' }});
 ```
 </details>
 
-### async  `multiInsert(items)`
+### async  `multiInsert(items, options)`
 <details>
 	<summary>Perform a bulk insert of items in DB. This action will insert elements, and will not update elements.
 </summary>
 
+#### Parameters
+- `items` array of objects to insert (required)
+- `options` optional object forwarded to the database driver (e.g. MongoDB `multiInsert`). _Since **8.14.0**_. Flags depend on the driver; for example the MongoDB driver may honor `failOnDuplicateErrors` among others.
+
 #### Example
 ```js
 await myModel.multiInsert([{ foo: 1 }, { foo: 2 }]);
+
+await myModel.multiInsert([{ foo: 1 }], { failOnDuplicateErrors: true });
 
 const items = await myModel.get();
 
@@ -487,16 +497,20 @@ const items = await myModel.get();
 ```
 </details>
 
-### async  `multiSave(items, setOnInsert)`
+### async  `multiSave(items, setOnInsert, options)`
 <details>
 	<summary>Perform a bulk save of items in DB. This action will insert/update (upsert) elements.</summary>
 
 #### Parameters
 - `setOnInsert` to add default values on Insert, optional
+- `options` optional object forwarded to the database driver (e.g. MongoDB `multiSave`). _Since **8.14.0**_. Supported flags depend on the driver; commonly:
+	- `skipAutomaticSetModifiedData`: _Boolean_. When **true**, `dateModified` and `userModified` are not set automatically on each item before the driver runs.
 
 #### Example
 ```js
 await myModel.multiSave([{ foo: 1 }, { foo: 2, status: 'pending' }], { status: 'active' });
+
+await myModel.multiSave([{ id: '...', foo: 1 }], {}, { skipAutomaticSetModifiedData: true });
 
 const items = await myModel.get();
 

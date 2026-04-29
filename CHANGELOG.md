@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [8.14.0] - 2026-04-29
+### Added
+- `save()` and `multiSave()` accept an optional `options` argument (passed through to the database driver). Use `skipAutomaticSetModifiedData: true` to skip automatically setting `dateModified` and `userModified` on the item(s) at the model layer (consistent with `update()` / `multiUpdate()`).
+- `multiInsert()` accepts an optional `options` argument and forwards it to the database driver (same pattern as other write methods).
+
 ## [8.13.0] - 2026-04-29
 ### Added
 - `multiUpdate()` method now accepts `skipAutomaticSetModifiedData` option to skip the automatic setting of the `dateModified` and `userModified` fields in the operations

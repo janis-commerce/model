@@ -939,7 +939,25 @@ describe('Model', () => {
 						userModified,
 						dateModified: sinon.match.date
 					}
-				]);
+				], {});
+			});
+
+			it('Should pass options to the database driver', async () => {
+
+				sinon.stub(DBDriver.prototype, 'multiInsert')
+					.resolves();
+
+				await myClientModel.multiInsert([{ some: 'data' }], { failOnDuplicateErrors: true });
+
+				sinon.assert.calledOnceWithExactly(DBDriver.prototype.multiInsert, myClientModel, [
+					{
+						some: 'data',
+						userCreated,
+						dateCreated: sinon.match.date,
+						userModified,
+						dateModified: sinon.match.date
+					}
+				], { failOnDuplicateErrors: true });
 			});
 
 			it('Should log the multiInsert operation when session exists', async () => {
@@ -1377,7 +1395,7 @@ describe('Model', () => {
 				}, {
 					userCreated,
 					dateCreated: sinon.match.date
-				});
+				}, {});
 			});
 
 			it('Should add the setOnInsert when it is passed', async () => {
@@ -1395,7 +1413,7 @@ describe('Model', () => {
 					status: 'active',
 					userCreated,
 					dateCreated: sinon.match.date
-				});
+				}, {});
 			});
 
 			[
@@ -1418,7 +1436,7 @@ describe('Model', () => {
 					}, {
 						userCreated,
 						dateCreated: sinon.match.date
-					});
+					}, {});
 				});
 			});
 
@@ -1469,6 +1487,21 @@ describe('Model', () => {
 						executionTime: sinon.match.number
 					}
 				}]);
+			});
+
+			it('Should not add userModified or dateModified and pass options when skipAutomaticSetModifiedData is true', async () => {
+
+				sinon.stub(DBDriver.prototype, 'save')
+					.resolves();
+
+				await myClientModel.save({ some: 'data' }, {}, { skipAutomaticSetModifiedData: true });
+
+				sinon.assert.calledOnceWithExactly(DBDriver.prototype.save, myClientModel, {
+					some: 'data'
+				}, {
+					userCreated,
+					dateCreated: sinon.match.date
+				}, { skipAutomaticSetModifiedData: true });
 			});
 		});
 
@@ -1579,7 +1612,7 @@ describe('Model', () => {
 				], {
 					userCreated,
 					dateCreated: sinon.match.date
-				});
+				}, {});
 			});
 
 			it('Should add setOnInsert when it is passed', async () => {
@@ -1604,7 +1637,7 @@ describe('Model', () => {
 					quantity: 100,
 					userCreated,
 					dateCreated: sinon.match.date
-				});
+				}, {});
 			});
 
 			[
@@ -1638,8 +1671,24 @@ describe('Model', () => {
 					], {
 						userCreated,
 						dateCreated: sinon.match.date
-					});
+					}, {});
 				});
+			});
+
+			it('Should not add userModified or dateModified and pass options when skipAutomaticSetModifiedData is true', async () => {
+
+				sinon.stub(DBDriver.prototype, 'multiSave')
+					.resolves();
+
+				await myClientModel.multiSave([{ some: 'data' }, { other: 'data' }], {}, { skipAutomaticSetModifiedData: true });
+
+				sinon.assert.calledOnceWithExactly(DBDriver.prototype.multiSave, myClientModel, [
+					{ some: 'data' },
+					{ other: 'data' }
+				], {
+					userCreated,
+					dateCreated: sinon.match.date
+				}, { skipAutomaticSetModifiedData: true });
 			});
 
 			it('Should log the multiSave operation', async () => {
