@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [8.13.0] - 2026-04-29
+### Added
+- `multiUpdate()` method now accepts `skipAutomaticSetModifiedData` option to skip the automatic setting of the `dateModified` and `userModified` fields in the operations
+
 ## [8.12.1] - 2026-03-26
 ### Changed
 - `get()` method now returns the raw response from the database driver instead of the results array when `returnType` parameter is passed
