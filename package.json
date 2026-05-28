@@ -50,5 +50,8 @@
     "@janiscommerce/settings": "^1.0.1",
     "lllog": "^1.1.2",
     "md5": "^2.3.0"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
