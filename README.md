@@ -852,6 +852,30 @@ await myModel.insert({
 
 ```
 
+3. Re-enabling logs: by using the method `enableLogs()`. _Since 8.15.0_
+
+:information_source: Reverts a pending `disableLogs()` before it is consumed by the next operation, restoring the automatic logging
+
+### Example
+```js
+
+// An earlier step in the flow decided to skip logging for the next write
+myModel.disableLogs();
+
+// ...but a later condition determines the write must be audited after all,
+// so the pending disableLogs() is reverted before the operation runs
+if(mustAudit)
+	myModel.enableLogs();
+
+// logs are saved normally because enableLogs() cancelled the pending disableLogs()
+await myModel.insert({
+	pet: 'roger',
+	animal: 'dog',
+	age: 8
+});
+
+```
+
 </details>
 
 ### :no_entry_sign: Excluding fields from logs
