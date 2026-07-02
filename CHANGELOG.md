@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Automatic Trace logs for core entities: models whose `databaseKey` maps to a core database now emit logs via `Log.addCore` (client-less), even without a client session.
+
+### Fixed
+- ParameterStore no longer re-fetches the SSM parameter on every operation when it is missing (negative-caching); a fetch that fails for any reason other than "parameter not found" now fails the operation (and retries on the next call) instead of being silently ignored.
 
 ## [8.14.0] - 2026-04-29
 ### Added
