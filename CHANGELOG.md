@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [8.15.0] - 2026-07-02
 ### Added
 - Automatic Trace logs for core entities: models whose `databaseKey` maps to a core database now emit logs via `Log.addCore` (client-less), even without a client session.
 - `enableLogs()` to re-enable automatic logs, cancelling a pending `disableLogs()`.
