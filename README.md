@@ -859,8 +859,16 @@ await myModel.insert({
 ### Example
 ```js
 
-// disableLogs() is reverted by enableLogs(), so logs are saved normally
-await myModel.disableLogs().enableLogs().insert({
+// An earlier step in the flow decided to skip logging for the next write
+myModel.disableLogs();
+
+// ...but a later condition determines the write must be audited after all,
+// so the pending disableLogs() is reverted before the operation runs
+if(mustAudit)
+	myModel.enableLogs();
+
+// logs are saved normally because enableLogs() cancelled the pending disableLogs()
+await myModel.insert({
 	pet: 'roger',
 	animal: 'dog',
 	age: 8

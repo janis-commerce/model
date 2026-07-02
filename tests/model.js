@@ -6,6 +6,12 @@
 const assert = require('assert');
 const sinon = require('sinon');
 
+require('lllog')('none');
+
+// lllog's factory returns a new Logger instance per call sharing the same prototype, so stubbing
+// the prototype intercepts the logger.warn() call made inside the model under test.
+const LllogLogger = require('lllog')().constructor;
+
 const Log = require('@janiscommerce/log');
 
 const Model = require('../lib/model');
@@ -2419,13 +2425,13 @@ describe('Model', () => {
 
 			it('Should throw an error when received invalid data to log', () => {
 				assert.throws(() => myCoreModel.setLogData(['invalid data']), {
-					message: 'The custom data to log must be string or an object'
+					message: 'Model - Custom log data: the custom data to log must be string or an object'
 				});
 			});
 
 			it('Should throw an error when received an invalid custom log property', () => {
 				assert.throws(() => myCoreModel.setLogData({ log: 'invalid-log' }), {
-					message: 'The property name log in custom log data must be an object'
+					message: 'Model - Custom log data: the property name log in custom log data must be an object'
 				});
 			});
 
@@ -2713,6 +2719,54 @@ describe('Model', () => {
 				sinon.stub(DBDriver.prototype, 'insert').resolves(dbDriverInsertId);
 
 				await myClientModel.insert({ some: 'data' });
+
+				sinon.assert.notCalled(Log.add);
+				sinon.assert.notCalled(Log.addCore);
+			});
+
+			it('Should warn (not silently discard) when the model is not core and the session has no clientCode using insert()', async () => {
+
+				const warnStub = sinon.stub(LllogLogger.prototype, 'warn');
+
+				const myClientModel = new ClientModel();
+
+				myClientModel.session = {
+					...fakeSession,
+					userId: userCreated
+				};
+
+				sinon.stub(DBDriver.prototype, 'insert').resolves(dbDriverInsertId);
+
+				await myClientModel.insert({ some: 'data' });
+
+				sinon.assert.calledOnceWithExactly(
+					warnStub,
+					'ClientModel - Discarding log: model has no clientCode in session and is not core. This is likely a bug.'
+				);
+
+				sinon.assert.notCalled(Log.add);
+				sinon.assert.notCalled(Log.addCore);
+			});
+
+			it('Should warn when discarding a multi write log (addByItem) for a non-core model without clientCode', async () => {
+
+				const warnStub = sinon.stub(LllogLogger.prototype, 'warn');
+
+				const myClientModel = new ClientModel();
+
+				myClientModel.session = {
+					...fakeSession,
+					userId: userCreated
+				};
+
+				sinon.stub(DBDriver.prototype, 'multiInsert').resolves([{ id: dbDriverInsertId, some: 'data' }]);
+
+				await myClientModel.multiInsert([{ some: 'data' }]);
+
+				sinon.assert.calledOnceWithExactly(
+					warnStub,
+					'ClientModel - Discarding log: model has no clientCode in session and is not core. This is likely a bug.'
+				);
 
 				sinon.assert.notCalled(Log.add);
 				sinon.assert.notCalled(Log.addCore);
