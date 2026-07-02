@@ -852,6 +852,22 @@ await myModel.insert({
 
 ```
 
+3. Re-enabling logs: by using the method `enableLogs()`. _Since 8.15.0_
+
+:information_source: Reverts a pending `disableLogs()` before it is consumed by the next operation, restoring the automatic logging
+
+### Example
+```js
+
+// disableLogs() is reverted by enableLogs(), so logs are saved normally
+await myModel.disableLogs().enableLogs().insert({
+	pet: 'roger',
+	animal: 'dog',
+	age: 8
+});
+
+```
+
 </details>
 
 ### :no_entry_sign: Excluding fields from logs

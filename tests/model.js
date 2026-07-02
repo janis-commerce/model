@@ -934,6 +934,28 @@ describe('Model', () => {
 						}
 					}]);
 				});
+
+				it('Should re-enable the automatic logs when enableLogs() reverts a pending disableLogs()', async () => {
+
+					sinon.stub(DBDriver.prototype, 'insert')
+						.resolves('62c45c01812a0a142d320ebd');
+
+					await myClientModel.disableLogs().enableLogs()
+						.insert({ some: 'data' });
+
+					sinon.assert.calledOnceWithExactly(DBDriver.prototype.insert, myClientModel, dataToInsert);
+
+					sinon.assert.calledOnceWithExactly(Log.add, 'some-client', [{
+						type: 'inserted',
+						entity: 'client',
+						entityId: '62c45c01812a0a142d320ebd',
+						userCreated,
+						log: {
+							item: dataToInsert,
+							executionTime: sinon.match.number
+						}
+					}]);
+				});
 			});
 		});
 
