@@ -42,6 +42,18 @@ describe('Model', () => {
 		afterGet([...newItems]) { return newItems; }
 	}
 
+	// Core model whose databaseKey is NOT literally 'core' but is mapped in coreDatabases
+	class OtherCoreModel extends Model {
+		get databaseKey() { return 'otherCoreDB'; }
+	}
+
+	// Core model that opts out of logging explicitly
+	class NoLogsCoreModel extends Model {
+		get databaseKey() { return 'core'; }
+
+		static get shouldCreateLogs() { return false; }
+	}
+
 	class OtherModel extends Model {
 		get databaseKey() { return 'other'; }
 	}
@@ -80,6 +92,10 @@ describe('Model', () => {
 			.resolves(new DBDriver())
 			.withArgs('core', false)
 			.resolves(new DBDriver())
+			.withArgs('otherCoreDB', true)
+			.resolves(new DBDriver())
+			.withArgs('otherCoreDB', false)
+			.resolves(new DBDriver())
 			.withArgs('default', true)
 			.resolves(new DBDriver())
 			.withArgs('default', false)
@@ -92,6 +108,12 @@ describe('Model', () => {
 			.resolves(new OtherDBDriver())
 			.withArgs('other', false)
 			.resolves(new OtherDBDriver());
+
+		// Core detection is resolved via the dispatcher (coreDatabases map); isolate it here.
+		// The dispatcher<->ParameterStore integration is covered in tests/database-dispatcher.js.
+		const isCoreDatabaseStub = sinon.stub(DatabaseDispatcher.prototype, 'isCoreDatabase').resolves(false);
+		isCoreDatabaseStub.withArgs('core').resolves(true);
+		isCoreDatabaseStub.withArgs('otherCoreDB').resolves(true);
 	});
 
 	afterEach(() => {
@@ -2500,6 +2522,105 @@ describe('Model', () => {
 				}]);
 
 				sinon.assert.notCalled(Log.add);
+			});
+
+			it('Should log via Log.addCore when the model is core via coreDatabases mapping with a databaseKey other than \'core\'', async () => {
+
+				const coreModel = new OtherCoreModel();
+
+				coreModel.session = {
+					...fakeSession,
+					clientCode: userClientCode,
+					userId: userCreated
+				};
+
+				sinon.stub(DBDriver.prototype, 'insert').resolves(dbDriverInsertId);
+
+				await coreModel.insert({ some: 'data' });
+
+				sinon.assert.calledOnceWithExactly(Log.addCore, [{
+					type: 'inserted',
+					entity: 'other-core',
+					entityId: dbDriverInsertId,
+					userCreated,
+					log: {
+						item: coreInsertData,
+						executionTime: sinon.match.number
+					}
+				}]);
+
+				sinon.assert.notCalled(Log.add);
+			});
+
+			it('Should not log at all when the model is core but shouldCreateLogs is explicitly false', async () => {
+
+				const coreModel = new NoLogsCoreModel();
+
+				coreModel.session = {
+					...fakeSession,
+					clientCode: userClientCode,
+					userId: userCreated
+				};
+
+				sinon.stub(DBDriver.prototype, 'insert').resolves(dbDriverInsertId);
+
+				await coreModel.insert({ some: 'data' });
+
+				sinon.assert.notCalled(Log.addCore);
+				sinon.assert.notCalled(Log.add);
+			});
+
+			it('Should resolve core only once (memoized, no extra IO) across multiple operations on the same model instance', async () => {
+
+				const coreModel = new CoreModel();
+
+				coreModel.session = {
+					...fakeSession,
+					clientCode: userClientCode,
+					userId: userCreated
+				};
+
+				sinon.stub(DBDriver.prototype, 'insert').resolves(dbDriverInsertId);
+
+				await coreModel.insert({ some: 'data' });
+				await coreModel.insert({ some: 'data' });
+
+				sinon.assert.calledTwice(Log.addCore);
+				sinon.assert.calledOnce(DatabaseDispatcher.prototype.isCoreDatabase);
+			});
+
+			it('Should log via Log.addCore when using addByItem (multiInsert) for a core model without clientCode', async () => {
+
+				const coreModel = new CoreModel();
+
+				coreModel.session = {
+					...fakeSession,
+					userId: userCreated
+				};
+
+				sinon.stub(DBDriver.prototype, 'multiInsert').resolves([{ id: dbDriverInsertId, some: 'data' }]);
+
+				await coreModel.multiInsert([{ some: 'data' }]);
+
+				sinon.assert.called(Log.addCore);
+				sinon.assert.notCalled(Log.add);
+			});
+
+			it('Should not log at all when using addByItem (multiInsert) and the model is not core and the session has no clientCode', async () => {
+
+				const myClientModel = new ClientModel();
+
+				myClientModel.session = {
+					...fakeSession,
+					userId: userCreated
+				};
+
+				sinon.stub(DBDriver.prototype, 'multiInsert').resolves([{ id: dbDriverInsertId, some: 'data' }]);
+
+				await myClientModel.multiInsert([{ some: 'data' }]);
+
+				sinon.assert.notCalled(Log.add);
+				sinon.assert.notCalled(Log.addCore);
 			});
 
 			it('Should log via Log.addCore without breaking when the model is core and has no session', async () => {

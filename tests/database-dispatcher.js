@@ -202,9 +202,13 @@ describe('Database Dispatcher', () => {
 	};
 
 	const stubParameterNotFound = () => {
+
+		const parameterNotFoundError = new Error('Parameter not found');
+		parameterNotFoundError.name = 'ParameterNotFound';
+
 		ssmClientMock
 			.on(GetParameterCommand)
-			.rejects(new Error('Parameter not found', { code: 'ParameterNotFound' }));
+			.rejects(parameterNotFoundError);
 	};
 
 	describe('DBDriver dispatching', () => {
@@ -857,6 +861,139 @@ describe('Database Dispatcher', () => {
 
 				assert.deepStrictEqual(isCore, false);
 			});
+		});
+	});
+
+	describe('isCoreDatabase()', () => {
+
+		it('Should return true when the databaseKey is present in coreDatabases (key other than \'core\')', async () => {
+
+			stubParameterResolves({
+				coreDatabases: { otherCoreDB: { id: databaseId, database: 'great-core-db' } }
+			});
+
+			const dispatcher = new DatabaseDispatcher();
+
+			assert.deepStrictEqual(await dispatcher.isCoreDatabase('otherCoreDB'), true);
+		});
+
+		it('Should return false when the databaseKey is not present in coreDatabases', async () => {
+
+			stubParameterResolves({
+				coreDatabases: { otherCoreDB: { id: databaseId, database: 'great-core-db' } }
+			});
+
+			const dispatcher = new DatabaseDispatcher();
+
+			assert.deepStrictEqual(await dispatcher.isCoreDatabase('core'), false);
+		});
+
+		it('Should NOT use the deprecated settings path (isCore true via settings, isCoreDatabase false)', async () => {
+
+			// settings.core exists (stubbed in the outer beforeEach) but the parameter has no coreDatabases
+			stubParameterNotFound();
+
+			const dispatcher = new DatabaseDispatcher();
+
+			assert.deepStrictEqual(await dispatcher.isCore('core'), true);
+			assert.deepStrictEqual(await dispatcher.isCoreDatabase('core'), false);
+		});
+	});
+
+	describe('ParameterStore caching', () => {
+
+		it('Should negative-cache and NOT re-hit SSM when the parameter genuinely does not exist (ParameterNotFound)', async () => {
+
+			stubParameterNotFound();
+
+			const dispatcher = new DatabaseDispatcher();
+
+			const first = await dispatcher.isCoreDatabase('core');
+			const second = await dispatcher.isCoreDatabase('core');
+
+			assert.deepStrictEqual(first, false);
+			assert.deepStrictEqual(second, false);
+			assert.deepStrictEqual(ssmClientMock.commandCalls(GetParameterCommand).length, 1);
+		});
+
+		it('Should negative-cache when the not-found is signaled via __type (ResourceNotFoundException)', async () => {
+
+			const notFoundError = new Error('Resource not found');
+			notFoundError.name = 'SomeGenericName';
+			notFoundError.__type = 'ResourceNotFoundException'; // eslint-disable-line no-underscore-dangle
+
+			ssmClientMock.on(GetParameterCommand).rejects(notFoundError);
+
+			const dispatcher = new DatabaseDispatcher();
+
+			const first = await dispatcher.isCoreDatabase('core');
+			const second = await dispatcher.isCoreDatabase('core');
+
+			assert.deepStrictEqual(first, false);
+			assert.deepStrictEqual(second, false);
+			assert.deepStrictEqual(ssmClientMock.commandCalls(GetParameterCommand).length, 1);
+		});
+
+		it('Should NOT cache and should reject on a non-not-found SSM error, retrying on the next call', async () => {
+
+			const transientError = new Error('Rate exceeded');
+			transientError.name = 'ThrottlingException';
+
+			ssmClientMock
+				.on(GetParameterCommand)
+				.rejectsOnce(transientError)
+				.resolves({
+					Parameter: {
+						Value: JSON.stringify({ coreDatabases: { core: { id: databaseId, database: 'my-service-core' } } })
+					}
+				});
+
+			const dispatcher = new DatabaseDispatcher();
+
+			// First call fails (nothing cached) ...
+			await assert.rejects(() => dispatcher.isCoreDatabase('core'), { name: 'ThrottlingException' });
+
+			// ... and the next call retries and succeeds
+			assert.deepStrictEqual(await dispatcher.isCoreDatabase('core'), true);
+			assert.deepStrictEqual(ssmClientMock.commandCalls(GetParameterCommand).length, 2);
+		});
+
+		it('Should share a single SSM fetch across concurrent callers', async () => {
+
+			stubParameterResolves({
+				coreDatabases: { core: { id: databaseId, database: 'my-service-core' } }
+			});
+
+			const dispatcher = new DatabaseDispatcher();
+
+			const results = await Promise.all([
+				dispatcher.isCoreDatabase('core'),
+				dispatcher.isCoreDatabase('core'),
+				dispatcher.isCoreDatabase('core')
+			]);
+
+			assert.deepStrictEqual(results, [true, true, true]);
+			assert.deepStrictEqual(ssmClientMock.commandCalls(GetParameterCommand).length, 1);
+		});
+
+		it('Should not add IO: isCoreDatabase reuses the ParameterStore already warmed by getDb', async () => {
+
+			stubParameterResolves({
+				coreDatabases: { core: { id: databaseId, database: 'my-service-core' } },
+				databases: {
+					[databaseId]: {
+						type: 'driver-type',
+						connectionString: 'the-host.driver-type.net'
+					}
+				}
+			});
+
+			const coreModel = new CoreModel();
+
+			await coreModel.getDb();
+
+			assert.deepStrictEqual(await coreModel.dispatcher.isCoreDatabase('core'), true);
+			assert.deepStrictEqual(ssmClientMock.commandCalls(GetParameterCommand).length, 1);
 		});
 	});
 });
