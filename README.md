@@ -9,6 +9,18 @@
 npm install @janiscommerce/model
 ```
 
+## ⚠️ Core logging & sensitive data _(Since 8.15.0)_
+
+Models whose `databaseKey` maps to a **core** database now automatically log their write operations as _core logs_ (client-less logs sent to the trace service). This means the data written by core models — which may include sensitive fields — starts being sent to the logs.
+
+**Before upgrading, review your core models** and make sure sensitive fields are not logged:
+
+- exclude them per-model with the `excludeFieldsInLog` static getter (e.g. `['password', 'super-secret']`), which removes the field from the log,
+- mask them service-wide with the `JANIS_TRACE_PRIVATE_FIELDS` env var from [`@janiscommerce/log`](https://www.npmjs.com/package/@janiscommerce/log#env-variables), which recursively replaces the listed fields with `***` in every log, or
+- disable logging entirely with `static get shouldCreateLogs() { return false; }`.
+
+See the [Logging](#clipboard-logging) section for details.
+
 ## Breaking changes ⚠️
 
 ### 6.0.0
