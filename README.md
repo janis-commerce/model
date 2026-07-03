@@ -15,7 +15,8 @@ Models whose `databaseKey` maps to a **core** database now automatically log the
 
 **Before upgrading, review your core models** and make sure sensitive fields are not logged:
 
-- exclude them with the `excludeFieldsInLog` static getter (e.g. `['password', 'super-secret']`), or
+- exclude them per-model with the `excludeFieldsInLog` static getter (e.g. `['password', 'super-secret']`), which removes the field from the log,
+- mask them service-wide with the `JANIS_TRACE_PRIVATE_FIELDS` env var from [`@janiscommerce/log`](https://www.npmjs.com/package/@janiscommerce/log#env-variables), which recursively replaces the listed fields with `***` in every log, or
 - disable logging entirely with `static get shouldCreateLogs() { return false; }`.
 
 See the [Logging](#clipboard-logging) section for details.
