@@ -1086,7 +1086,7 @@ describe('Model', () => {
 				]);
 			});
 
-			it('Should log on multiInsert operation for every item when driver resolves with id', async () => {
+			it('Should group items into a single batched log with parallel entityids when driver resolves with id', async () => {
 
 				sinon.stub(DBDriver.prototype, 'multiInsert')
 					.resolves([{ id: 1, letter: 'A' }, { id: 2, letter: 'B' }]);
@@ -1097,29 +1097,20 @@ describe('Model', () => {
 					{
 						type: 'inserted',
 						entity: 'client',
-						entityId: 1,
+						entityids: [1, 2],
 						userCreated,
 						log: {
-							item: {
-								id: 1,
-								letter: 'A'
-							},
+							items: [
+								{ id: 1, letter: 'A' },
+								{ id: 2, letter: 'B' }
+							],
 							batchLength: 2,
 							batchToken: sinon.match.string,
-							executionTime: sinon.match.number
-						}
-					}, {
-						type: 'inserted',
-						entity: 'client',
-						entityId: 2,
-						userCreated,
-						log: {
-							item: {
-								id: 2,
-								letter: 'B'
+							chunkData: {
+								chunkLength: 2,
+								chunkIndex: 1,
+								totalParts: 1
 							},
-							batchLength: 2,
-							batchToken: sinon.match.string,
 							executionTime: sinon.match.number
 						}
 					}
@@ -1157,34 +1148,21 @@ describe('Model', () => {
 					sinon.assert.calledOnceWithExactly(Log.add, 'some-client', [{
 						type: 'inserted',
 						entity: 'client',
-						entityId: 3,
+						entityids: [3, 4, 5],
 						userCreated,
 						log: {
-							item: { id: 3, letter: 'C' },
+							items: [
+								{ id: 3, letter: 'C' },
+								{ id: 4, letter: 'D' },
+								{ id: 5, letter: 'E' }
+							],
 							batchLength: 3,
 							batchToken: sinon.match.string,
-							executionTime: sinon.match.number
-						}
-					}, {
-						type: 'inserted',
-						entity: 'client',
-						entityId: 4,
-						userCreated,
-						log: {
-							item: { id: 4, letter: 'D' },
-							batchLength: 3,
-							batchToken: sinon.match.string,
-							executionTime: sinon.match.number
-						}
-					}, {
-						type: 'inserted',
-						entity: 'client',
-						entityId: 5,
-						userCreated,
-						log: {
-							item: { id: 5, letter: 'E' },
-							batchLength: 3,
-							batchToken: sinon.match.string,
+							chunkData: {
+								chunkLength: 3,
+								chunkIndex: 1,
+								totalParts: 1
+							},
 							executionTime: sinon.match.number
 						}
 					}]);
