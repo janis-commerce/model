@@ -78,7 +78,7 @@ describe('LogHelper', () => {
 			sinon.stub(Log, 'addCore').resolves();
 		});
 
-		it('Should group items with id (>1) into a single batched log with items and parallel entityids, without entityId', async () => {
+		it('Should group items with id (>1) into a single batched log with items and parallel entityIds, without entityId', async () => {
 
 			const logHelper = getLogHelperWithSession();
 
@@ -91,7 +91,7 @@ describe('LogHelper', () => {
 				entity: 'some',
 				type: 'inserted',
 				userCreated: 'some-user-id',
-				entityids: ['id-1', 'id-2'],
+				entityIds: ['id-1', 'id-2'],
 				log: {
 					executionTime: 15,
 					batchToken: sinon.match.string,
@@ -142,8 +142,8 @@ describe('LogHelper', () => {
 			assert.deepStrictEqual(builtLogs[0].log.chunkData, { chunkLength: 500, chunkIndex: 1, totalParts: 2 });
 			assert.deepStrictEqual(builtLogs[1].log.chunkData, { chunkLength: 200, chunkIndex: 2, totalParts: 2 });
 
-			assert.strictEqual(builtLogs[0].entityids.length, 500);
-			assert.strictEqual(builtLogs[1].entityids.length, 200);
+			assert.strictEqual(builtLogs[0].entityIds.length, 500);
+			assert.strictEqual(builtLogs[1].entityIds.length, 200);
 			assert.strictEqual(builtLogs[0].log.items.length, 500);
 			assert.strictEqual(builtLogs[1].log.items.length, 200);
 
@@ -167,11 +167,11 @@ describe('LogHelper', () => {
 			assert.deepStrictEqual(builtLogs[0].log.chunkData, { chunkLength: 3, chunkIndex: 1, totalParts: 2 });
 			assert.deepStrictEqual(builtLogs[1].log.chunkData, { chunkLength: 3, chunkIndex: 2, totalParts: 2 });
 
-			assert.deepStrictEqual(builtLogs[0].entityids, ['id-1', 'id-2', 'id-3']);
-			assert.deepStrictEqual(builtLogs[1].entityids, ['id-4', 'id-5', 'id-6']);
+			assert.deepStrictEqual(builtLogs[0].entityIds, ['id-1', 'id-2', 'id-3']);
+			assert.deepStrictEqual(builtLogs[1].entityIds, ['id-4', 'id-5', 'id-6']);
 		});
 
-		it('Should group items without id using the size-aware chunker (no entityids, no entityId)', async () => {
+		it('Should group items without id using the size-aware chunker (no entityIds, no entityId)', async () => {
 
 			const logHelper = getLogHelperWithSession();
 
@@ -213,7 +213,7 @@ describe('LogHelper', () => {
 			const [builtLogs] = Log.addCore.firstCall.args;
 
 			assert.strictEqual(builtLogs.length, 1);
-			assert.deepStrictEqual(builtLogs[0].entityids, ['id-1', 'id-2']);
+			assert.deepStrictEqual(builtLogs[0].entityIds, ['id-1', 'id-2']);
 		});
 	});
 });
