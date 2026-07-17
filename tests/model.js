@@ -1086,7 +1086,7 @@ describe('Model', () => {
 				]);
 			});
 
-			it('Should group items into a single batched log with parallel entityIds when driver resolves with id', async () => {
+			it('Should group items into a single batched log with parallel relatedEntities tokens when driver resolves with id', async () => {
 
 				sinon.stub(DBDriver.prototype, 'multiInsert')
 					.resolves([{ id: 1, letter: 'A' }, { id: 2, letter: 'B' }]);
@@ -1097,7 +1097,7 @@ describe('Model', () => {
 					{
 						type: 'inserted',
 						entity: 'client',
-						entityIds: [1, 2],
+						relatedEntities: ['client:1', 'client:2'],
 						userCreated,
 						log: {
 							items: [
@@ -1148,7 +1148,7 @@ describe('Model', () => {
 					sinon.assert.calledOnceWithExactly(Log.add, 'some-client', [{
 						type: 'inserted',
 						entity: 'client',
-						entityIds: [3, 4, 5],
+						relatedEntities: ['client:3', 'client:4', 'client:5'],
 						userCreated,
 						log: {
 							items: [
