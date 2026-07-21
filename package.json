@@ -1,6 +1,6 @@
 {
   "name": "@janiscommerce/model",
-  "version": "8.16.0-beta.2",
+  "version": "8.15.1",
   "description": "A package for managing Janis Models",
   "main": "lib/model.js",
   "scripts": {
@@ -44,7 +44,7 @@
   "dependencies": {
     "@aws-sdk/client-ssm": "^3.859.0",
     "@janiscommerce/aws-secrets-manager": "^1.1.1",
-    "@janiscommerce/log": "^5.3.0",
+    "@janiscommerce/log": "^5.5.0",
     "@janiscommerce/settings": "^1.0.1",
     "lllog": "^1.1.2",
     "md5": "^2.3.0"

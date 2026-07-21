@@ -824,6 +824,11 @@ The package will add automatic fields in the `log` _Object_ field.
 - `executionTime`. Each log will have the time spent on the query. _Since 6.6.0_
 - `itemsBatch`. Exclusively for methods `multiInsert()` and `multiSave()`, will be added the quantity of items _inserted_ or _updated_ in the same query. _Since 6.6.0_
 
+### Grouped logs for batch writes _Since 8.16.0_
+`multiInsert()` and `multiSave()` now emit a single **grouped** log per batch of items with id, instead of one log per item. A grouped log identifies its items through `relatedEntities` (`entity:id` tokens, `entity` = model name) and carries the item payloads under `log.items` (e.g. `relatedEntities: ['product:5ea1c8c53fdac68fb60eac9e', 'product:5ea1c8cd11f82560a364cbd4']`). A single-item write keeps the previous per-item shape (`entityId` + `item`).
+
+To stay within the trace service's per-record limit, large batches are split into several grouped logs by item count and serialized size (whichever limit is reached first).
+
 ### :no_mouth: Disabling automatic logging
 <details>
 	<summary>This functionality can be disabled in 2 ways</summary>
