@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [8.16.0] - 2026-07-21
 ### Changed
 - `multiInsert()` and `multiSave()` now emit a single grouped log per batch of id'd items (`relatedEntities` `entity:id` tokens + item payloads under `log.items`) instead of one log per item; single-item writes keep the per-item shape. Large batches are split by item count and serialized size to stay within the trace per-record limit.
 - Bumped `@janiscommerce/log` to `^5.5.0` (grouped logs rely on its derived `entities` field).
