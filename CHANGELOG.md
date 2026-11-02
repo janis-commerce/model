@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [8.16.1] - 2026-11-02
+### Fixed
+- `update()` and `multiRemove()` no longer lose their trace log when the filter is an array (OR) or its `id` is not a valid entity id (operator, empty or non positive): the log is sent without `entityId`. An array filter creates one log per id when every branch filters by `id`. ([JCN-567](https://janiscommerce.atlassian.net/browse/JCN-567))
+
 ## [8.16.0] - 2026-07-21
 ### Changed
 - `multiInsert()` and `multiSave()` now emit a single grouped log per batch of id'd items (`relatedEntities` `entity:id` tokens + item payloads under `log.items`) instead of one log per item; single-item writes keep the per-item shape. Large batches are split by item count and serialized size to stay within the trace per-record limit.
