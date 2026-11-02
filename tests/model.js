@@ -1316,6 +1316,42 @@ describe('Model', () => {
 						}
 					}]);
 				});
+
+				it('Should log without entityId when one of the filter ids is an empty string', async () => {
+
+					const filter = { id: ['62c45c01812a0a142d320ebd', ''] };
+
+					await myClientModel.update({ some: 'data' }, filter);
+
+					sinon.assert.calledWithExactly(Log.add, 'some-client', [{
+						type: 'updated',
+						entity: 'client',
+						userCreated,
+						log: {
+							values: { some: 'data', userModified, dateModified: sinon.match.date },
+							filter,
+							params: undefined,
+							executionTime: sinon.match.number
+						}
+					}]);
+				});
+
+				it('Should log without entityId when the filter id is a non positive number', async () => {
+
+					await myClientModel.update({ some: 'data' }, { id: 0 });
+
+					sinon.assert.calledWithExactly(Log.add, 'some-client', [{
+						type: 'updated',
+						entity: 'client',
+						userCreated,
+						log: {
+							values: { some: 'data', userModified, dateModified: sinon.match.date },
+							filter: { id: 0 },
+							params: undefined,
+							executionTime: sinon.match.number
+						}
+					}]);
+				});
 			});
 
 			it('Should create one log per id when every branch of the array filter has an id', async () => {
@@ -1516,6 +1552,36 @@ describe('Model', () => {
 				sinon.assert.calledWithExactly(Log.add, 'some-client', [{
 					type: 'removed',
 					entity: 'client',
+					userCreated,
+					log: {
+						filter,
+						executionTime: sinon.match.number
+					}
+				}]);
+			});
+
+			it('Should create one log per id when every branch of the array filter has an id', async () => {
+
+				sinon.stub(DBDriver.prototype, 'multiRemove')
+					.resolves(2);
+
+				const filter = [{ id: '62c45c01812a0a142d320ebd' }, { id: 15 }];
+
+				await myClientModel.multiRemove(filter);
+
+				sinon.assert.calledWithExactly(Log.add, 'some-client', [{
+					type: 'removed',
+					entity: 'client',
+					entityId: '62c45c01812a0a142d320ebd',
+					userCreated,
+					log: {
+						filter,
+						executionTime: sinon.match.number
+					}
+				}, {
+					type: 'removed',
+					entity: 'client',
+					entityId: 15,
 					userCreated,
 					log: {
 						filter,
