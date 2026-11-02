@@ -1233,6 +1233,124 @@ describe('Model', () => {
 				}]);
 			});
 
+			context('When the filter does not resolve the entity ids', () => {
+
+				beforeEach(() => {
+					sinon.stub(DBDriver.prototype, 'update')
+						.resolves(22);
+				});
+
+				it('Should log without entityId when the filter object has no id', async () => {
+
+					await myClientModel.update({ some: 'data' }, { status: 'active' });
+
+					sinon.assert.calledWithExactly(Log.add, 'some-client', [{
+						type: 'updated',
+						entity: 'client',
+						userCreated,
+						log: {
+							values: { some: 'data', userModified, dateModified: sinon.match.date },
+							filter: { status: 'active' },
+							params: undefined,
+							executionTime: sinon.match.number
+						}
+					}]);
+				});
+
+				it('Should log without entityId when the array filter has no ids', async () => {
+
+					const filter = [
+						{ requiresApproval: { type: 'exists', value: true } },
+						{ allowedRoles: { type: 'exists', value: true } }
+					];
+
+					await myClientModel.update({ some: 'data' }, filter);
+
+					sinon.assert.calledWithExactly(Log.add, 'some-client', [{
+						type: 'updated',
+						entity: 'client',
+						userCreated,
+						log: {
+							values: { some: 'data', userModified, dateModified: sinon.match.date },
+							filter,
+							params: undefined,
+							executionTime: sinon.match.number
+						}
+					}]);
+				});
+
+				it('Should log without entityId when a branch of the array filter has no id', async () => {
+
+					const filter = [{ id: '62c45c01812a0a142d320ebd' }, { status: 'active' }];
+
+					await myClientModel.update({ some: 'data' }, filter);
+
+					sinon.assert.calledWithExactly(Log.add, 'some-client', [{
+						type: 'updated',
+						entity: 'client',
+						userCreated,
+						log: {
+							values: { some: 'data', userModified, dateModified: sinon.match.date },
+							filter,
+							params: undefined,
+							executionTime: sinon.match.number
+						}
+					}]);
+				});
+
+				it('Should log without entityId when the filter id is not a scalar value', async () => {
+
+					const filter = { id: { type: 'in', value: ['62c45c01812a0a142d320ebd'] } };
+
+					await myClientModel.update({ some: 'data' }, filter);
+
+					sinon.assert.calledWithExactly(Log.add, 'some-client', [{
+						type: 'updated',
+						entity: 'client',
+						userCreated,
+						log: {
+							values: { some: 'data', userModified, dateModified: sinon.match.date },
+							filter,
+							params: undefined,
+							executionTime: sinon.match.number
+						}
+					}]);
+				});
+			});
+
+			it('Should create one log per id when every branch of the array filter has an id', async () => {
+
+				sinon.stub(DBDriver.prototype, 'update')
+					.resolves(2);
+
+				const filter = [
+					{ id: '62c45c01812a0a142d320ebd' },
+					{ id: ['62c45c0a93d7e2b2e1b74b3d', '62c45c01812a0a142d320ebd'], status: 'active' }
+				];
+
+				await myClientModel.update({ some: 'data' }, filter);
+
+				const logBase = {
+					type: 'updated',
+					entity: 'client',
+					userCreated,
+					log: {
+						values: { some: 'data', userModified, dateModified: sinon.match.date },
+						filter,
+						params: undefined,
+						executionTime: sinon.match.number
+					}
+				};
+
+				sinon.assert.calledWithExactly(Log.add, 'some-client', [{
+					...logBase,
+					entityId: '62c45c01812a0a142d320ebd'
+				}, {
+					...logBase,
+					entityId: '62c45c0a93d7e2b2e1b74b3d'
+				}]);
+			});
+
 			context('When update multiple items at once', () => {
 
 				it('Should call once to update() and create multiple logs', async () => {
@@ -1381,6 +1499,26 @@ describe('Model', () => {
 					userCreated,
 					log: {
 						filter: { id: '62c45c01812a0a142d320ebd' },
+						executionTime: sinon.match.number
+					}
+				}]);
+			});
+
+			it('Should log without entityId when the array filter has no ids', async () => {
+
+				sinon.stub(DBDriver.prototype, 'multiRemove')
+					.resolves(3);
+
+				const filter = [{ status: 'inactive' }, { status: 'deleted' }];
+
+				await myClientModel.multiRemove(filter);
+
+				sinon.assert.calledWithExactly(Log.add, 'some-client', [{
+					type: 'removed',
+					entity: 'client',
+					userCreated,
+					log: {
+						filter,
 						executionTime: sinon.match.number
 					}
 				}]);
