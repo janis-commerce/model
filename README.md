@@ -829,6 +829,9 @@ The package will add automatic fields in the `log` _Object_ field.
 
 To stay within the trace service's per-record limit, large batches are split into several grouped logs by item count and serialized size (whichever limit is reached first).
 
+### `entityId` in `update()` and `multiRemove()` logs
+The log `entityId` comes from the filter `id`. A filter `id` with a list of ids creates one log per id. An array filter (OR) creates one log per id only when every branch filters by `id`. Any other filter (without `id`, with an `id` operator such as `{ type: 'in', value: [...] }`, or with an empty or non positive `id`) creates a single log without `entityId`.
+
 ### :no_mouth: Disabling automatic logging
 <details>
 	<summary>This functionality can be disabled in 2 ways</summary>
